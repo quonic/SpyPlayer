@@ -1,0 +1,554 @@
+package main
+
+import "aseprite"
+import "core:encoding/json"
+import "core:fmt"
+import "core:io"
+import "core:os"
+import "core:strings"
+import "core:time"
+import "ffprobe"
+import "vendor:raylib"
+
+window_texture: raylib.Texture2D
+previous_button: ButtonControl
+play_button: ButtonControl
+pause_button: ButtonControl
+next_button: ButtonControl
+stop_button: ButtonControl
+close_button: ButtonControl
+min_button: ButtonControl
+menu_button: ButtonControl
+current_song_text: TextControl
+volume_slider: SliderControl
+eq_slider: SliderControl
+meter_slider: SliderControl
+load_button: ButtonControl
+seek_bar: SliderControl
+seek_time_left_text: TextControl
+seek_time_current_text: TextControl
+playlist_text: TextControl
+slider_bar: raylib.Rectangle
+
+spriteSheet: aseprite.Aseprite
+
+current_song_tags: ffprobe.Tags
+
+PlayState :: enum {
+	Playing,
+	Paused,
+	Stopped,
+}
+
+play_state: PlayState = .Stopped
+song_index: int = 0
+
+CreateUserInterface :: proc() {
+	CreateUI()
+}
+
+CreateUI :: proc() {
+	spriteSheet, ok := aseprite.ReadAsespriteJsonFile("assets/window.json")
+	assert(ok, fmt.tprintf("Error reading file"))
+	window_texture = raylib.LoadTexture(fmt.caprintf("assets/%s", spriteSheet.meta.image))
+
+	for slice, _ in spriteSheet.meta.slices {
+		name := slice.name
+		color := slice.color
+		keys := slice.keys
+
+		for key, _ in keys {
+			switch name {
+			case "previous":
+				previous_button = {
+					name = name,
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+				}
+			case "play":
+				play_button = {
+					name = "play",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "next":
+				next_button = {
+					name = "next",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "stop":
+				stop_button = {
+					name = "stop",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "pause":
+				pause_button = {
+					name = "pause",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "close":
+				close_button = {
+					name = "close",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "min":
+				min_button = {
+					name = "min",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "menu":
+				menu_button = {
+					name = "menu",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "current song":
+				current_song_text = {
+					name = "current song",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					text = "current song",
+					fontSize = 20,
+					textColor = raylib.BLACK,
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "volume":
+				for k, _ in spriteSheet.meta.slices {
+					switch k.name {
+					case "slider bar":
+						slider_bar = {
+							k.keys[0].bounds.x,
+							k.keys[0].bounds.y,
+							k.keys[0].bounds.w,
+							k.keys[0].bounds.h,
+						}
+					}
+				}
+				volume_slider = {
+					name = "volume",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					sliderPosition = key.bounds.x + 6 + (0.5 * key.bounds.w),
+					slider = {
+						sourceRec = slider_bar,
+						sliderPosition = {
+							x = key.bounds.x,
+							y = key.bounds.y,
+							width = key.bounds.w,
+							height = key.bounds.h,
+						},
+					},
+					value = 0.5,
+				}
+			case "eq":
+				eq_slider = {
+					name = "eq",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "meter":
+				meter_slider = {
+					name = "meter",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "load":
+				load_button = {
+					name = "load",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "seek bar":
+				seek_bar = {
+					name = "seek bar",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "seek time left":
+				seek_time_left_text = {
+					name = "seek time left",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "seek time current":
+				seek_time_current_text = {
+					name = "seek time current",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			case "playlist":
+				playlist_text = {
+					name = "playlist",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.BLACK,
+				}
+			}
+			AddButton(&previous_button)
+			AddButton(&play_button)
+			AddButton(&pause_button)
+			AddButton(&next_button)
+			AddButton(&stop_button)
+			AddButton(&close_button)
+			AddButton(&min_button)
+			AddButton(&menu_button)
+			AddText(&current_song_text)
+			AddSlider(&volume_slider)
+			AddSlider(&eq_slider)
+			AddSlider(&meter_slider)
+			AddButton(&load_button)
+			AddSlider(&seek_bar)
+			AddText(&seek_time_left_text)
+			AddText(&seek_time_current_text)
+			AddText(&playlist_text)
+		}
+	}
+}
+
+UserInterface :: proc() {
+	DrawButtons()
+	DrawSliders()
+	DrawTexts()
+	HandleButtonActions()
+	HandleSliderValues()
+}
+
+DrawButtons :: proc() {
+	DrawButtonControl("previous", camera)
+	DrawButtonControl("play", camera)
+	DrawButtonControl("pause", camera)
+	DrawButtonControl("next", camera)
+	DrawButtonControl("stop", camera)
+}
+
+DrawSliders :: proc() {
+	DrawSliderControl("volume", camera)
+	// DrawSliderControl("eq_slider", camera)
+	// DrawSliderControl("meter_slider", camera)
+}
+
+DrawTexts :: proc() {
+	DrawTextControl("current song", camera)
+	// DrawTextControl("seek time left", camera)
+	// DrawTextControl("seek time current", camera)
+	// DrawTextControl("playlist", camera)
+}
+
+HandleSliderValues :: proc() {
+	raylib.SetMusicVolume(currentStream, Sliders["volume"].value)
+}
+
+HandleButtonActions :: proc() {
+	if GetButtonPressedState("previous") == 1 {
+		fmt.println("Previous")
+		previous()
+	}
+	if GetButtonPressedState("play") == 1 {
+		fmt.println("Play")
+		play()
+	}
+	if GetButtonPressedState("pause") == 1 {
+		fmt.println("Pause")
+		pause()
+	}
+	if GetButtonPressedState("next") == 1 {
+		fmt.println("Next")
+		next()
+	}
+	if GetButtonPressedState("stop") == 1 {
+		fmt.println("Stop")
+		stop()
+	}
+}
