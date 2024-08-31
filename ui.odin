@@ -531,24 +531,41 @@ HandleSliderValues :: proc() {
 }
 
 HandleButtonActions :: proc() {
-	if GetButtonPressedState("previous") == 1 {
-		fmt.println("Previous")
-		previous()
-	}
-	if GetButtonPressedState("play") == 1 {
-		fmt.println("Play")
-		play()
-	}
-	if GetButtonPressedState("pause") == 1 {
-		fmt.println("Pause")
-		pause()
-	}
-	if GetButtonPressedState("next") == 1 {
-		fmt.println("Next")
-		next()
-	}
-	if GetButtonPressedState("stop") == 1 {
-		fmt.println("Stop")
-		stop()
+	if playListLoaded {
+		if Buttons["play"].enabled == false {
+			Buttons["previous"].enabled = true
+			Buttons["play"].enabled = true
+			Buttons["pause"].enabled = true
+			Buttons["next"].enabled = true
+			Buttons["stop"].enabled = true
+			Sliders["volume"].enabled = true
+		}
+		if GetButtonPressedState("previous") == 1 {
+			fmt.println("Previous")
+			previous()
+		}
+		if GetButtonPressedState("play") == 1 {
+			fmt.println("Play")
+			play()
+		}
+		if GetButtonPressedState("pause") == 1 {
+			fmt.println("Pause")
+			pause()
+		}
+		if GetButtonPressedState("next") == 1 {
+			fmt.println("Next")
+			next()
+		}
+		if GetButtonPressedState("stop") == 1 {
+			fmt.println("Stop")
+			stop()
+		}
+	} else {
+		Buttons["previous"].enabled = false
+		Buttons["play"].enabled = false
+		Buttons["pause"].enabled = false
+		Buttons["next"].enabled = false
+		Buttons["stop"].enabled = false
+		Sliders["volume"].enabled = false
 	}
 }
