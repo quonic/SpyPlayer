@@ -1,8 +1,11 @@
 package main
 
+import "base:intrinsics"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "core:thread"
+import "core:time"
 import "file_dialog"
 import "vendor:raylib"
 
@@ -21,4 +24,15 @@ PromptLoadPlaylist :: proc() {
 			AddSong(file.fullpath)
 		}
 	}
+}
+
+did_acquire :: proc(m: ^b64) -> (acquired: bool) {
+	res, ok := intrinsics.atomic_compare_exchange_strong(m, false, true)
+	return ok && res == false
+}
+
+task_prompt_load_playlist :: proc(t: thread.Task) {
+	PromptLoadPlaylist()
+	time.sleep(1 * time.Millisecond)
+	playListLoaded = true
 }

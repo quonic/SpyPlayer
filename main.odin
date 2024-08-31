@@ -58,23 +58,9 @@ currentStream: raylib.Music
 MAX_SAMPLES :: 512
 MAX_SAMPLES_PER_UPDATE :: 4096
 
-print_mutex := b64(false)
+N :: 1
 
 main :: proc() {
-
-	did_acquire :: proc(m: ^b64) -> (acquired: bool) {
-		res, ok := intrinsics.atomic_compare_exchange_strong(m, false, true)
-		return ok && res == false
-	}
-	task_prompt_load_playlist :: proc(t: thread.Task) {
-		for !did_acquire(&print_mutex) {thread.yield()} 	// Allow one thread to print at a time.
-		PromptLoadPlaylist()
-		print_mutex = false
-		time.sleep(1 * time.Millisecond)
-		playListLoaded = true
-	}
-
-	N :: 1
 
 	pool: thread.Pool
 	thread.pool_init(&pool, allocator = context.allocator, thread_count = N)
@@ -112,12 +98,12 @@ main :: proc() {
 			player_state = .NoMusic
 		}
 		if thread.pool_num_done(&pool) < N {
+			Texts["current song"].text = fmt.caprintf("Playlist loading...")
 			thread.yield()
 		} else {
 			if !playListLoaded_terminate_thread && playListLoaded {
 				thread.terminate(pool.threads[N - 1], 0)
-				fmt.println("Canceled last thread")
-				print_mutex = false
+				Texts["current song"].text = fmt.caprintf("Playlist loaded!")
 
 				thread.pool_finish(&pool)
 				playListLoaded_terminate_thread = true
