@@ -9,29 +9,29 @@ import "core:mem"
 import "core:strings"
 
 Format :: struct {
-	filename:         string `json:"filename"`,
-	nb_streams:       int `json:"nb_streams"`,
-	nb_programs:      int `json:"nb_programs"`,
-	format_name:      string `json:"format_name"`,
-	format_long_name: string `json:"format_long_name"`,
-	start_time:       string `json:"start_time"`,
-	duration:         string `json:"duration"`,
-	size:             string `json:"size"`,
-	bit_rate:         string `json:"bit_rate"`,
-	probe_score:      int `json:"probe_score"`,
-	tags:             Tags `json:"tags"`,
+	filename:         string,
+	nb_streams:       int,
+	nb_programs:      int,
+	format_name:      string,
+	format_long_name: string,
+	start_time:       string,
+	duration:         string,
+	size:             string,
+	bit_rate:         string,
+	probe_score:      int,
+	tags:             Tags,
 }
 
 Tags :: struct {
-	title:       string `json:"title"`,
-	artist:      string `json:"artist"`,
-	album:       string `json:"album"`,
-	description: string `json:"description"`,
-	comment:     string `json:"comment"`,
-	genre:       string `json:"genre"`,
-	date:        string `json:"date"`,
-	track:       string `json:"track"`,
-	disc:        string `json:"disc"`,
+	title:       string,
+	artist:      string,
+	album:       string,
+	description: string,
+	comment:     string,
+	genre:       string,
+	date:        string,
+	track:       string,
+	disc:        string,
 }
 
 GetTags :: proc(file_name: string) -> (result: struct {
