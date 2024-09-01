@@ -36,7 +36,6 @@ PlayerState :: enum {
 player_state: PlayerState = .NoMusic
 
 Song :: struct {
-	name:  string,
 	path:  string,
 	frame: f32,
 	tags:  ffprobe.Tags,
@@ -47,10 +46,12 @@ playList: [dynamic]Song
 playListLoaded: bool = false
 playListLoaded_terminate_thread: bool = false
 
-currentSong: int
+currentSongIndex: int = 0
+currentSongPath: string
 currentSongPlayPosition: f32 = 0
-currentSongVolume: f32 = 1
+currentSongVolume: f32 = 0.5
 currentSongLength: f32 = 0
+loadedSongPath: string
 
 currentStream: raylib.Music
 
@@ -66,6 +67,8 @@ main :: proc() {
 	thread.pool_init(&pool, allocator = context.allocator, thread_count = N)
 	defer thread.pool_destroy(&pool)
 
+	raylib.InitWindow(600, 200, "SpyPlayer")
+
 	thread.pool_add_task(
 		&pool,
 		allocator = context.allocator,
@@ -74,9 +77,6 @@ main :: proc() {
 		user_index = 0,
 	)
 	thread.pool_start(&pool)
-
-
-	raylib.InitWindow(600, 200, "SpyPlayer")
 	CreateUserInterface()
 
 	SetWindowToPrimaryMonitor(setFps = true)
@@ -94,9 +94,7 @@ main :: proc() {
 		raylib.ClearBackground(raylib.BLACK)
 
 		UserInterface()
-		if len(playList) == 0 {
-			player_state = .NoMusic
-		}
+
 		if thread.pool_num_done(&pool) < N {
 			Texts["current song"].text = fmt.caprintf("Playlist loading...")
 			thread.yield()
@@ -105,8 +103,16 @@ main :: proc() {
 				thread.terminate(pool.threads[N - 1], 0)
 				Texts["current song"].text = fmt.caprintf("Playlist loaded!")
 
+				fmt.printfln("Playlist loaded!")
+
 				thread.pool_finish(&pool)
 				playListLoaded_terminate_thread = true
+				currentSongIndex = 0
+				currentSongPath = playList[currentSongIndex].path
+				current_song_tags = playList[currentSongIndex].tags
+				currentStream = raylib.LoadMusicStream(
+					strings.clone_to_cstring(playList[currentSongIndex].path),
+				)
 			}
 			switch player_state {
 			case .Playing:
@@ -147,76 +153,116 @@ AddSong :: proc(path: string) {
 	append(&playList, Song{path = path, tags = frame.format.tags})
 }
 
-RemoveSong :: proc(name: string) {
+RemoveSong :: proc(path: string) {
 	for song, i in playList {
-		if song.name == name {
+		if song.path == path {
 			ordered_remove(&playList, i)
 			break
 		}
 	}
 }
 
+IsSongLoaded :: proc(path: string) -> bool {
+	if playList[currentSongIndex].path == currentSongPath {
+		return true
+	}
+	return false
+}
 
-play :: proc() {
-
-	current_song_tags = playList[currentSong].tags
-	if !raylib.IsMusicStreamPlaying(currentStream) {
+LoadSong :: proc(path: string) {
+	fmt.println("LoadSong")
+	if loadedSongPath == path && raylib.IsMusicReady(currentStream) {
+		fmt.println("Already loaded")
+		return
+	} else if loadedSongPath != path {
+		fmt.println("Loading")
+		current_song_tags = playList[currentSongIndex].tags
 		currentStream = raylib.LoadMusicStream(
-			strings.clone_to_cstring(playList[currentSong].path),
+			strings.clone_to_cstring(playList[currentSongIndex].path),
 		)
 		for !raylib.IsMusicReady(currentStream) {
 			thread.yield()
 		}
+		loadedSongPath = path
 	}
-	raylib.SetMusicVolume(currentStream, currentSongVolume)
-	if player_state == .Paused {
-		raylib.ResumeMusicStream(currentStream)
-	} else {
-		raylib.PlayMusicStream(currentStream)
-	}
+}
 
+play :: proc() {
+
+	raylib.PlayMusicStream(currentStream)
+	raylib.SetMusicVolume(currentStream, currentSongVolume)
+	fmt.println("Playing")
 	player_state = .Playing
 
 	UpdateCurrentSongLabel()
 }
 
 pause :: proc() {
-	player_state = .Paused
 	raylib.PauseMusicStream(currentStream)
+	fmt.println("Pausing")
+	player_state = .Paused
+
+	UpdateCurrentSongLabel()
 }
 
 stop :: proc() {
-	player_state = .Stopped
 	raylib.StopMusicStream(currentStream)
+	fmt.println("Stopping")
+	player_state = .Stopped
+
+	UpdateCurrentSongLabel()
 }
 
 next :: proc() {
 	raylib.StopMusicStream(currentStream)
 	raylib.UnloadMusicStream(currentStream)
-	player_state = .NoMusic
 	if len(playList) > 0 {
-		currentSong += 1
-		if currentSong >= len(playList) {
-			currentSong = 0
+		currentSongIndex += 1
+		if currentSongIndex >= len(playList) {
+			currentSongIndex = 0
 		}
-		play()
 	}
+	current_song_tags = playList[currentSongIndex].tags
+	currentStream = raylib.LoadMusicStream(
+		strings.clone_to_cstring(playList[currentSongIndex].path),
+	)
+
+	if player_state == .Playing {
+		fmt.println("Play")
+		raylib.SetMusicVolume(currentStream, currentSongVolume)
+		raylib.PlayMusicStream(currentStream)
+	}
+	fmt.println("Next")
+
+	UpdateCurrentSongLabel()
 }
 
 previous :: proc() {
 	raylib.StopMusicStream(currentStream)
 	raylib.UnloadMusicStream(currentStream)
-	player_state = .NoMusic
 	if len(playList) > 0 {
-		currentSong -= 1
-		if currentSong < 0 {
-			currentSong = len(playList) - 1
+		currentSongIndex -= 1
+		if currentSongIndex < 0 {
+			currentSongIndex = len(playList) - 1
 		}
-		play()
 	}
+	current_song_tags = playList[currentSongIndex].tags
+	currentStream = raylib.LoadMusicStream(
+		strings.clone_to_cstring(playList[currentSongIndex].path),
+	)
+
+	if player_state == .Playing {
+		fmt.println("Play")
+		raylib.SetMusicVolume(currentStream, currentSongVolume)
+		raylib.PlayMusicStream(currentStream)
+	}
+	fmt.println("Previous")
+
+	UpdateCurrentSongLabel()
 }
 
 UpdateCurrentSongLabel :: proc() {
+	fmt.println("UpdateCurrentSongLabel")
 	Texts["current song"].text = fmt.caprintf(
 		"%v - %v",
 		current_song_tags.title,
