@@ -53,6 +53,8 @@ currentSongVolume: f32 = 0.5
 currentSongLength: f32 = 0
 loadedSongPath: string
 
+PlayListLoading: bool = false
+
 currentStream: raylib.Music
 
 
@@ -94,7 +96,7 @@ main :: proc() {
 		// Draw the UI
 		UserInterface()
 
-
+		LoadingUpdate()
 		switch player_state {
 		case .Playing:
 			{
@@ -242,6 +244,28 @@ previous :: proc() {
 	UpdateCurrentSongLabel()
 }
 
+LoadingUpdate :: proc() {
+	if PlayListLoading {
+		Texts["current song"].text = fmt.caprintf("Playlist loading...")
+		if thread.pool_num_done(&pool) >= N {
+			thread.terminate(pool.threads[N - 1], 0)
+			Texts["current song"].text = fmt.caprintf("Playlist loaded!")
+
+			fmt.printfln("Playlist loaded!")
+
+			thread.pool_finish(&pool)
+			playListLoaded_terminate_thread = true
+			currentSongIndex = 0
+			currentSongPath = playList[currentSongIndex].path
+			current_song_tags = playList[currentSongIndex].tags
+			currentStream = raylib.LoadMusicStream(
+				strings.clone_to_cstring(playList[currentSongIndex].path),
+			)
+			PlayListLoading = false
+		}
+	}
+}
+
 load :: proc() {
 	thread.pool_add_task(
 		&pool,
@@ -252,23 +276,7 @@ load :: proc() {
 	)
 	thread.pool_start(&pool)
 	Texts["current song"].text = fmt.caprintf("Playlist loading...")
-	for thread.pool_num_done(&pool) < N {
-		thread.yield()
-	}
-
-	thread.terminate(pool.threads[N - 1], 0)
-	Texts["current song"].text = fmt.caprintf("Playlist loaded!")
-
-	fmt.printfln("Playlist loaded!")
-
-	thread.pool_finish(&pool)
-	playListLoaded_terminate_thread = true
-	currentSongIndex = 0
-	currentSongPath = playList[currentSongIndex].path
-	current_song_tags = playList[currentSongIndex].tags
-	currentStream = raylib.LoadMusicStream(
-		strings.clone_to_cstring(playList[currentSongIndex].path),
-	)
+	PlayListLoading = true
 }
 
 UpdateCurrentSongLabel :: proc() {
