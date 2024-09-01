@@ -44,7 +44,6 @@ Song :: struct {
 playList: [dynamic]Song
 
 playListLoaded: bool = false
-playListLoaded_terminate_thread: bool = false
 
 currentSongIndex: int = 0
 currentSongPath: string
@@ -254,7 +253,6 @@ LoadingUpdate :: proc() {
 			fmt.printfln("Playlist loaded!")
 
 			thread.pool_finish(&pool)
-			playListLoaded_terminate_thread = true
 			currentSongIndex = 0
 			currentSongPath = playList[currentSongIndex].path
 			current_song_tags = playList[currentSongIndex].tags
