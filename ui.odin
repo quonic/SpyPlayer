@@ -244,7 +244,7 @@ CreateUI :: proc() {
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
-					text = "current song",
+					text = "",
 					fontSize = 20,
 					textColor = raylib.DARKGRAY,
 					tint = raylib.WHITE,
@@ -502,6 +502,10 @@ DrawButtons :: proc() {
 	DrawButtonControl("pause", camera)
 	DrawButtonControl("next", camera)
 	DrawButtonControl("stop", camera)
+	DrawButtonControl("load", camera)
+	DrawButtonControl("close", camera)
+	DrawButtonControl("min", camera)
+	DrawButtonControl("menu", camera)
 }
 
 DrawSliders :: proc() {
@@ -522,6 +526,22 @@ HandleSliderValues :: proc() {
 }
 
 HandleButtonActions :: proc() {
+	if GetButtonPressedState("load") == 1 {
+		fmt.println("load")
+		load()
+	}
+	if GetButtonPressedState("menu") == 1 {
+		fmt.println("menu")
+	}
+	if GetButtonPressedState("close") == 1 {
+		fmt.println("close")
+		raylib.CloseWindow()
+		os.exit(0)
+	}
+	if GetButtonPressedState("min") == 1 {
+		fmt.println("min")
+		raylib.MinimizeWindow()
+	}
 	if playListLoaded {
 		if Buttons["play"].enabled == false {
 			Buttons["previous"].enabled = true

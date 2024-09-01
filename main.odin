@@ -61,29 +61,27 @@ MAX_SAMPLES_PER_UPDATE :: 4096
 
 N :: 1
 
-main :: proc() {
+pool: thread.Pool
 
-	pool: thread.Pool
+main :: proc() {
+	// Create the thread pool
 	thread.pool_init(&pool, allocator = context.allocator, thread_count = N)
 	defer thread.pool_destroy(&pool)
 
+	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
 
-	thread.pool_add_task(
-		&pool,
-		allocator = context.allocator,
-		procedure = task_prompt_load_playlist,
-		data = nil,
-		user_index = 0,
-	)
-	thread.pool_start(&pool)
+	// Create the UI elements
 	CreateUserInterface()
 
+	// Move the window to the primary monitor
 	SetWindowToPrimaryMonitor(setFps = true)
 
+	// Initialize the audio device
 	raylib.InitAudioDevice()
 	defer raylib.CloseAudioDevice()
 
+	// Set the audio buffer size
 	raylib.SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE)
 
 	// https://github.com/MineBill/Engin3/blob/master/engine/file_dialog_linux.odin
@@ -93,54 +91,37 @@ main :: proc() {
 		raylib.BeginMode2D(camera)
 		raylib.ClearBackground(raylib.BLACK)
 
+		// Draw the UI
 		UserInterface()
 
-		if thread.pool_num_done(&pool) < N {
-			Texts["current song"].text = fmt.caprintf("Playlist loading...")
-			thread.yield()
-		} else {
-			if !playListLoaded_terminate_thread && playListLoaded {
-				thread.terminate(pool.threads[N - 1], 0)
-				Texts["current song"].text = fmt.caprintf("Playlist loaded!")
 
-				fmt.printfln("Playlist loaded!")
-
-				thread.pool_finish(&pool)
-				playListLoaded_terminate_thread = true
-				currentSongIndex = 0
-				currentSongPath = playList[currentSongIndex].path
-				current_song_tags = playList[currentSongIndex].tags
-				currentStream = raylib.LoadMusicStream(
-					strings.clone_to_cstring(playList[currentSongIndex].path),
-				)
+		switch player_state {
+		case .Playing:
+			{
+				currentSongPlayPosition = raylib.GetMusicTimePlayed(currentStream)
+				currentSongLength = raylib.GetMusicTimeLength(currentStream)
+				if currentSongPlayPosition >= currentSongLength {
+					next()
+				}
+				raylib.UpdateMusicStream(currentStream)
 			}
-			switch player_state {
-			case .Playing:
-				{
-					currentSongPlayPosition = raylib.GetMusicTimePlayed(currentStream)
-					currentSongLength = raylib.GetMusicTimeLength(currentStream)
-					if currentSongPlayPosition >= currentSongLength {
-						next()
-					}
-					raylib.UpdateMusicStream(currentStream)
-				}
-			case .Paused:
-				{
-					currentSongPlayPosition = raylib.GetMusicTimePlayed(currentStream)
-					currentSongLength = raylib.GetMusicTimeLength(currentStream)
-				}
-			case .Stopped:
-				{
-					currentSongPlayPosition = 0
-					currentSongLength = raylib.GetMusicTimeLength(currentStream)
-				}
-			case .NoMusic:
-				{
-					currentSongPlayPosition = 0
-					currentSongLength = 0
-				}
+		case .Paused:
+			{
+				currentSongPlayPosition = raylib.GetMusicTimePlayed(currentStream)
+				currentSongLength = raylib.GetMusicTimeLength(currentStream)
+			}
+		case .Stopped:
+			{
+				currentSongPlayPosition = 0
+				currentSongLength = raylib.GetMusicTimeLength(currentStream)
+			}
+		case .NoMusic:
+			{
+				currentSongPlayPosition = 0
+				currentSongLength = 0
 			}
 		}
+
 
 		raylib.EndMode2D()
 		raylib.EndDrawing()
@@ -259,6 +240,35 @@ previous :: proc() {
 	fmt.println("Previous")
 
 	UpdateCurrentSongLabel()
+}
+
+load :: proc() {
+	thread.pool_add_task(
+		&pool,
+		allocator = context.allocator,
+		procedure = task_prompt_load_playlist,
+		data = nil,
+		user_index = 0,
+	)
+	thread.pool_start(&pool)
+	Texts["current song"].text = fmt.caprintf("Playlist loading...")
+	for thread.pool_num_done(&pool) < N {
+		thread.yield()
+	}
+
+	thread.terminate(pool.threads[N - 1], 0)
+	Texts["current song"].text = fmt.caprintf("Playlist loaded!")
+
+	fmt.printfln("Playlist loaded!")
+
+	thread.pool_finish(&pool)
+	playListLoaded_terminate_thread = true
+	currentSongIndex = 0
+	currentSongPath = playList[currentSongIndex].path
+	current_song_tags = playList[currentSongIndex].tags
+	currentStream = raylib.LoadMusicStream(
+		strings.clone_to_cstring(playList[currentSongIndex].path),
+	)
 }
 
 UpdateCurrentSongLabel :: proc() {
