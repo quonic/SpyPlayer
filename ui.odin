@@ -34,15 +34,6 @@ spriteSheet: aseprite.Aseprite
 
 current_song_tags: ffprobe.Tags
 
-PlayState :: enum {
-	Playing,
-	Paused,
-	Stopped,
-}
-
-play_state: PlayState = .Stopped
-song_index: int = 0
-
 CreateUserInterface :: proc() {
 	CreateUI()
 }
@@ -74,7 +65,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 					positionSpriteSheet = {
 						x = key.bounds.x,
 						y = key.bounds.y,
@@ -103,7 +94,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "next":
 				next_button = {
@@ -126,7 +117,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "stop":
 				stop_button = {
@@ -149,7 +140,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "pause":
 				pause_button = {
@@ -172,7 +163,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "close":
 				close_button = {
@@ -195,7 +186,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "min":
 				min_button = {
@@ -218,7 +209,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "menu":
 				menu_button = {
@@ -241,7 +232,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "current song":
 				current_song_text = {
@@ -255,7 +246,7 @@ CreateUI :: proc() {
 					},
 					text = "current song",
 					fontSize = 20,
-					textColor = raylib.BLACK,
+					textColor = raylib.DARKGRAY,
 					tint = raylib.WHITE,
 					texture = window_texture,
 					positionSpriteSheet = {
@@ -267,7 +258,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "volume":
 				for k, _ in spriteSheet.meta.slices {
@@ -295,14 +286,14 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 					positionSpriteSheet = {
 						x = key.bounds.x,
 						y = key.bounds.y,
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
-					sliderPosition = key.bounds.x + 6 + (0.5 * key.bounds.w),
+					sliderPosition = key.bounds.x + 6 + (currentSongVolume * key.bounds.w),
 					slider = {
 						sourceRec = slider_bar,
 						sliderPosition = {
@@ -335,7 +326,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "meter":
 				meter_slider = {
@@ -358,7 +349,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "load":
 				load_button = {
@@ -381,7 +372,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "seek bar":
 				seek_bar = {
@@ -404,7 +395,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "seek time left":
 				seek_time_left_text = {
@@ -427,7 +418,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "seek time current":
 				seek_time_current_text = {
@@ -450,7 +441,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			case "playlist":
 				playlist_text = {
@@ -473,7 +464,7 @@ CreateUI :: proc() {
 					tint_normal = raylib.WHITE,
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.BLACK,
+					tint_disabled = raylib.DARKGRAY,
 				}
 			}
 			AddButton(&previous_button)
