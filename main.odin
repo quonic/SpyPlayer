@@ -49,7 +49,6 @@ currentSongIndex: int = 0
 currentSongPath: string
 currentSongPlayPosition: f32 = 0
 currentSongVolume: f32 = 0.5
-currentSongLength: f32 = 0
 loadedSongPath: string
 
 PlayListLoading: bool = false
@@ -92,34 +91,25 @@ main :: proc() {
 		raylib.BeginMode2D(camera)
 		raylib.ClearBackground(raylib.BLACK)
 
-		// Draw the UI
 		UserInterface()
 
 		LoadingUpdate()
 		switch player_state {
 		case .Playing:
 			{
-				currentSongPlayPosition = raylib.GetMusicTimePlayed(currentStream)
-				currentSongLength = raylib.GetMusicTimeLength(currentStream)
-				if currentSongPlayPosition >= currentSongLength {
+				raylib.UpdateMusicStream(currentStream)
+				if !raylib.IsMusicStreamPlaying(currentStream) {
 					next()
 				}
-				raylib.UpdateMusicStream(currentStream)
 			}
 		case .Paused:
 			{
-				currentSongPlayPosition = raylib.GetMusicTimePlayed(currentStream)
-				currentSongLength = raylib.GetMusicTimeLength(currentStream)
 			}
 		case .Stopped:
 			{
-				currentSongPlayPosition = 0
-				currentSongLength = raylib.GetMusicTimeLength(currentStream)
 			}
 		case .NoMusic:
 			{
-				currentSongPlayPosition = 0
-				currentSongLength = 0
 			}
 		}
 
@@ -175,7 +165,7 @@ play :: proc() {
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	fmt.println("Playing")
 	player_state = .Playing
-
+	currentStream.looping = false // Prevent current song from looping TODO: Add a setting for this
 	UpdateCurrentSongLabel()
 }
 
@@ -215,7 +205,7 @@ next :: proc() {
 		raylib.PlayMusicStream(currentStream)
 	}
 	fmt.println("Next")
-
+	currentStream.looping = false
 	UpdateCurrentSongLabel()
 }
 
@@ -239,7 +229,7 @@ previous :: proc() {
 		raylib.PlayMusicStream(currentStream)
 	}
 	fmt.println("Previous")
-
+	currentStream.looping = false
 	UpdateCurrentSongLabel()
 }
 
