@@ -95,14 +95,8 @@ DrawTextControl :: proc(name: string, camera: raylib.Camera2D) {
 	texture: raylib.Texture2D = Texts[name].texture
 	sourceRec: raylib.Rectangle = Texts[name].positionSpriteSheet
 	tint: raylib.Color = Texts[name].enabled ? Texts[name].tint_normal : Texts[name].tint_disabled
-	destRec := raylib.Rectangle {
-		Texts[name].positionRec.x,
-		Texts[name].positionRec.y,
-		Texts[name].positionRec.width,
-		Texts[name].positionRec.height,
-	}
 	if Texts[name].enabled {
-		if IsHovering(destRec, camera) {
+		if IsHovering(Texts[name].positionRec, camera) {
 			if raylib.IsMouseButtonDown(raylib.MouseButton.LEFT) {
 				// Pressed state
 				Texts[name].pressed = true
@@ -121,12 +115,13 @@ DrawTextControl :: proc(name: string, camera: raylib.Camera2D) {
 		// Disabled state
 	}
 
-	raylib.DrawTexturePro(texture, sourceRec, destRec, {0, 0}, 0, tint)
-	raylib.DrawText(
+	raylib.DrawTexturePro(texture, sourceRec, Texts[name].positionRec, {0, 0}, 0, tint)
+	raylib.DrawTextEx(
+		raylib.GetFontDefault(),
 		Texts[name].text,
-		cast(i32)Texts[name].positionRec.x + 2,
-		cast(i32)Texts[name].positionRec.y + 1,
+		{Texts[name].positionRec.x + 2, Texts[name].positionRec.y + 1},
 		Texts[name].fontSize,
+		2,
 		Texts[name].textColor,
 	)
 }
@@ -135,15 +130,9 @@ DrawButtonControl :: proc(name: string, camera: raylib.Camera2D) {
 	texture: raylib.Texture2D = Buttons[name].texture
 	sourceRec: raylib.Rectangle = Buttons[name].positionSpriteSheet
 	tint: raylib.Color
-	destRec := raylib.Rectangle {
-		Buttons[name].positionRec.x,
-		Buttons[name].positionRec.y,
-		Buttons[name].positionRec.width,
-		Buttons[name].positionRec.height,
-	}
 
 	if Buttons[name].enabled {
-		if IsHovering(destRec, camera) {
+		if IsHovering(Buttons[name].positionRec, camera) {
 			if raylib.IsMouseButtonDown(raylib.MouseButton.LEFT) {
 				// Pressed state
 				Buttons[name].pressed = true
@@ -167,7 +156,7 @@ DrawButtonControl :: proc(name: string, camera: raylib.Camera2D) {
 		tint = Buttons[name].tint_disabled
 	}
 
-	raylib.DrawTexturePro(texture, sourceRec, destRec, {0, 0}, 0, tint)
+	raylib.DrawTexturePro(texture, sourceRec, Buttons[name].positionRec, {0, 0}, 0, tint)
 
 }
 
@@ -428,7 +417,7 @@ TextControl :: struct {
 	name:                string,
 	enabled:             bool,
 	text:                cstring,
-	fontSize:            i32,
+	fontSize:            f32,
 	textColor:           raylib.Color,
 	positionRec:         raylib.Rectangle,
 	backgroundColor:     raylib.Color,
