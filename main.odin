@@ -142,12 +142,9 @@ IsSongLoaded :: proc(path: string) -> bool {
 }
 
 LoadSong :: proc(path: string) {
-	fmt.println("LoadSong")
 	if loadedSongPath == path && raylib.IsMusicReady(currentStream) {
-		fmt.println("Already loaded")
 		return
 	} else if loadedSongPath != path {
-		fmt.println("Loading")
 		current_song_tags = playList[currentSongIndex].tags
 		currentStream = raylib.LoadMusicStream(
 			strings.clone_to_cstring(playList[currentSongIndex].path),
@@ -163,7 +160,6 @@ play :: proc() {
 
 	raylib.PlayMusicStream(currentStream)
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
-	fmt.println("Playing")
 	player_state = .Playing
 	currentStream.looping = false // Prevent current song from looping TODO: Add a setting for this
 	UpdateCurrentSongLabel()
@@ -171,7 +167,6 @@ play :: proc() {
 
 pause :: proc() {
 	raylib.PauseMusicStream(currentStream)
-	fmt.println("Pausing")
 	player_state = .Paused
 
 	UpdateCurrentSongLabel()
@@ -179,7 +174,6 @@ pause :: proc() {
 
 stop :: proc() {
 	raylib.StopMusicStream(currentStream)
-	fmt.println("Stopping")
 	player_state = .Stopped
 
 	UpdateCurrentSongLabel()
@@ -200,11 +194,9 @@ next :: proc() {
 	)
 
 	if player_state == .Playing {
-		fmt.println("Play")
 		raylib.SetMusicVolume(currentStream, currentSongVolume)
 		raylib.PlayMusicStream(currentStream)
 	}
-	fmt.println("Next")
 	currentStream.looping = false
 	UpdateCurrentSongLabel()
 }
@@ -224,11 +216,9 @@ previous :: proc() {
 	)
 
 	if player_state == .Playing {
-		fmt.println("Play")
 		raylib.SetMusicVolume(currentStream, currentSongVolume)
 		raylib.PlayMusicStream(currentStream)
 	}
-	fmt.println("Previous")
 	currentStream.looping = false
 	UpdateCurrentSongLabel()
 }
@@ -239,8 +229,6 @@ LoadingUpdate :: proc() {
 		if thread.pool_num_done(&pool) >= N {
 			thread.terminate(pool.threads[N - 1], 0)
 			Texts["current song"].text = fmt.caprintf("Playlist loaded!")
-
-			fmt.printfln("Playlist loaded!")
 
 			thread.pool_finish(&pool)
 			currentSongIndex = 0
@@ -268,7 +256,6 @@ load :: proc() {
 }
 
 UpdateCurrentSongLabel :: proc() {
-	fmt.println("UpdateCurrentSongLabel")
 	Texts["current song"].text = fmt.caprintf(
 		"%v - %v",
 		current_song_tags.title,

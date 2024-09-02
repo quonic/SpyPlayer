@@ -16,9 +16,6 @@ play_button: ButtonControl
 pause_button: ButtonControl
 next_button: ButtonControl
 stop_button: ButtonControl
-close_button: ButtonControl
-min_button: ButtonControl
-menu_button: ButtonControl
 current_song_text: TextControl
 volume_slider: SliderControl
 eq_slider: SliderControl
@@ -145,75 +142,6 @@ CreateUI :: proc() {
 			case "pause":
 				pause_button = {
 					name = "pause",
-					enabled = true,
-					positionRec = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint = raylib.WHITE,
-					texture = window_texture,
-					positionSpriteSheet = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint_normal = raylib.WHITE,
-					tint_pressed = raylib.LIGHTGRAY,
-					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.DARKGRAY,
-				}
-			case "close":
-				close_button = {
-					name = "close",
-					enabled = true,
-					positionRec = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint = raylib.WHITE,
-					texture = window_texture,
-					positionSpriteSheet = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint_normal = raylib.WHITE,
-					tint_pressed = raylib.LIGHTGRAY,
-					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.DARKGRAY,
-				}
-			case "min":
-				min_button = {
-					name = "min",
-					enabled = true,
-					positionRec = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint = raylib.WHITE,
-					texture = window_texture,
-					positionSpriteSheet = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint_normal = raylib.WHITE,
-					tint_pressed = raylib.LIGHTGRAY,
-					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.DARKGRAY,
-				}
-			case "menu":
-				menu_button = {
-					name = "menu",
 					enabled = true,
 					positionRec = {
 						x = key.bounds.x,
@@ -472,9 +400,6 @@ CreateUI :: proc() {
 			AddButton(&pause_button)
 			AddButton(&next_button)
 			AddButton(&stop_button)
-			AddButton(&close_button)
-			AddButton(&min_button)
-			AddButton(&menu_button)
 			AddText(&current_song_text)
 			AddSlider(&volume_slider)
 			AddSlider(&eq_slider)
@@ -503,9 +428,6 @@ DrawButtons :: proc() {
 	DrawButtonControl("next", camera)
 	DrawButtonControl("stop", camera)
 	DrawButtonControl("load", camera)
-	DrawButtonControl("close", camera)
-	DrawButtonControl("min", camera)
-	DrawButtonControl("menu", camera)
 }
 
 DrawSliders :: proc() {
@@ -516,9 +438,9 @@ DrawSliders :: proc() {
 
 DrawTexts :: proc() {
 	DrawTextControl("current song", camera)
-	// DrawTextControl("seek time left", camera)
-	// DrawTextControl("seek time current", camera)
-	// DrawTextControl("playlist", camera)
+	DrawTextControl("seek time left", camera)
+	DrawTextControl("seek time current", camera)
+	DrawTextControl("playlist", camera)
 }
 
 HandleSliderValues :: proc() {
@@ -529,18 +451,6 @@ HandleButtonActions :: proc() {
 	if GetButtonPressedState("load") == 1 {
 		fmt.println("load")
 		load()
-	}
-	if GetButtonPressedState("menu") == 1 {
-		fmt.println("menu")
-	}
-	if GetButtonPressedState("close") == 1 {
-		fmt.println("close")
-		raylib.CloseWindow()
-		os.exit(0)
-	}
-	if GetButtonPressedState("min") == 1 {
-		fmt.println("min")
-		raylib.MinimizeWindow()
 	}
 	if playListLoaded {
 		if Buttons["play"].enabled == false {
