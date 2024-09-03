@@ -47,7 +47,6 @@ playListLoaded: bool = false
 
 currentSongIndex: int = 0
 currentSongPath: string
-currentSongPlayPosition: f32 = 0
 currentSongVolume: f32 = 0.5
 loadedSongPath: string
 
@@ -113,12 +112,15 @@ main :: proc() {
 		switch player_state {
 		case .Playing:
 			{
+				UpdatePlayTimeText()
+
+
 				// Scrool the current song text when scrolling is enabled
 				if Texts["current song"].text != "" && Texts["current song"].scrolling {
 					// Scroll the text every scrollTime seconds
 					if raylib.GetTime() - lastScrollTime > scrollTime {
 						text: string = cast(string)Texts["current song"].text
-						// Reverse the text and scroll it back to the beginning
+						// Scroll the text
 						Texts["current song"].text = fmt.caprintf("%v%v", text[1:], text[:1])
 						// Update the last time we scrolled
 						lastScrollTime = raylib.GetTime()
@@ -302,4 +304,21 @@ UpdateCurrentSongText :: proc() {
 	} else {
 		Texts["current song"].scrolling = false
 	}
+	UpdatePlayTimeText()
+}
+
+UpdatePlayTimeText :: proc() {
+	song_length := raylib.GetMusicTimeLength(currentStream)
+	Texts["song length"].text = fmt.caprintf(
+		"%02d:%02d",
+		int(song_length / 60) % 60,
+		int(song_length) % 60,
+	)
+	// Update the play time text
+	play_time := raylib.GetMusicTimePlayed(currentStream)
+	Texts["play time"].text = fmt.caprintf(
+		"%02d:%02d",
+		int(play_time / 60) % 60,
+		int(play_time) % 60,
+	)
 }

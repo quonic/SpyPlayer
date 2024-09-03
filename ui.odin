@@ -22,8 +22,8 @@ eq_slider: SliderControl
 meter_slider: SliderControl
 load_button: ButtonControl
 seek_bar: SliderControl
-seek_time_left_text: TextControl
-seek_time_current_text: TextControl
+song_length_text: TextControl
+play_time_text: TextControl
 playlist_text: TextControl
 slider_bar: raylib.Rectangle
 
@@ -328,9 +328,9 @@ CreateUI :: proc() {
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
 				}
-			case "seek time left":
-				seek_time_left_text = {
-					name = "seek time left",
+			case "song length":
+				song_length_text = {
+					name = "song length",
 					enabled = true,
 					positionRec = {
 						x = key.bounds.x,
@@ -338,11 +338,13 @@ CreateUI :: proc() {
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
-					tint = raylib.WHITE,
-					text = "00:00:00",
+					text = "00:00",
+					fontSize = 20,
 					font = textFont,
 					spacing = textSpacing,
+					scrolling = false,
 					textColor = raylib.BLACK,
+					tint = raylib.WHITE,
 					texture = window_texture,
 					positionSpriteSheet = {
 						x = key.bounds.x,
@@ -355,9 +357,9 @@ CreateUI :: proc() {
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
 				}
-			case "seek time current":
-				seek_time_current_text = {
-					name = "seek time current",
+			case "play time":
+				play_time_text = {
+					name = "play time",
 					enabled = true,
 					positionRec = {
 						x = key.bounds.x,
@@ -365,11 +367,13 @@ CreateUI :: proc() {
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
-					tint = raylib.WHITE,
-					text = "00:00:00",
+					text = "00:00",
+					fontSize = 20,
 					font = textFont,
 					spacing = textSpacing,
-					textColor = raylib.DARKGRAY,
+					scrolling = false,
+					textColor = raylib.BLACK,
+					tint = raylib.WHITE,
 					texture = window_texture,
 					positionSpriteSheet = {
 						x = key.bounds.x,
@@ -412,15 +416,16 @@ CreateUI :: proc() {
 			AddButton(&pause_button)
 			AddButton(&next_button)
 			AddButton(&stop_button)
-			AddText(&current_song_text)
 			AddSlider(&volume_slider)
-			AddSlider(&eq_slider)
-			AddSlider(&meter_slider)
+			// AddSlider(&eq_slider)
+			// AddSlider(&meter_slider)
 			AddButton(&load_button)
-			AddSlider(&seek_bar)
-			AddText(&seek_time_left_text)
-			AddText(&seek_time_current_text)
+			// AddSlider(&seek_bar)
 			AddText(&playlist_text)
+			AddText(&current_song_text)
+
+			AddText(&song_length_text)
+			AddText(&play_time_text)
 		}
 	}
 }
@@ -450,8 +455,8 @@ DrawSliders :: proc() {
 
 DrawTexts :: proc() {
 	DrawTextControl("current song", camera)
-	DrawTextControl("seek time left", camera)
-	DrawTextControl("seek time current", camera)
+	DrawTextControl("song length", camera)
+	DrawTextControl("play time", camera)
 	DrawTextControl("playlist", camera)
 }
 
