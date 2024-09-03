@@ -65,6 +65,8 @@ fps_timer: f64
 fps_counter: int
 fps_value: f64
 
+songProgress: f32 = 0
+
 scrollTime: f64 = 0.1
 lastScrollTime: f64 = 0
 
@@ -112,7 +114,7 @@ main :: proc() {
 		switch player_state {
 		case .Playing:
 			{
-				UpdatePlayTimeText()
+				UpdatePlayTime()
 
 
 				// Scrool the current song text when scrolling is enabled
@@ -126,6 +128,9 @@ main :: proc() {
 						lastScrollTime = raylib.GetTime()
 					}
 				}
+				songProgress =
+					raylib.GetMusicTimePlayed(currentStream) /
+					raylib.GetMusicTimeLength(currentStream)
 
 				raylib.UpdateMusicStream(currentStream)
 				if !raylib.IsMusicStreamPlaying(currentStream) {
@@ -304,10 +309,10 @@ UpdateCurrentSongText :: proc() {
 	} else {
 		Texts["current song"].scrolling = false
 	}
-	UpdatePlayTimeText()
+	UpdatePlayTime()
 }
 
-UpdatePlayTimeText :: proc() {
+UpdatePlayTime :: proc() {
 	song_length := raylib.GetMusicTimeLength(currentStream)
 	Texts["song length"].text = fmt.caprintf(
 		"%02d:%02d",
@@ -321,4 +326,7 @@ UpdatePlayTimeText :: proc() {
 		int(play_time / 60) % 60,
 		int(play_time) % 60,
 	)
+	songProgress =
+		raylib.GetMusicTimePlayed(currentStream) / raylib.GetMusicTimeLength(currentStream)
+	Sliders["seek bar"].value = songProgress
 }

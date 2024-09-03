@@ -211,9 +211,12 @@ DrawSliderControl :: proc(name: string, camera: raylib.Camera2D) {
 				} else {
 					Sliders[name].sliderPosition = mousePos.x
 				}
-				// Range should be from 0 to 1
+				// Save value
 				Sliders[name].value =
 					(Sliders[name].sliderPosition - xPosMin) / (xPosMax - xPosMin)
+				if Sliders[name].valueReturnCallback != nil {
+					Sliders[name].valueReturnCallback(Sliders[name].value)
+				}
 			} else if raylib.IsMouseButtonReleased(raylib.MouseButton.LEFT) {
 				Sliders[name].pressed = false
 				tint = Sliders[name].tint_normal
@@ -221,15 +224,22 @@ DrawSliderControl :: proc(name: string, camera: raylib.Camera2D) {
 				// Hover state
 				Sliders[name].pressed = false
 				tint = Sliders[name].tint_hover
+				// Update slider position based on value
+				Sliders[name].sliderPosition =
+					(Sliders[name].value * (xPosMax - xPosMin)) + xPosMin
 			}
 		} else {
 			// Normal state
 			Sliders[name].pressed = false
 			tint = Sliders[name].tint_normal
+			// Update slider position based on value
+			Sliders[name].sliderPosition = (Sliders[name].value * (xPosMax - xPosMin)) + xPosMin
 		}
 	} else {
 		// Disabled state
 		tint = Sliders[name].tint_disabled
+		// Update slider position based on value
+		Sliders[name].sliderPosition = (Sliders[name].value * (xPosMax - xPosMin)) + xPosMin
 	}
 
 	raylib.DrawTexturePro(texture, sourceRec, destRec, {0, 0}, 0, Sliders[name].tint_normal)
@@ -238,7 +248,9 @@ DrawSliderControl :: proc(name: string, camera: raylib.Camera2D) {
 		Sliders[name].slider.sourceRec,
 		{
 			Sliders[name].sliderPosition,
-			destRec.y + 2,
+			destRec.y +
+			Sliders[name].positionRec.height / 2 -
+			Sliders[name].slider.sourceRec.height / 2,
 			Sliders[name].slider.sourceRec.width,
 			Sliders[name].slider.sourceRec.height,
 		},
@@ -504,6 +516,7 @@ SliderControl :: struct {
 	sliderPosition:      f32,
 	slider:              SliderBar,
 	value:               f32,
+	valueReturnCallback: proc(value: f32),
 }
 
 SliderBar :: struct {

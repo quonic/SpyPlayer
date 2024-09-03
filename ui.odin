@@ -306,6 +306,17 @@ CreateUI :: proc() {
 					tint_disabled = raylib.DARKGRAY,
 				}
 			case "seek bar":
+				for k, _ in spriteSheet.meta.slices {
+					switch k.name {
+					case "seeker bar":
+						slider_bar = {
+							k.keys[0].bounds.x,
+							k.keys[0].bounds.y,
+							k.keys[0].bounds.w,
+							k.keys[0].bounds.h,
+						}
+					}
+				}
 				seek_bar = {
 					name = "seek bar",
 					enabled = true,
@@ -317,16 +328,36 @@ CreateUI :: proc() {
 					},
 					tint = raylib.WHITE,
 					texture = window_texture,
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.DARKGRAY,
 					positionSpriteSheet = {
 						x = key.bounds.x,
 						y = key.bounds.y,
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
-					tint_normal = raylib.WHITE,
-					tint_pressed = raylib.LIGHTGRAY,
-					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.DARKGRAY,
+					sliderPosition = key.bounds.x + 6 + (songProgress * key.bounds.w),
+					slider = {
+						sourceRec = slider_bar,
+						sliderPosition = {
+							x = key.bounds.x,
+							y = key.bounds.y,
+							width = key.bounds.w,
+							height = key.bounds.h,
+						},
+					},
+					value = 0,
+					valueReturnCallback = proc(value: f32) {
+						//Convert value that is between 0 and 1 to a time in seconds based on the song length
+						if raylib.IsMusicStreamPlaying(currentStream) {
+							raylib.SeekMusicStream(
+								currentStream,
+								raylib.GetMusicTimeLength(currentStream) * value,
+							)
+						}
+					},
 				}
 			case "song length":
 				song_length_text = {
@@ -420,7 +451,7 @@ CreateUI :: proc() {
 			// AddSlider(&eq_slider)
 			// AddSlider(&meter_slider)
 			AddButton(&load_button)
-			// AddSlider(&seek_bar)
+			AddSlider(&seek_bar)
 			AddText(&playlist_text)
 			AddText(&current_song_text)
 
@@ -449,6 +480,7 @@ DrawButtons :: proc() {
 
 DrawSliders :: proc() {
 	DrawSliderControl("volume", camera)
+	DrawSliderControl("seek bar", camera)
 	// DrawSliderControl("eq_slider", camera)
 	// DrawSliderControl("meter_slider", camera)
 }
