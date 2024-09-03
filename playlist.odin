@@ -2,6 +2,7 @@ package main
 
 import "base:intrinsics"
 import "core:fmt"
+import "core:math/rand"
 import "core:os"
 import "core:strings"
 import "core:thread"
@@ -24,6 +25,7 @@ PromptLoadPlaylist :: proc() {
 			AddSong(file.fullpath)
 		}
 	}
+	ShufflePlaylist()
 }
 
 did_acquire :: proc(m: ^b64) -> (acquired: bool) {
@@ -35,4 +37,9 @@ task_prompt_load_playlist :: proc(t: thread.Task) {
 	PromptLoadPlaylist()
 	time.sleep(1 * time.Millisecond)
 	playListLoaded = true
+}
+
+
+ShufflePlaylist :: proc() {
+	rand.shuffle(playList[:])
 }
