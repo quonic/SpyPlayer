@@ -2,7 +2,7 @@
 
 Yet another music player inspired by the likes of WinAmp, written in [Odin](https://github.com/odin-lang/Odin).
 
-This uses raylib to render the GUI and play music, and is currently only tested on Linux.
+Raylib is used for playback and UI rendering. A custom Aseprite sprite sheet parser is used to load sprites and to help position the sprites for custom controls. Currently only Button, Slider and Text controls are implemented. `ffprobe` is used to get metadata from audio files.
 
 ![Screenshot](screenshots/player.png)
 
@@ -15,11 +15,21 @@ This is a work in progress, and is not yet feature complete.
 - [x] Load from folder to current playlist
 - [x] Volume control
 - [x] Use threading to load audio files
-- [ ] Current time and total time
-- [ ] Play next song when finished playing current song
-- [ ] Seeking
-- [ ] Playlist management ie. add, remove, clear, save, load
-- [ ] Show metadata - title and artist at the moment
+- [x] Current time and total time
+- [x] Play next song when finished playing current song
+- [x] Seeking
+- [ ] Playlist management
+  - [x] Load from folder
+  - [ ] Add to playlist
+  - [ ] Remove from playlist
+  - [ ] Clear playlist
+  - [ ] Save playlist
+  - [ ] Load playlist
+- [ ] Show metadata
+  - [x] Title
+  - [x] Artist
+  - [ ] Album
+  - [ ] Genre
 - [ ] Other things I haven't figured out yet
 
 ## Contributions
