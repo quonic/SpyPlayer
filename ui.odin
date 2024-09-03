@@ -174,7 +174,10 @@ CreateUI :: proc() {
 					},
 					text = "",
 					fontSize = 20,
-					textColor = raylib.DARKGRAY,
+					font = textFont,
+					spacing = textSpacing,
+					scrolling = false,
+					textColor = raylib.BLACK,
 					tint = raylib.WHITE,
 					texture = window_texture,
 					positionSpriteSheet = {
@@ -336,6 +339,10 @@ CreateUI :: proc() {
 						height = key.bounds.h,
 					},
 					tint = raylib.WHITE,
+					text = "00:00:00",
+					font = textFont,
+					spacing = textSpacing,
+					textColor = raylib.BLACK,
 					texture = window_texture,
 					positionSpriteSheet = {
 						x = key.bounds.x,
@@ -359,6 +366,10 @@ CreateUI :: proc() {
 						height = key.bounds.h,
 					},
 					tint = raylib.WHITE,
+					text = "00:00:00",
+					font = textFont,
+					spacing = textSpacing,
+					textColor = raylib.DARKGRAY,
 					texture = window_texture,
 					positionSpriteSheet = {
 						x = key.bounds.x,
@@ -382,6 +393,7 @@ CreateUI :: proc() {
 						height = key.bounds.h,
 					},
 					tint = raylib.WHITE,
+					textColor = raylib.DARKGRAY,
 					texture = window_texture,
 					positionSpriteSheet = {
 						x = key.bounds.x,

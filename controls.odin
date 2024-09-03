@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:strings"
 import "vendor:raylib"
 
 Labels: map[string]^LabelControl
@@ -75,18 +76,15 @@ IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
 	)
 }
 
-DrawLabelControl :: proc(control: ^LabelControl) {
-	if control.enabled {
-		raylib.DrawText(control.text, control.x, control.y, control.w, control.textColor)
-	} else {
-		raylib.DrawText(
-			control.text,
-			control.x,
-			control.y,
-			control.w,
-			raylib.Fade(control.textColor, 0.5),
-		)
-	}
+DrawLabelControl :: proc(name: string) {
+	raylib.DrawTextEx(
+		Labels[name].font,
+		Labels[name].text,
+		{Labels[name].positionRec.x + 2, Labels[name].positionRec.y + 1},
+		Labels[name].fontSize,
+		0,
+		Labels[name].textColor,
+	)
 }
 
 DrawTextControl :: proc(name: string, camera: raylib.Camera2D) {
@@ -116,14 +114,36 @@ DrawTextControl :: proc(name: string, camera: raylib.Camera2D) {
 	}
 
 	raylib.DrawTexturePro(texture, sourceRec, Texts[name].positionRec, {0, 0}, 0, tint)
-	raylib.DrawTextEx(
-		raylib.GetFontDefault(),
-		Texts[name].text,
-		{Texts[name].positionRec.x + 2, Texts[name].positionRec.y + 1},
-		Texts[name].fontSize,
-		2,
-		Texts[name].textColor,
-	)
+
+	// Make sure the text fits in the control
+	if MeasureTextLength(name, Texts[name].text) > Texts[name].positionRec.width {
+		text := string(Texts[name].text)
+		for i := len(text) - 1; i >= 0; i -= 1 {
+			text = text[:i]
+			if MeasureTextLength(name, strings.clone_to_cstring(text)) <
+			   Texts[name].positionRec.width {
+				raylib.DrawTextEx(
+					Texts[name].font,
+					strings.clone_to_cstring(text),
+					{Texts[name].positionRec.x + 2, Texts[name].positionRec.y + 1},
+					Texts[name].fontSize,
+					Texts[name].spacing,
+					Texts[name].textColor,
+				)
+				break
+			}
+		}
+
+	} else {
+		raylib.DrawTextEx(
+			Texts[name].font,
+			Texts[name].text,
+			{Texts[name].positionRec.x + 2, Texts[name].positionRec.y + 1},
+			Texts[name].fontSize,
+			Texts[name].spacing,
+			Texts[name].textColor,
+		)
+	}
 }
 
 DrawButtonControl :: proc(name: string, camera: raylib.Camera2D) {
@@ -397,19 +417,25 @@ GetButtonPressedState :: proc(name: string) -> int {
 	return 0
 }
 
+MeasureTextLength :: proc(name: string, text: cstring) -> f32 {
+	return(
+		raylib.MeasureTextEx(Texts[name].font, text, Texts[name].fontSize, Texts[name].spacing).x \
+	)
+}
+
+
 // Control that can be used to display text
 LabelControl :: struct {
-	name:            string,
-	enabled:         bool,
-	x, y, w, h:      i32,
-	backgroundColor: raylib.Color,
-	borderColor:     raylib.Color,
-	borderWidth:     i32,
-	text:            cstring,
-	font:            raylib.Font,
-	textColor:       raylib.Color,
-	clickAction:     proc(this: ^LabelControl),
-	hoverAction:     proc(this: ^LabelControl),
+	name:        string,
+	positionRec: raylib.Rectangle,
+	text:        cstring,
+	fontSize:    f32,
+	textColor:   raylib.Color,
+	scrolling:   bool,
+	font:        raylib.Font,
+	pressed:     bool,
+	wasPressed:  bool,
+	hovering:    bool,
 }
 
 // TextControl is a control that can be used to enter text
@@ -417,7 +443,9 @@ TextControl :: struct {
 	name:                string,
 	enabled:             bool,
 	text:                cstring,
+	font:                raylib.Font,
 	fontSize:            f32,
+	spacing:             f32,
 	textColor:           raylib.Color,
 	positionRec:         raylib.Rectangle,
 	backgroundColor:     raylib.Color,
@@ -425,6 +453,7 @@ TextControl :: struct {
 	borderWidth:         i32,
 	pressed:             bool,
 	hovering:            bool,
+	scrolling:           bool,
 	tint:                raylib.Color,
 	texture:             raylib.Texture2D,
 	tint_normal:         raylib.Color,

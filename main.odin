@@ -55,6 +55,19 @@ PlayListLoading: bool = false
 
 currentStream: raylib.Music
 
+textFont: raylib.Font
+textSpacing: f32 = 2
+
+current_time: f64
+dt: f64
+last_time: f64
+fixed_step_timer: f64
+fps_timer: f64
+fps_counter: int
+fps_value: f64
+
+scrollTime: f64 = 0.1
+lastScrollTime: f64 = 0
 
 MAX_SAMPLES :: 512
 MAX_SAMPLES_PER_UPDATE :: 4096
@@ -71,6 +84,9 @@ main :: proc() {
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
 
+	// textFont = raylib.LoadFont("assets/fonts/MyFontHere.ttf")
+	textFont = raylib.GetFontDefault()
+
 	// Create the UI elements
 	CreateUserInterface()
 
@@ -84,7 +100,7 @@ main :: proc() {
 	// Set the audio buffer size
 	raylib.SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE)
 
-	// https://github.com/MineBill/Engin3/blob/master/engine/file_dialog_linux.odin
+	lastScrollTime = raylib.GetTime()
 
 	for !raylib.WindowShouldClose() {
 		raylib.BeginDrawing()
@@ -97,6 +113,18 @@ main :: proc() {
 		switch player_state {
 		case .Playing:
 			{
+				// Scrool the current song text when scrolling is enabled
+				if Texts["current song"].text != "" && Texts["current song"].scrolling {
+					// Scroll the text every scrollTime seconds
+					if raylib.GetTime() - lastScrollTime > scrollTime {
+						text: string = cast(string)Texts["current song"].text
+						// Reverse the text and scroll it back to the beginning
+						Texts["current song"].text = fmt.caprintf("%v%v", text[1:], text[:1])
+						// Update the last time we scrolled
+						lastScrollTime = raylib.GetTime()
+					}
+				}
+
 				raylib.UpdateMusicStream(currentStream)
 				if !raylib.IsMusicStreamPlaying(currentStream) {
 					next()
@@ -162,21 +190,21 @@ play :: proc() {
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	player_state = .Playing
 	currentStream.looping = false // Prevent current song from looping TODO: Add a setting for this
-	UpdateCurrentSongLabel()
+	UpdateCurrentSongText()
 }
 
 pause :: proc() {
 	raylib.PauseMusicStream(currentStream)
 	player_state = .Paused
 
-	UpdateCurrentSongLabel()
+	UpdateCurrentSongText()
 }
 
 stop :: proc() {
 	raylib.StopMusicStream(currentStream)
 	player_state = .Stopped
 
-	UpdateCurrentSongLabel()
+	UpdateCurrentSongText()
 }
 
 next :: proc() {
@@ -198,7 +226,7 @@ next :: proc() {
 		raylib.PlayMusicStream(currentStream)
 	}
 	currentStream.looping = false
-	UpdateCurrentSongLabel()
+	UpdateCurrentSongText()
 }
 
 previous :: proc() {
@@ -220,7 +248,7 @@ previous :: proc() {
 		raylib.PlayMusicStream(currentStream)
 	}
 	currentStream.looping = false
-	UpdateCurrentSongLabel()
+	UpdateCurrentSongText()
 }
 
 LoadingUpdate :: proc() {
@@ -255,10 +283,23 @@ load :: proc() {
 	PlayListLoading = true
 }
 
-UpdateCurrentSongLabel :: proc() {
+UpdateCurrentSongText :: proc() {
 	Texts["current song"].text = fmt.caprintf(
 		"%v - %v",
 		current_song_tags.title,
 		current_song_tags.artist,
 	)
+	// Add some spaces to the end of the text
+	if Texts["current song"].scrolling == false &&
+	   MeasureTextLength("current song", Texts["current song"].text) >
+		   Texts["current song"].positionRec.width {
+		Texts["current song"].scrolling = true
+		Texts["current song"].text = fmt.caprintf(
+			"%v - %v    ",
+			current_song_tags.title,
+			current_song_tags.artist,
+		)
+	} else {
+		Texts["current song"].scrolling = false
+	}
 }
