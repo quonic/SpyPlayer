@@ -115,17 +115,30 @@ DrawTextControl :: proc(name: string, camera: raylib.Camera2D) {
 
 	raylib.DrawTexturePro(texture, sourceRec, Texts[name].positionRec, {0, 0}, 0, tint)
 
+	pos: raylib.Vector2
+	if Texts[name].centered {
+		pos = {
+			Texts[name].positionRec.x +
+			Texts[name].positionRec.width / 2 -
+			MeasureTextDimensions(name, Texts[name].text).x / 2,
+			Texts[name].positionRec.y +
+			Texts[name].positionRec.height / 2 -
+			MeasureTextDimensions(name, Texts[name].text).y / 2,
+		}
+	} else {
+		pos = {Texts[name].positionRec.x + 2, Texts[name].positionRec.y + 1}
+	}
 	// Make sure the text fits in the control
-	if MeasureTextLength(name, Texts[name].text) > Texts[name].positionRec.width {
+	if MeasureTextDimensions(name, Texts[name].text).x > Texts[name].positionRec.width {
 		text := string(Texts[name].text)
 		for i := len(text) - 1; i >= 0; i -= 1 {
 			text = text[:i]
-			if MeasureTextLength(name, strings.clone_to_cstring(text)) <
-			   Texts[name].positionRec.width {
+			ctext := strings.clone_to_cstring(text)
+			if MeasureTextDimensions(name, ctext).x < Texts[name].positionRec.width {
 				raylib.DrawTextEx(
 					Texts[name].font,
 					strings.clone_to_cstring(text),
-					{Texts[name].positionRec.x + 2, Texts[name].positionRec.y + 1},
+					pos,
 					Texts[name].fontSize,
 					Texts[name].spacing,
 					Texts[name].textColor,
@@ -138,7 +151,7 @@ DrawTextControl :: proc(name: string, camera: raylib.Camera2D) {
 		raylib.DrawTextEx(
 			Texts[name].font,
 			Texts[name].text,
-			{Texts[name].positionRec.x + 2, Texts[name].positionRec.y + 1},
+			pos,
 			Texts[name].fontSize,
 			Texts[name].spacing,
 			Texts[name].textColor,
@@ -193,8 +206,8 @@ DrawSliderControl :: proc(name: string, camera: raylib.Camera2D) {
 		Sliders[name].positionRec.width,
 		Sliders[name].positionRec.height,
 	}
-	xPosMin := destRec.x + 6
-	xPosMax := destRec.x + destRec.width - 12
+	xPosMin := destRec.x + Sliders[name].sliderPositionInset
+	xPosMax := destRec.x + destRec.width - Sliders[name].sliderPositionInset * 2
 
 	if Sliders[name].enabled {
 		if IsHovering(destRec, camera) {
@@ -429,10 +442,8 @@ GetButtonPressedState :: proc(name: string) -> int {
 	return 0
 }
 
-MeasureTextLength :: proc(name: string, text: cstring) -> f32 {
-	return(
-		raylib.MeasureTextEx(Texts[name].font, text, Texts[name].fontSize, Texts[name].spacing).x \
-	)
+MeasureTextDimensions :: proc(name: string, text: cstring) -> raylib.Vector2 {
+	return raylib.MeasureTextEx(Texts[name].font, text, Texts[name].fontSize, Texts[name].spacing)
 }
 
 
@@ -459,6 +470,7 @@ TextControl :: struct {
 	fontSize:            f32,
 	spacing:             f32,
 	textColor:           raylib.Color,
+	centered:            bool,
 	positionRec:         raylib.Rectangle,
 	backgroundColor:     raylib.Color,
 	borderColor:         raylib.Color,
@@ -515,6 +527,7 @@ SliderControl :: struct {
 	wasPressed:          bool,
 	sliderPosition:      f32,
 	slider:              SliderBar,
+	sliderPositionInset: f32,
 	value:               f32,
 	valueReturnCallback: proc(value: f32),
 }

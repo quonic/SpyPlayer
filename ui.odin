@@ -178,6 +178,7 @@ CreateUI :: proc() {
 					spacing = textSpacing,
 					scrolling = false,
 					textColor = raylib.BLACK,
+					centered = false,
 					tint = raylib.WHITE,
 					texture = window_texture,
 					positionSpriteSheet = {
@@ -218,6 +219,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					sliderPositionInset = 6,
 					positionSpriteSheet = {
 						x = key.bounds.x,
 						y = key.bounds.y,
@@ -235,6 +237,10 @@ CreateUI :: proc() {
 						},
 					},
 					value = 0.5,
+					valueReturnCallback = proc(value: f32) {
+						raylib.SetMusicVolume(currentStream, value)
+						currentSongVolume = value
+					},
 				}
 			case "eq":
 				eq_slider = {
@@ -332,6 +338,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					sliderPositionInset = 6,
 					positionSpriteSheet = {
 						x = key.bounds.x,
 						y = key.bounds.y,
@@ -373,6 +380,7 @@ CreateUI :: proc() {
 					fontSize = 20,
 					font = textFont,
 					spacing = textSpacing,
+					centered = true,
 					scrolling = false,
 					textColor = raylib.BLACK,
 					tint = raylib.WHITE,
@@ -402,6 +410,7 @@ CreateUI :: proc() {
 					fontSize = 20,
 					font = textFont,
 					spacing = textSpacing,
+					centered = true,
 					scrolling = false,
 					textColor = raylib.BLACK,
 					tint = raylib.WHITE,
@@ -466,7 +475,6 @@ UserInterface :: proc() {
 	DrawSliders()
 	DrawTexts()
 	HandleButtonActions()
-	HandleSliderValues()
 }
 
 DrawButtons :: proc() {
@@ -490,10 +498,6 @@ DrawTexts :: proc() {
 	DrawTextControl("song length", camera)
 	DrawTextControl("play time", camera)
 	DrawTextControl("playlist", camera)
-}
-
-HandleSliderValues :: proc() {
-	raylib.SetMusicVolume(currentStream, Sliders["volume"].value)
 }
 
 HandleButtonActions :: proc() {

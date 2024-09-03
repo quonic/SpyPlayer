@@ -228,8 +228,8 @@ next :: proc() {
 		strings.clone_to_cstring(playList[currentSongIndex].path),
 	)
 
+	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	if player_state == .Playing {
-		raylib.SetMusicVolume(currentStream, currentSongVolume)
 		raylib.PlayMusicStream(currentStream)
 	}
 	currentStream.looping = false
@@ -250,8 +250,8 @@ previous :: proc() {
 		strings.clone_to_cstring(playList[currentSongIndex].path),
 	)
 
+	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	if player_state == .Playing {
-		raylib.SetMusicVolume(currentStream, currentSongVolume)
 		raylib.PlayMusicStream(currentStream)
 	}
 	currentStream.looping = false
@@ -298,7 +298,7 @@ UpdateCurrentSongText :: proc() {
 	)
 	// Add some spaces to the end of the text
 	if Texts["current song"].scrolling == false &&
-	   MeasureTextLength("current song", Texts["current song"].text) >
+	   MeasureTextDimensions("current song", Texts["current song"].text).x >
 		   Texts["current song"].positionRec.width {
 		Texts["current song"].scrolling = true
 		Texts["current song"].text = fmt.caprintf(
