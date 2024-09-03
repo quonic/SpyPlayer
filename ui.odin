@@ -509,6 +509,7 @@ HandleButtonActions :: proc() {
 			Buttons["next"].enabled = true
 			Buttons["stop"].enabled = true
 			Sliders["volume"].enabled = true
+			Sliders["seek bar"].enabled = true
 		}
 		if GetButtonPressedState("previous") == 1 {
 			fmt.println("Previous")
@@ -537,5 +538,6 @@ HandleButtonActions :: proc() {
 		Buttons["next"].enabled = false
 		Buttons["stop"].enabled = false
 		Sliders["volume"].enabled = false
+		Sliders["seek bar"].enabled = false
 	}
 }
