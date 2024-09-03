@@ -12,18 +12,14 @@ This is a work in progress, and is not yet feature complete.
 
 - [x] Plays audio files - only tested on mp3 files
 - [x] Play, pause, stop, next, previous
+- [x] Load from folder to current playlist
 - [x] Volume control
 - [x] Use threading to load audio files
-- [ ] Use threading to manage the audio playback
-- [ ] Shows a popup when an error occurs
-- [ ] Repeat
-- [ ] Seeking
-- [ ] Playlists
-- [ ] Show metadata - title and artist at the moment
-- [ ] Show album art
-- [ ] EQ
 - [ ] Current time and total time
-- [ ] Current Playlist
+- [ ] Play next song when finished playing current song
+- [ ] Seeking
+- [ ] Playlist management ie. add, remove, clear, save, load
+- [ ] Show metadata - title and artist at the moment
 - [ ] Other things I haven't figured out yet
 
 ## Contributions
