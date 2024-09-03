@@ -4,8 +4,12 @@ import "core:strings"
 import win32 "core:sys/windows"
 import glfw "vendor:glfw"
 
-open_file_dialog :: proc(filter: ..string) -> string {
-	window := glfw.GetWin32Window(EngineInstance.window)
+file_dialog_window: ^glfw.Window
+
+open_file_dialog :: proc(filter: ..string, directory: bool = false) -> string {
+	when ODIN_OS == .Windows {
+		window := glfw.GetWin32Window(file_dialog_window.window)
+	}
 
 	file := [260]win32.WCHAR{}
 

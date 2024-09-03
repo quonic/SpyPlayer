@@ -51,6 +51,7 @@ Example Usage:
 ```
 */
 run_executable :: proc(command: string, stdout: ^[]byte) -> (u32, bool, []byte) {
+	exit_code: u32 = 0
 	when ODIN_OS == .Windows {
 		stdout_read: win32.HANDLE
 		stdout_write: win32.HANDLE
@@ -113,13 +114,9 @@ run_executable :: proc(command: string, stdout: ^[]byte) -> (u32, bool, []byte) 
 
 		stdout[index + 1] = 0
 
-		exit_code: u32
-
 		win32.WaitForSingleObject(process_info.hProcess, win32.INFINITE)
 		win32.GetExitCodeProcess(process_info.hProcess, &exit_code)
 		win32.CloseHandle(stdout_read)
-
-		return exit_code, true, stdout[0:index]
 	}
 	when ODIN_OS == .Darwin || ODIN_OS == .Linux || ODIN_OS == .NetBSD {
 		fp := popen(strings.clone_to_cstring(command, context.temp_allocator), "r")
@@ -139,6 +136,6 @@ run_executable :: proc(command: string, stdout: ^[]byte) -> (u32, bool, []byte) 
 				mem.copy(&stdout[index], &read_buffer[0], cast(int)read)
 			}
 		}
-		return 0, true, stdout[0:index]
 	}
+	return exit_code, true, stdout[0:index]
 }
