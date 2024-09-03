@@ -498,7 +498,6 @@ HandleSliderValues :: proc() {
 
 HandleButtonActions :: proc() {
 	if GetButtonPressedState("load") == 1 {
-		fmt.println("load")
 		load()
 	}
 	if playListLoaded {
@@ -512,23 +511,18 @@ HandleButtonActions :: proc() {
 			Sliders["seek bar"].enabled = true
 		}
 		if GetButtonPressedState("previous") == 1 {
-			fmt.println("Previous")
 			previous()
 		}
 		if GetButtonPressedState("play") == 1 {
-			fmt.println("Play")
 			play()
 		}
 		if GetButtonPressedState("pause") == 1 {
-			fmt.println("Pause")
 			pause()
 		}
 		if GetButtonPressedState("next") == 1 {
-			fmt.println("Next")
 			next()
 		}
 		if GetButtonPressedState("stop") == 1 {
-			fmt.println("Stop")
 			stop()
 		}
 	} else {
