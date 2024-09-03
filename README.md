@@ -4,6 +4,8 @@ Yet another music player inspired by the likes of WinAmp, written in [Odin](http
 
 This uses raylib to render the GUI and play music, and is currently only tested on Linux.
 
+![Screenshot](screenshots/player.png)
+
 ## Features
 
 This is a work in progress, and is not yet feature complete.
