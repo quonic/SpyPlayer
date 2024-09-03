@@ -104,7 +104,7 @@ main :: proc() {
 	for !raylib.WindowShouldClose() {
 		raylib.BeginDrawing()
 		raylib.BeginMode2D(camera)
-		raylib.ClearBackground(raylib.BLACK)
+		raylib.ClearBackground(raylib.Color{81, 81, 81, 255})
 
 		UserInterface()
 
