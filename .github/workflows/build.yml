@@ -1,0 +1,18 @@
+name: Setup Odin
+run-name: asdf
+on: [push]
+jobs:
+  Build-Linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: laytan/setup-odin@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - run: odin build .
+  Build-Windows:
+    runs-on: windows-latest
+    steps:
+    - uses: laytan/setup-odin@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - run: odin build .
