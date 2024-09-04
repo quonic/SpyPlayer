@@ -43,3 +43,11 @@ task_prompt_load_playlist :: proc(t: thread.Task) {
 ShufflePlaylist :: proc() {
 	rand.shuffle(playList[:])
 }
+
+UpdatePlaylistList :: proc() {
+	Lists["playlist"].itemCount = len(playList)
+	Lists["playlist"].items = make([dynamic]cstring, len(playList))
+	for song, i in playList {
+		Lists["playlist"].items[i] = strings.clone_to_cstring(song.tags.title)
+	}
+}
