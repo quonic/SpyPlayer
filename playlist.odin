@@ -10,7 +10,12 @@ import "core:time"
 import "file_dialog"
 import "vendor:raylib"
 
-PromptLoadPlaylist :: proc() {
+did_acquire :: proc(m: ^b64) -> (acquired: bool) {
+	res, ok := intrinsics.atomic_compare_exchange_strong(m, false, true)
+	return ok && res == false
+}
+
+task_prompt_load_playlist :: proc(t: thread.Task) {
 	// TODO: Add a way to remember the last folder/playlist
 	folder := file_dialog.open_file_dialog("*.mp3", directory = true)
 	assert(os.exists(folder))
@@ -26,17 +31,10 @@ PromptLoadPlaylist :: proc() {
 		}
 	}
 	ShufflePlaylist()
-}
 
-did_acquire :: proc(m: ^b64) -> (acquired: bool) {
-	res, ok := intrinsics.atomic_compare_exchange_strong(m, false, true)
-	return ok && res == false
-}
-
-task_prompt_load_playlist :: proc(t: thread.Task) {
-	PromptLoadPlaylist()
 	time.sleep(1 * time.Millisecond)
 	playListLoaded = true
+	UpdatePlaylistList()
 }
 
 
@@ -45,9 +43,8 @@ ShufflePlaylist :: proc() {
 }
 
 UpdatePlaylistList :: proc() {
-	Lists["playlist"].itemCount = len(playList)
-	Lists["playlist"].items = make([dynamic]cstring, len(playList))
+	Lists["playlist"].itemCount = i32(len(playList))
 	for song, i in playList {
-		Lists["playlist"].items[i] = strings.clone_to_cstring(song.tags.title)
+		append(&Lists["playlist"].items, fmt.caprint(song.tags.title))
 	}
 }

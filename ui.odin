@@ -492,6 +492,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					scrollIndex = 0,
 					scrollbar = {
 						name = "playlist scrollbar",
 						enabled = true,
@@ -535,6 +536,7 @@ CreateUI :: proc() {
 UserInterface :: proc() {
 	DrawButtons()
 	DrawSliders()
+	DrawLists()
 	DrawTexts()
 	HandleButtonActions()
 }

@@ -45,7 +45,7 @@ playList: [dynamic]Song
 
 playListLoaded: bool = false
 
-currentSongIndex: int = 0
+currentSongIndex: i32 = 0
 currentSongPath: string
 currentSongVolume: f32 = 0.5
 loadedSongPath: string
@@ -219,7 +219,7 @@ next :: proc() {
 	raylib.UnloadMusicStream(currentStream)
 	if len(playList) > 0 {
 		currentSongIndex += 1
-		if currentSongIndex >= len(playList) {
+		if currentSongIndex >= i32(len(playList)) {
 			currentSongIndex = 0
 		}
 	}
@@ -242,7 +242,7 @@ previous :: proc() {
 	if len(playList) > 0 {
 		currentSongIndex -= 1
 		if currentSongIndex < 0 {
-			currentSongIndex = len(playList) - 1
+			currentSongIndex = i32(len(playList)) - 1
 		}
 	}
 	current_song_tags = playList[currentSongIndex].tags
@@ -310,6 +310,7 @@ UpdateCurrentSongText :: proc() {
 		Texts["current song"].scrolling = false
 	}
 	UpdatePlayTime()
+	Lists["playlist"].scrollIndex = currentSongIndex
 }
 
 UpdatePlayTime :: proc() {

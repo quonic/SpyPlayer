@@ -285,13 +285,21 @@ DrawSliderControl :: proc(name: string, camera: raylib.Camera2D) {
 }
 
 DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
+	// TODO: Rewrite this using similar logic as GuiListViewEx and GuiScrollBar
+	// https://github.com/raysan5/raygui/blob/master/src/raygui.h#L3351
+	// https://github.com/raysan5/raygui/blob/master/src/raygui.h#L5305
+
 	// Assert that the control exists
 	assert(Lists[name] != {}, fmt.tprintf("Control %v does not exist", name))
 	texture: raylib.Texture2D = Lists[name].texture
 	sourceRec: raylib.Rectangle = Lists[name].positionSpriteSheet
 	tint: raylib.Color = Lists[name].enabled ? Lists[name].tint_normal : Lists[name].tint_disabled
+	active: i32 = 0
+	focused: i32 = 0
 	if Lists[name].enabled {
+		active = 1
 		if IsHovering(Lists[name].positionRec, camera) {
+			focused = 1
 			if raylib.IsMouseButtonDown(raylib.MouseButton.LEFT) {
 				// Pressed state
 				Lists[name].pressed = true
@@ -314,46 +322,17 @@ DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, Lists[name].positionRec, {0, 0}, 0, tint)
 
-	// Measure the height of one item
-	itemHeight := MeasureTextDimensions(name, Lists[name].items[0]).y
-	// Calculate the height of the list
-	listHeight := itemHeight * cast(f32)Lists[name].itemCount
-	// Calculate the number of items that can fit in the Lists[name].positionRec
-	numItemsFit := cast(int)math.floor((Lists[name].positionRec.height / itemHeight) + 2)
-	if numItemsFit > Lists[name].itemCount {
-		// Draw the items in the list
-		for i := 0; i < numItemsFit; i += 1 {
-			// Draw the item
-			raylib.DrawTextEx(
-				Lists[name].font,
-				Lists[name].items[i],
-				{
-					Lists[name].positionRec.x + 2,
-					Lists[name].positionRec.y + 1 + itemHeight * cast(f32)i,
-				},
-				Lists[name].fontSize,
-				Lists[name].spacing,
-				Lists[name].itemSelected >= 0 && i == Lists[name].itemSelected ? Lists[name].tintSelected : Lists[name].tint,
-			)
-		}
-	} else {
-		// Draw the items in the list
-		for i := 0; i < Lists[name].itemCount; i += 1 {
-			// Draw the item
-			raylib.DrawTextEx(
-				Lists[name].font,
-				Lists[name].items[i],
-				{
-					Lists[name].positionRec.x + 2,
-					Lists[name].positionRec.y + 1 + itemHeight * cast(f32)i,
-				},
-				Lists[name].fontSize,
-				Lists[name].spacing,
-				Lists[name].itemSelected >= 0 && i == Lists[name].itemSelected ? Lists[name].tintSelected : Lists[name].tint,
-			)
-		}
-	}
+	list: [^]cstring = raw_data(Lists[name].items)
+	raylib.GuiListViewEx(
+		Lists[name].positionRec,
+		list,
+		Lists[name].itemCount,
+		&Lists[name].scrollIndex,
+		&active,
+		&focused,
+	)
 }
+
 
 GetButtonPressedState :: proc(name: string) -> int {
 	if Buttons[name].pressed {
@@ -541,9 +520,10 @@ ListControl :: struct {
 	tint_disabled:       raylib.Color,
 	items:               [dynamic]cstring, // The list of items to display. TODO: Might change to string
 	itemPositions:       [dynamic]raylib.Rectangle, // The position of each item in the list
-	itemSelected:        int, // The index of the currently selected item in the list
-	itemCount:           int, // The number of items in the list
+	scrollIndex:         i32, // The index of the currently selected item in the list
+	itemCount:           i32, // The number of items in the list
 	scrollbar:           ScrollbarControl, // Required for scrolling, only displayed if the list is too long to fit on the screen
+	itemViewRange:       [2]int, // The range of items that are currently visible in the list
 }
 
 ScrollbarControl :: struct {
