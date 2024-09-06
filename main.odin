@@ -115,6 +115,8 @@ _main :: proc() {
 
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
+	raylib.GuiLoadStyle("assets/listview.rgs")
+	// raylib.GuiSetStyle(raylib.GuiControl.DEFAULT, i32(raylib.GuiControlProperty.BORDER_WIDTH), 1)
 
 	// textFont = raylib.LoadFont("assets/fonts/MyFontHere.ttf")
 	textFont = raylib.GetFontDefault()
@@ -145,6 +147,12 @@ _main :: proc() {
 		switch player_state {
 		case .Playing:
 			{
+
+				if Lists["playlist"].active != currentSongIndex {
+					currentSongIndex = Lists["playlist"].active
+					playSelected(currentSongIndex)
+				}
+
 				UpdatePlayTime()
 
 
@@ -229,6 +237,23 @@ play :: proc() {
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	player_state = .Playing
 	currentStream.looping = false // Prevent current song from looping TODO: Add a setting for this
+	UpdateCurrentSongText()
+}
+
+playSelected :: proc(index: i32) {
+	raylib.StopMusicStream(currentStream)
+	raylib.UnloadMusicStream(currentStream)
+
+	current_song_tags = playList[currentSongIndex].tags
+	currentStream = raylib.LoadMusicStream(
+		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
+	)
+
+	raylib.SetMusicVolume(currentStream, currentSongVolume)
+	if player_state == .Playing {
+		raylib.PlayMusicStream(currentStream)
+	}
+	currentStream.looping = false
 	UpdateCurrentSongText()
 }
 
@@ -341,8 +366,17 @@ UpdateCurrentSongText :: proc() {
 	} else {
 		Texts["current song"].scrolling = false
 	}
+
 	UpdatePlayTime()
-	Lists["playlist"].scrollIndex = currentSongIndex
+
+	if currentSongIndex < 3 {
+		Lists["playlist"].scrollIndex = currentSongIndex
+	} else if currentSongIndex > i32(len(playList)) - 3 {
+		Lists["playlist"].scrollIndex = i32(len(playList)) - 3
+	} else {
+		Lists["playlist"].scrollIndex = currentSongIndex - 3
+	}
+	Lists["playlist"].active = currentSongIndex
 }
 
 UpdatePlayTime :: proc() {
