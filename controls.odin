@@ -79,6 +79,20 @@ AddList :: proc(list: ^ListControl) -> bool {
 	return true
 }
 
+CleanUpControls :: proc() {
+	for name, _ in Lists {
+		delete(Lists[name].items)
+	}
+	Lists = {}
+	ProgressBars = {}
+	Sliders = {}
+	Spinners = {}
+	Toggles = {}
+	Texts = {}
+	Buttons = {}
+	Labels = {}
+}
+
 IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
 	return raylib.CheckCollisionPointRec(
 		raylib.GetScreenToWorld2D(raylib.GetMousePosition(), camera),
@@ -144,10 +158,11 @@ DrawTextControl :: proc(name: string, camera: raylib.Camera2D) {
 		for i := len(text) - 1; i >= 0; i -= 1 {
 			text = text[:i]
 			ctext := strings.clone_to_cstring(text)
+			defer delete(ctext)
 			if MeasureTextDimensions(name, ctext).x < Texts[name].positionRec.width {
 				raylib.DrawTextEx(
 					Texts[name].font,
-					strings.clone_to_cstring(text),
+					strings.clone_to_cstring(text, context.temp_allocator),
 					pos,
 					Texts[name].fontSize,
 					Texts[name].spacing,
@@ -291,46 +306,180 @@ DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
 
 	// Assert that the control exists
 	assert(Lists[name] != {}, fmt.tprintf("Control %v does not exist", name))
+	if len(Lists[name].items) == 0 {return}
+
 	texture: raylib.Texture2D = Lists[name].texture
 	sourceRec: raylib.Rectangle = Lists[name].positionSpriteSheet
 	tint: raylib.Color = Lists[name].enabled ? Lists[name].tint_normal : Lists[name].tint_disabled
-	active: i32 = 0
-	focused: i32 = 0
-	if Lists[name].enabled {
-		active = 1
-		if IsHovering(Lists[name].positionRec, camera) {
-			focused = 1
-			if raylib.IsMouseButtonDown(raylib.MouseButton.LEFT) {
-				// Pressed state
-				Lists[name].pressed = true
-			} else if raylib.IsMouseButtonReleased(raylib.MouseButton.LEFT) {
-				Lists[name].pressed = false
-			} else {
-				// Hover state
-				Lists[name].pressed = false
-			}
-
-		} else {
-			// Normal state
-			Lists[name].pressed = false
-		}
-	} else {
-		// Disabled state
-		tint = Lists[name].tint_disabled
-	}
+	active: i32 = Lists[name].active
+	focus: i32 = Lists[name].focus
 
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, Lists[name].positionRec, {0, 0}, 0, tint)
 
-	list: [^]cstring = raw_data(Lists[name].items)
-	raylib.GuiListViewEx(
-		Lists[name].positionRec,
-		list,
-		Lists[name].itemCount,
-		&Lists[name].scrollIndex,
-		&active,
-		&focused,
+	itemFocused: i32 = focus == {} ? -1 : focus
+	itemSelected: i32 = active == {} ? -1 : active
+
+	useScrollbar := false
+	if raylib.MeasureTextEx(Lists[name].font, Lists[name].items[0], Lists[name].fontSize, Lists[name].spacing).y *
+		   cast(f32)len(Lists[name].items) >
+	   Lists[name].positionRec.height {
+		useScrollbar = true
+	}
+
+	border_width: f32 = 1
+	itemBounds: raylib.Rectangle
+	itemBounds.x = Lists[name].positionRec.x + Lists[name].spacing
+	itemBounds.y = Lists[name].positionRec.y + Lists[name].spacing + border_width
+	itemBounds.width = Lists[name].positionRec.width - 2 * Lists[name].spacing - border_width
+	itemBounds.height =
+		raylib.MeasureTextEx(Lists[name].font, Lists[name].items[0], Lists[name].fontSize, Lists[name].spacing).y
+	if useScrollbar {itemBounds.width -= Lists[name].scrollbarWidth}
+
+	visibleItems: i32 = i32(
+		Lists[name].positionRec.height / itemBounds.height - Lists[name].spacing,
 	)
+	if visibleItems > 0 {visibleItems = i32(len(Lists[name].items))}
+
+	startIndex: i32 = Lists[name].scrollIndex == {} ? 0 : Lists[name].scrollIndex
+	if startIndex < 0 || startIndex > i32(len(Lists[name].items)) - i32(visibleItems) {
+		startIndex = 0
+	}
+	endIndex: i32 = startIndex + visibleItems
+
+	state := 0 // 0 = normal, 1=focused
+	if Lists[name].enabled {
+		mousePoint := raylib.GetMousePosition()
+		if raylib.CheckCollisionPointRec(mousePoint, Lists[name].positionRec) {
+			state = 1
+			for i := 0; i < int(visibleItems); i = i + 1 {
+				if raylib.CheckCollisionPointRec(mousePoint, itemBounds) {
+					itemFocused = startIndex + 1
+					if raylib.IsMouseButtonPressed(raylib.MouseButton.LEFT) {
+						if itemSelected ==
+						   startIndex + 1 {itemSelected = -1} else {itemSelected = startIndex + 1}
+					}
+					break
+				}
+				itemBounds.y += itemBounds.height + Lists[name].spacing
+			}
+			if useScrollbar {
+				wheelMove := raylib.GetMouseWheelMove()
+				startIndex -= cast(i32)wheelMove
+
+				if startIndex <
+				   0 {startIndex = 0} else if startIndex > i32(len(Lists[name].items)) - visibleItems {
+					startIndex = i32(len(Lists[name].items)) - visibleItems
+				}
+				endIndex = startIndex + visibleItems
+				if endIndex > i32(len(Lists[name].items)) {endIndex = i32(len(Lists[name].items))}
+			}
+		} else {itemFocused = -1}
+		itemBounds.y = Lists[name].positionRec.y + Lists[name].spacing + border_width
+	}
+
+	raylib.DrawTexturePro(texture, sourceRec, Lists[name].positionRec, {0, 0}, 0, tint)
+
+	for i: i32 = 0; i < visibleItems && len(Lists[name].items) > 0; i = i + 1 {
+		if state == -1 {
+			// Disabled
+			if startIndex + i == itemSelected {
+				tint = Lists[name].tint_disabled
+			}
+			raylib.DrawTextEx(
+				Lists[name].font,
+				Lists[name].items[startIndex + i],
+				{
+					Lists[name].positionRec.x + Lists[name].spacing,
+					Lists[name].positionRec.y +
+					border_width +
+					Lists[name].spacing +
+					f32(i) * itemBounds.height,
+				},
+				Lists[name].fontSize,
+				Lists[name].spacing,
+				tint,
+			)
+		} else {
+			if startIndex + 1 == itemSelected && active != {} {
+				// Draw item selected
+				tint = Lists[name].tint_pressed
+				raylib.DrawTextEx(
+					Lists[name].font,
+					Lists[name].items[startIndex + i],
+					{
+						Lists[name].positionRec.x + Lists[name].spacing,
+						Lists[name].positionRec.y +
+						border_width +
+						Lists[name].spacing +
+						f32(i) * itemBounds.height,
+					},
+					Lists[name].fontSize,
+					Lists[name].spacing,
+					tint,
+				)
+			} else if startIndex + i == itemFocused {
+				// Draw item focused
+				tint = Lists[name].tint_hover
+				raylib.DrawTextEx(
+					Lists[name].font,
+					Lists[name].items[startIndex + i],
+					{
+						Lists[name].positionRec.x + Lists[name].spacing,
+						Lists[name].positionRec.y +
+						border_width +
+						Lists[name].spacing +
+						f32(i) * itemBounds.height,
+					},
+					Lists[name].fontSize,
+					Lists[name].spacing,
+					tint,
+				)
+			} else {
+				// Draw item normal
+				tint = Lists[name].tint_normal
+				raylib.DrawTextEx(
+					Lists[name].font,
+					Lists[name].items[startIndex + i],
+					{
+						Lists[name].positionRec.x + Lists[name].spacing,
+						Lists[name].positionRec.y +
+						border_width +
+						Lists[name].spacing +
+						f32(i) * itemBounds.height,
+					},
+					Lists[name].fontSize,
+					Lists[name].spacing,
+					tint,
+				)
+			}
+		}
+		itemBounds.y += itemBounds.height + Lists[name].spacing
+	}
+	if useScrollbar {
+		// Draw scrollbar
+		scrollBarBounds: raylib.Rectangle = {
+			Lists[name].positionRec.x + Lists[name].positionRec.width - Lists[name].scrollbarWidth,
+			Lists[name].positionRec.y,
+			Lists[name].scrollbarWidth,
+			Lists[name].positionRec.height - 2 * border_width,
+		}
+		percentVisible: f32 = f32(endIndex - startIndex) / cast(f32)len(Lists[name].items)
+		sliderSize: f32 = f32(scrollBarBounds.height) * percentVisible
+		prevSliderSize := Lists[name].sliderSize
+		prevScrollSpeed := Lists[name].scrollSpeed
+		Lists[name].scrollSpeed = cast(i32)len(Lists[name].items) - visibleItems
+
+		// startIndex = GuiScrollBar(scrollBarBounds, startIndex, 0, count - visibleItems)
+
+		Lists[name].scrollSpeed = prevScrollSpeed
+		Lists[name].sliderSize = prevSliderSize
+	}
+	//--------------------------------------------------------------------
+
+	if (Lists[name].active != {}) {Lists[name].active = itemSelected}
+	if (Lists[name].focus != {}) {Lists[name].focus = itemFocused}
+	if (Lists[name].scrollIndex != {}) {Lists[name].scrollIndex = startIndex}
 }
 
 
@@ -519,30 +668,11 @@ ListControl :: struct {
 	tint_hover:          raylib.Color,
 	tint_disabled:       raylib.Color,
 	items:               [dynamic]cstring, // The list of items to display. TODO: Might change to string
-	itemPositions:       [dynamic]raylib.Rectangle, // The position of each item in the list
 	scrollIndex:         i32, // The index of the currently selected item in the list
-	itemCount:           i32, // The number of items in the list
-	scrollbar:           ScrollbarControl, // Required for scrolling, only displayed if the list is too long to fit on the screen
-	itemViewRange:       [2]int, // The range of items that are currently visible in the list
-}
-
-ScrollbarControl :: struct {
-	name:           string, // Name of the scrollbar control, never displayed
-	enabled:        bool, // Whether the scrollbar is enabled and can be interacted with
-	positionRec:    raylib.Rectangle, // The position of the scrollbar in the window
-	texture:        raylib.Texture2D, // The texture of the scrollbar
-	minusButtonReg: raylib.Rectangle, // Will be drawn at the start of the scrollbar, representing the minimum value
-	positionReg:    raylib.Rectangle, // Will be drawn in the middle of the scrollbar, representing the current value
-	plusButtonReg:  raylib.Rectangle, // Will be drawn at the end of the scrollbar, representing the maximum value
-	backgroundReg:  raylib.Rectangle, // Should be 1x pixel tall/wide
-	tint:           raylib.Color, // Tint of the scrollbar, can be used to change the color of the scrollbar
-	value:          f32, // The current value of the scrollbar
-	minValue:       f32, // The minimum value of the scrollbar
-	maxValue:       f32, // The maximum value of the scrollbar
-	orientation:    ScrollbarOrientation, // The orientation of the scrollbar
-}
-
-ScrollbarOrientation :: enum {
-	Horizontal,
-	Vertical,
+	active:              i32,
+	focus:               i32,
+	scrollbarVertical:   bool,
+	scrollbarWidth:      f32,
+	scrollSpeed:         i32,
+	sliderSize:          f32,
 }

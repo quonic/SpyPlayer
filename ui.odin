@@ -493,25 +493,9 @@ CreateUI :: proc() {
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
 					scrollIndex = 0,
-					scrollbar = {
-						name = "playlist scrollbar",
-						enabled = true,
-						positionRec = {
-							x = key.bounds.x + key.bounds.w - 20,
-							y = key.bounds.y,
-							width = 20,
-							height = key.bounds.h,
-						},
-						texture = window_texture,
-						minusButtonReg = playlist_minus_button,
-						positionReg = playlist_position_button,
-						plusButtonReg = playlist_plus_button,
-						backgroundReg = playlist_background,
-						value = 0,
-						minValue = 0,
-						maxValue = 100,
-						orientation = .Vertical,
-					},
+					scrollSpeed = 10,
+					sliderSize = 20,
+					scrollbarVertical = true,
 				}
 			}
 			AddButton(&previous_button)
