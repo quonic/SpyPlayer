@@ -19,7 +19,6 @@ task_prompt_load_playlist :: proc(t: thread.Task) {
 	// TODO: Add a way to remember the last folder/playlist
 	folder := file_dialog.open_file_dialog("*.mp3", directory = true)
 	assert(os.exists(folder))
-	musicList := raylib.LoadDirectoryFiles(strings.clone_to_cstring(folder))
 	handle, handleerror := os.open(folder)
 	assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
 	fileinfo, fileinfoerror := os.read_dir(handle, 100)
@@ -43,7 +42,6 @@ ShufflePlaylist :: proc() {
 }
 
 UpdatePlaylistList :: proc() {
-	Lists["playlist"].itemCount = i32(len(playList))
 	for song, i in playList {
 		append(&Lists["playlist"].items, fmt.caprint(song.tags.title))
 	}

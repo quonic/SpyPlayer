@@ -66,7 +66,6 @@ ReadAsespriteJsonFile :: proc(
 	data := os.read_entire_file(filename) or_return
 	defer delete(data)
 
-	aseprite = new(Aseprite)
 	err := json.unmarshal(data, aseprite)
 	assert(err == nil, fmt.tprintf("Error: %v", err))
 	ok = err == nil

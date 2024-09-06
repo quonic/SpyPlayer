@@ -7,6 +7,7 @@ import "core:encoding/json"
 import "core:fmt"
 import "core:io"
 import "core:math"
+import "core:mem"
 import "core:os"
 import "core:strings"
 import "core:thread"
@@ -78,6 +79,26 @@ N :: 1
 pool: thread.Pool
 
 main :: proc() {
+	track: mem.Tracking_Allocator
+	mem.tracking_allocator_init(&track, context.allocator)
+	defer mem.tracking_allocator_destroy(&track)
+	context.allocator = mem.tracking_allocator(&track)
+
+	_main()
+
+	for _, leak in track.allocation_map {
+		if strings.contains(leak.location.file_path, "SpyPlayer") {
+			fmt.printf("%v leaked %m\n", leak.location, leak.size)
+		}
+	}
+	for bad_free in track.bad_free_array {
+		if strings.contains(bad_free.location.file_path, "SpyPlayer") {
+			fmt.printf("%v allocation %p was freed badly\n", bad_free.location, bad_free.memory)
+		}
+	}
+}
+
+_main :: proc() {
 	// Create the thread pool
 	thread.pool_init(&pool, allocator = context.allocator, thread_count = N)
 	defer thread.pool_destroy(&pool)
@@ -153,6 +174,7 @@ main :: proc() {
 		raylib.EndDrawing()
 	}
 	raylib.CloseWindow()
+	CleanUpControls()
 }
 
 AddSong :: proc(path: string) {
@@ -225,7 +247,7 @@ next :: proc() {
 	}
 	current_song_tags = playList[currentSongIndex].tags
 	currentStream = raylib.LoadMusicStream(
-		strings.clone_to_cstring(playList[currentSongIndex].path),
+		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
@@ -270,7 +292,7 @@ LoadingUpdate :: proc() {
 			currentSongPath = playList[currentSongIndex].path
 			current_song_tags = playList[currentSongIndex].tags
 			currentStream = raylib.LoadMusicStream(
-				strings.clone_to_cstring(playList[currentSongIndex].path),
+				strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 			)
 			PlayListLoading = false
 		}
