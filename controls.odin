@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:math"
 import "core:strings"
 import "vendor:raylib"
 
@@ -11,6 +12,7 @@ Spinners: map[string]^SpinnerControl
 Toggles: map[string]^ToggleControl
 Texts: map[string]^TextControl
 ProgressBars: map[string]^ProgressBarControl
+Lists: map[string]^ListControl
 
 
 AddLabel :: proc(label: ^LabelControl) -> bool {
@@ -67,6 +69,28 @@ AddProgressBar :: proc(progressBar: ^ProgressBarControl) -> bool {
 	}
 	ProgressBars[progressBar.name] = progressBar
 	return true
+}
+
+AddList :: proc(list: ^ListControl) -> bool {
+	if list.name == "" {
+		return false
+	}
+	Lists[list.name] = list
+	return true
+}
+
+CleanUpControls :: proc() {
+	for name, _ in Lists {
+		delete(Lists[name].items)
+	}
+	Lists = {}
+	ProgressBars = {}
+	Sliders = {}
+	Spinners = {}
+	Toggles = {}
+	Texts = {}
+	Buttons = {}
+	Labels = {}
 }
 
 IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
@@ -134,10 +158,11 @@ DrawTextControl :: proc(name: string, camera: raylib.Camera2D) {
 		for i := len(text) - 1; i >= 0; i -= 1 {
 			text = text[:i]
 			ctext := strings.clone_to_cstring(text)
+			defer delete(ctext)
 			if MeasureTextDimensions(name, ctext).x < Texts[name].positionRec.width {
 				raylib.DrawTextEx(
 					Texts[name].font,
-					strings.clone_to_cstring(text),
+					strings.clone_to_cstring(text, context.temp_allocator),
 					pos,
 					Texts[name].fontSize,
 					Texts[name].spacing,
@@ -274,158 +299,194 @@ DrawSliderControl :: proc(name: string, camera: raylib.Camera2D) {
 
 }
 
-DrawSpinnerControl :: proc(control: ^SpinnerControl) {
-	mp := raylib.GetMousePosition()
-	mousePos: [2]i32 = {cast(i32)mp.x, cast(i32)mp.y}
-	if mousePos.x >= control.x &&
-	   mousePos.x <= control.x + control.w &&
-	   mousePos.y >= control.y &&
-	   mousePos.y <= control.y + control.h {
-		control.hoverAction(control)
-	}
+DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
+	// TODO: Rewrite this using similar logic as GuiListViewEx and GuiScrollBar
+	// https://github.com/raysan5/raygui/blob/master/src/raygui.h#L3351
+	// https://github.com/raysan5/raygui/blob/master/src/raygui.h#L5305
 
-	if control.enabled {
-		if raylib.IsMouseButtonPressed(raylib.MouseButton.LEFT) {
-			control.clickAction(control)
-		}
-		// Draw background
-		raylib.DrawRectangle(control.x, control.y, control.w, control.h, control.backgroundColor)
-		// Draw border
-		raylib.DrawRectangleLinesEx(
-			raylib.Rectangle {
-				cast(f32)control.x,
-				cast(f32)control.y,
-				cast(f32)control.w,
-				cast(f32)control.h,
-			},
-			cast(f32)control.borderWidth,
-			control.borderColor,
-		)
+	// Assert that the control exists
+	assert(Lists[name] != {}, fmt.tprintf("Control %v does not exist", name))
+	if len(Lists[name].items) == 0 {return}
 
-	} else {
-		// Draw background
-		raylib.DrawRectangle(
-			control.x,
-			control.y,
-			control.w,
-			control.h,
-			raylib.Fade(control.backgroundColor, 0.5),
-		)
-		// Draw border
-		raylib.DrawRectangleLinesEx(
-			raylib.Rectangle {
-				cast(f32)control.x,
-				cast(f32)control.y,
-				cast(f32)control.w,
-				cast(f32)control.h,
-			},
-			cast(f32)control.borderWidth,
-			raylib.Fade(control.borderColor, 0.5),
-		)
-	}
+	texture: raylib.Texture2D = Lists[name].texture
+	sourceRec: raylib.Rectangle = Lists[name].positionSpriteSheet
+	tint: raylib.Color = Lists[name].enabled ? Lists[name].tint_normal : Lists[name].tint_disabled
+
+	// Draw the background image
+	raylib.DrawTexturePro(texture, sourceRec, Lists[name].positionRec, {0, 0}, 0, tint)
+
+	list: [^]cstring = raw_data(Lists[name].items)
+	_ = raylib.GuiListViewEx(
+		Lists[name].positionRec,
+		list,
+		i32(len(Lists[name].items)),
+		&Lists[name].scrollIndex,
+		&Lists[name].active,
+		&Lists[name].focus,
+	)
 }
 
-DrawToggleControl :: proc(control: ^ToggleControl) {
-	mp := raylib.GetMousePosition()
-	mousePos: [2]i32 = {cast(i32)mp.x, cast(i32)mp.y}
-	if mousePos.x >= control.x &&
-	   mousePos.x <= control.x + control.w &&
-	   mousePos.y >= control.y &&
-	   mousePos.y <= control.y + control.h {
-		control.hoverAction(control)
+DrawScrollBar :: proc(
+	bounds: raylib.Rectangle,
+	indexValue: i32,
+	minValue: i32,
+	maxValue: i32,
+	tint: raylib.Color = raylib.WHITE,
+	scrollSpeed: i32 = 1,
+	stateBar: i32 = 0, // 0 = normal, 1 = hover, 2 = pressed, 3 = disabled
+	boarderWidth: i32 = 0,
+	scrollSliderSize: i32 = 16,
+	scrollPadding: i32 = 0,
+) -> i32 {
+	value: i32 = indexValue
+	state: i32 = stateBar
+	isVertical := bounds.height > bounds.width
+
+	arrowsVisible: bool = false
+	spinnerSize :=
+		arrowsVisible ? (isVertical ? i32(bounds.width) - 2 * boarderWidth : i32(bounds.height) - 2 * boarderWidth) : 0
+	arrowUpLeft: raylib.Rectangle
+	arrowDownRight: raylib.Rectangle
+
+	scrollbar: raylib.Rectangle
+
+	slider: raylib.Rectangle
+
+	if value > maxValue {
+		value = maxValue
+	}
+	if value < minValue {
+		value = minValue
+	}
+	valueRange := maxValue - minValue
+	if valueRange <= 0 {
+		valueRange = 1
 	}
 
-	if control.enabled {
-		if raylib.IsMouseButtonPressed(raylib.MouseButton.LEFT) {
-			control.clickAction(control)
+	sliderSize := scrollSliderSize
+	if sliderSize < 1 {
+		sliderSize = 1
+	}
+
+	arrowUpLeft = {
+		bounds.x + f32(boarderWidth),
+		bounds.y + f32(boarderWidth),
+		f32(spinnerSize),
+		f32(spinnerSize),
+	}
+
+	if isVertical {
+		arrowDownRight = {
+			bounds.x + f32(boarderWidth),
+			bounds.y + bounds.height - f32(spinnerSize) - f32(boarderWidth),
+			f32(spinnerSize),
+			f32(spinnerSize),
 		}
-		// Draw background
-		raylib.DrawRectangle(control.x, control.y, control.w, control.h, control.backgroundColor)
-		// Draw border
-		raylib.DrawRectangleLinesEx(
-			raylib.Rectangle {
-				cast(f32)control.x,
-				cast(f32)control.y,
-				cast(f32)control.w,
-				cast(f32)control.h,
-			},
-			cast(f32)control.borderWidth,
-			control.borderColor,
-		)
+		scrollbar = {
+			bounds.x + f32(boarderWidth + scrollPadding),
+			arrowUpLeft.y + arrowUpLeft.height,
+			bounds.width - f32(2 * boarderWidth - 2 * scrollPadding - spinnerSize),
+			arrowUpLeft.height - 2 * f32(boarderWidth),
+		}
 
-	} else {
-		// Draw background
-		raylib.DrawRectangle(
-			control.x,
-			control.y,
-			control.w,
-			control.h,
-			raylib.Fade(control.backgroundColor, 0.5),
-		)
-		// Draw border
-		raylib.DrawRectangleLinesEx(
-			raylib.Rectangle {
-				cast(f32)control.x,
-				cast(f32)control.y,
-				cast(f32)control.w,
-				cast(f32)control.h,
-			},
-			cast(f32)control.borderWidth,
-			raylib.Fade(control.borderColor, 0.5),
-		)
+		sliderSize = f32(sliderSize) >= scrollbar.height ? i32(scrollbar.height - 2) : sliderSize
+		slider = {
+			bounds.x + f32(boarderWidth + scrollPadding),
+			scrollbar.y + f32(value - minValue) * (scrollbar.height - f32(sliderSize)),
+			bounds.width - 2 * f32(boarderWidth + scrollPadding),
+			f32(sliderSize),
+		}
+	} else // horizontal
+	{
+		arrowDownRight = {
+			bounds.x + bounds.width - f32(spinnerSize) - f32(boarderWidth),
+			bounds.y + f32(boarderWidth),
+			f32(spinnerSize),
+			f32(spinnerSize),
+		}
+		scrollbar = {
+			arrowUpLeft.x + arrowUpLeft.width,
+			bounds.y + f32(boarderWidth + scrollPadding),
+			arrowUpLeft.width - arrowDownRight.width - 2 * f32(boarderWidth),
+			bounds.height - f32(2 * boarderWidth + scrollPadding),
+		}
+
+		sliderSize = f32(sliderSize) >= scrollbar.width ? i32(scrollbar.width - 2) : sliderSize
+		slider = {
+			scrollbar.x + f32(value - minValue) * (scrollbar.width - f32(sliderSize)),
+			bounds.y + f32(boarderWidth + scrollPadding),
+			f32(sliderSize),
+			bounds.height - 2 * f32(boarderWidth + scrollPadding),
+		}
 	}
+
+	// Update control
+	if state != 3 {
+		mousePoint := raylib.GetMousePosition()
+		if raylib.CheckCollisionPointRec(mousePoint, bounds) {
+			state = 1 // hover / focused
+
+			wheel := i32(raylib.GetMouseWheelMove())
+			if wheel != 0 {{value += wheel}
+
+				if raylib.IsMouseButtonDown(raylib.MouseButton.LEFT) {
+					if raylib.CheckCollisionPointRec(mousePoint, arrowUpLeft) {
+						value -= valueRange / scrollSpeed
+					} else if raylib.CheckCollisionPointRec(mousePoint, arrowDownRight) {
+						value += valueRange / scrollSpeed
+					} else if !raylib.CheckCollisionPointRec(mousePoint, scrollbar) {
+						if isVertical {
+							value =
+								i32(
+									(mousePoint.y - scrollbar.y - slider.height / 2) *
+									f32(valueRange),
+								) /
+									i32(scrollbar.height - slider.height) +
+								minValue
+						} else {
+							value =
+								i32(
+									(mousePoint.x - scrollbar.x - slider.width / 2) *
+									f32(valueRange),
+								) /
+									i32(scrollbar.width - slider.width) +
+								minValue
+						}
+						state = 2 // pressed
+					}
+				}
+			}
+			state = 1
+			if raylib.IsMouseButtonPressed(raylib.MouseButton.LEFT) {
+				state = 2
+			}
+		}
+		if value > maxValue {
+			value = maxValue
+		}
+		if value < minValue {
+			value = minValue
+		}
+	}
+
+	// Draw control
+	raylib.DrawRectanglePro(bounds, raylib.Vector2{bounds.width, bounds.height}, 0, tint)
+
+	raylib.DrawRectanglePro(
+		scrollbar,
+		raylib.Vector2{scrollbar.width, scrollbar.height},
+		0,
+		raylib.Fade(tint, 0.5),
+	)
+	raylib.DrawRectanglePro(
+		slider,
+		raylib.Vector2{slider.width, slider.height},
+		0,
+		raylib.Fade(tint, 0.5),
+	)
+	return value
 }
 
-DrawProgressBarControl :: proc(control: ^ProgressBarControl) {
-	mp := raylib.GetMousePosition()
-	mousePos: [2]i32 = {cast(i32)mp.x, cast(i32)mp.y}
-	if mousePos.x >= control.x &&
-	   mousePos.x <= control.x + control.w &&
-	   mousePos.y >= control.y &&
-	   mousePos.y <= control.y + control.h {
-		control.hoverAction(control)
-	}
-
-	if control.enabled {
-		if raylib.IsMouseButtonPressed(raylib.MouseButton.LEFT) {
-			control.clickAction(control)
-		}
-		// Draw background
-		raylib.DrawRectangle(control.x, control.y, control.w, control.h, control.backgroundColor)
-		// Draw border
-		raylib.DrawRectangleLinesEx(
-			raylib.Rectangle {
-				cast(f32)control.x,
-				cast(f32)control.y,
-				cast(f32)control.w,
-				cast(f32)control.h,
-			},
-			cast(f32)control.borderWidth,
-			control.borderColor,
-		)
-
-	} else {
-		// Draw background
-		raylib.DrawRectangle(
-			control.x,
-			control.y,
-			control.w,
-			control.h,
-			raylib.Fade(control.backgroundColor, 0.5),
-		)
-		// Draw border
-		raylib.DrawRectangleLinesEx(
-			raylib.Rectangle {
-				cast(f32)control.x,
-				cast(f32)control.y,
-				cast(f32)control.w,
-				cast(f32)control.h,
-			},
-			cast(f32)control.borderWidth,
-			raylib.Fade(control.borderColor, 0.5),
-		)
-	}
-}
 
 GetButtonPressedState :: proc(name: string) -> int {
 	if Buttons[name].pressed {
@@ -588,4 +649,35 @@ ProgressBarControl :: struct {
 	barColor:        raylib.Color,
 	clickAction:     proc(this: ^ProgressBarControl),
 	hoverAction:     proc(this: ^ProgressBarControl),
+}
+
+// ListControl
+ListControl :: struct {
+	name:                string,
+	enabled:             bool,
+	positionRec:         raylib.Rectangle,
+	text:                cstring,
+	fontSize:            f32,
+	textColor:           raylib.Color,
+	centered:            bool,
+	pressed:             bool,
+	hovering:            bool,
+	spacing:             f32,
+	font:                raylib.Font,
+	positionSpriteSheet: raylib.Rectangle,
+	tint:                raylib.Color,
+	tintSelected:        raylib.Color,
+	texture:             raylib.Texture2D,
+	tint_normal:         raylib.Color,
+	tint_pressed:        raylib.Color,
+	tint_hover:          raylib.Color,
+	tint_disabled:       raylib.Color,
+	items:               [dynamic]cstring, // The list of items to display. TODO: Might change to string
+	scrollIndex:         i32, // The index of the currently selected item in the list
+	active:              i32,
+	focus:               i32,
+	scrollbarVertical:   bool,
+	scrollbarWidth:      f32,
+	scrollSpeed:         i32,
+	sliderSize:          f32,
 }

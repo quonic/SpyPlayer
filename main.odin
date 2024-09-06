@@ -7,6 +7,7 @@ import "core:encoding/json"
 import "core:fmt"
 import "core:io"
 import "core:math"
+import "core:mem"
 import "core:os"
 import "core:strings"
 import "core:thread"
@@ -45,7 +46,7 @@ playList: [dynamic]Song
 
 playListLoaded: bool = false
 
-currentSongIndex: int = 0
+currentSongIndex: i32 = 0
 currentSongPath: string
 currentSongVolume: f32 = 0.5
 loadedSongPath: string
@@ -77,13 +78,45 @@ N :: 1
 
 pool: thread.Pool
 
+TRACK_MEMORY_LEAKS :: false
+
 main :: proc() {
+	when TRACK_MEMORY_LEAKS {
+		track: mem.Tracking_Allocator
+		mem.tracking_allocator_init(&track, context.allocator)
+		defer mem.tracking_allocator_destroy(&track)
+		context.allocator = mem.tracking_allocator(&track)
+
+		_main()
+
+		for _, leak in track.allocation_map {
+			if strings.contains(leak.location.file_path, "SpyPlayer") {
+				fmt.printf("%v leaked %m\n", leak.location, leak.size)
+			}
+		}
+		for bad_free in track.bad_free_array {
+			if strings.contains(bad_free.location.file_path, "SpyPlayer") {
+				fmt.printf(
+					"%v allocation %p was freed badly\n",
+					bad_free.location,
+					bad_free.memory,
+				)
+			}
+		}
+	} else {
+		_main()
+	}
+}
+
+_main :: proc() {
 	// Create the thread pool
 	thread.pool_init(&pool, allocator = context.allocator, thread_count = N)
 	defer thread.pool_destroy(&pool)
 
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
+	raylib.GuiLoadStyle("assets/listview.rgs")
+	// raylib.GuiSetStyle(raylib.GuiControl.DEFAULT, i32(raylib.GuiControlProperty.BORDER_WIDTH), 1)
 
 	// textFont = raylib.LoadFont("assets/fonts/MyFontHere.ttf")
 	textFont = raylib.GetFontDefault()
@@ -114,6 +147,11 @@ main :: proc() {
 		switch player_state {
 		case .Playing:
 			{
+
+				if Lists["playlist"].active != currentSongIndex {
+					playSelected()
+				}
+
 				UpdatePlayTime()
 
 
@@ -153,6 +191,7 @@ main :: proc() {
 		raylib.EndDrawing()
 	}
 	raylib.CloseWindow()
+	CleanUpControls()
 }
 
 AddSong :: proc(path: string) {
@@ -200,6 +239,25 @@ play :: proc() {
 	UpdateCurrentSongText()
 }
 
+playSelected :: proc() {
+	raylib.StopMusicStream(currentStream)
+	raylib.UnloadMusicStream(currentStream)
+
+	currentSongIndex = Lists["playlist"].active
+
+	current_song_tags = playList[currentSongIndex].tags
+	currentStream = raylib.LoadMusicStream(
+		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
+	)
+
+	raylib.SetMusicVolume(currentStream, currentSongVolume)
+	if player_state == .Playing {
+		raylib.PlayMusicStream(currentStream)
+	}
+	currentStream.looping = false
+	UpdateCurrentSongText()
+}
+
 pause :: proc() {
 	raylib.PauseMusicStream(currentStream)
 	player_state = .Paused
@@ -219,13 +277,13 @@ next :: proc() {
 	raylib.UnloadMusicStream(currentStream)
 	if len(playList) > 0 {
 		currentSongIndex += 1
-		if currentSongIndex >= len(playList) {
+		if currentSongIndex >= i32(len(playList)) {
 			currentSongIndex = 0
 		}
 	}
 	current_song_tags = playList[currentSongIndex].tags
 	currentStream = raylib.LoadMusicStream(
-		strings.clone_to_cstring(playList[currentSongIndex].path),
+		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
@@ -242,7 +300,7 @@ previous :: proc() {
 	if len(playList) > 0 {
 		currentSongIndex -= 1
 		if currentSongIndex < 0 {
-			currentSongIndex = len(playList) - 1
+			currentSongIndex = i32(len(playList)) - 1
 		}
 	}
 	current_song_tags = playList[currentSongIndex].tags
@@ -270,7 +328,7 @@ LoadingUpdate :: proc() {
 			currentSongPath = playList[currentSongIndex].path
 			current_song_tags = playList[currentSongIndex].tags
 			currentStream = raylib.LoadMusicStream(
-				strings.clone_to_cstring(playList[currentSongIndex].path),
+				strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 			)
 			PlayListLoading = false
 		}
@@ -309,7 +367,11 @@ UpdateCurrentSongText :: proc() {
 	} else {
 		Texts["current song"].scrolling = false
 	}
+
 	UpdatePlayTime()
+
+	Lists["playlist"].scrollIndex = currentSongIndex
+	Lists["playlist"].active = currentSongIndex
 }
 
 UpdatePlayTime :: proc() {

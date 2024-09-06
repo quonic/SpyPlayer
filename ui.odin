@@ -24,8 +24,15 @@ load_button: ButtonControl
 seek_bar: SliderControl
 song_length_text: TextControl
 play_time_text: TextControl
-playlist_text: TextControl
+playlist_list: ListControl
 slider_bar: raylib.Rectangle
+
+playlist_scrollbar: raylib.Rectangle
+playlist_minus_button: raylib.Rectangle
+playlist_position_button: raylib.Rectangle
+playlist_plus_button: raylib.Rectangle
+playlist_background: raylib.Rectangle
+
 
 spriteSheet: aseprite.Aseprite
 
@@ -427,7 +434,39 @@ CreateUI :: proc() {
 					tint_disabled = raylib.DARKGRAY,
 				}
 			case "playlist":
-				playlist_text = {
+				for k, _ in spriteSheet.meta.slices {
+					switch k.name {
+					case "playlist scrollbar":
+						playlist_scrollbar = {
+							k.keys[0].bounds.x,
+							k.keys[0].bounds.y,
+							k.keys[0].bounds.w,
+							k.keys[0].bounds.h,
+						}
+					case "playlist minus button":
+						playlist_minus_button = {
+							k.keys[0].bounds.x,
+							k.keys[0].bounds.y,
+							k.keys[0].bounds.w,
+							k.keys[0].bounds.h,
+						}
+					case "playlist plus button":
+						playlist_plus_button = {
+							k.keys[0].bounds.x,
+							k.keys[0].bounds.y,
+							k.keys[0].bounds.w,
+							k.keys[0].bounds.h,
+						}
+					case "playlist background":
+						playlist_background = {
+							k.keys[0].bounds.x,
+							k.keys[0].bounds.y,
+							k.keys[0].bounds.w,
+							k.keys[0].bounds.h,
+						}
+					}
+				}
+				playlist_list = {
 					name = "playlist",
 					enabled = true,
 					positionRec = {
@@ -436,6 +475,11 @@ CreateUI :: proc() {
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
+					fontSize = 14,
+					active = 0,
+					font = textFont,
+					spacing = textSpacing,
+					tintSelected = raylib.GREEN,
 					tint = raylib.WHITE,
 					textColor = raylib.DARKGRAY,
 					texture = window_texture,
@@ -449,6 +493,10 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					scrollIndex = 0,
+					scrollSpeed = 10,
+					sliderSize = 20,
+					scrollbarVertical = true,
 				}
 			}
 			AddButton(&previous_button)
@@ -461,7 +509,7 @@ CreateUI :: proc() {
 			// AddSlider(&meter_slider)
 			AddButton(&load_button)
 			AddSlider(&seek_bar)
-			AddText(&playlist_text)
+			AddList(&playlist_list)
 			AddText(&current_song_text)
 
 			AddText(&song_length_text)
@@ -473,6 +521,7 @@ CreateUI :: proc() {
 UserInterface :: proc() {
 	DrawButtons()
 	DrawSliders()
+	DrawLists()
 	DrawTexts()
 	HandleButtonActions()
 }
@@ -497,7 +546,10 @@ DrawTexts :: proc() {
 	DrawTextControl("current song", camera)
 	DrawTextControl("song length", camera)
 	DrawTextControl("play time", camera)
-	DrawTextControl("playlist", camera)
+}
+
+DrawLists :: proc() {
+	DrawListControl("playlist", camera)
 }
 
 HandleButtonActions :: proc() {
