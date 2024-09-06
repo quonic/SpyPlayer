@@ -153,6 +153,7 @@ _main :: proc() {
 				}
 				if Lists["playlist"].active != currentSongIndex {
 					playSelected()
+					UpdateCurrentSongText()
 				}
 
 				UpdatePlayTime()
@@ -180,9 +181,23 @@ _main :: proc() {
 			}
 		case .Paused:
 			{
+				if Lists["playlist"].active == -1 {
+					Lists["playlist"].active = currentSongIndex
+				}
+				if Lists["playlist"].active != currentSongIndex {
+					loadSelected()
+					UpdateCurrentSongText()
+				}
 			}
 		case .Stopped:
 			{
+				if Lists["playlist"].active == -1 {
+					Lists["playlist"].active = currentSongIndex
+				}
+				if Lists["playlist"].active != currentSongIndex {
+					loadSelected()
+					UpdateCurrentSongText()
+				}
 			}
 		case .NoMusic:
 			{
@@ -242,7 +257,7 @@ play :: proc() {
 	UpdateCurrentSongText()
 }
 
-playSelected :: proc() {
+loadSelected :: proc() {
 	raylib.StopMusicStream(currentStream)
 	raylib.UnloadMusicStream(currentStream)
 
@@ -254,11 +269,13 @@ playSelected :: proc() {
 	)
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
+}
+
+playSelected :: proc() {
+	loadSelected()
 	if player_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
 	}
-	currentStream.looping = false
-	UpdateCurrentSongText()
 }
 
 pause :: proc() {
