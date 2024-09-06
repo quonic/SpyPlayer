@@ -78,23 +78,33 @@ N :: 1
 
 pool: thread.Pool
 
+TRACK_MEMORY_LEAKS :: false
+
 main :: proc() {
-	track: mem.Tracking_Allocator
-	mem.tracking_allocator_init(&track, context.allocator)
-	defer mem.tracking_allocator_destroy(&track)
-	context.allocator = mem.tracking_allocator(&track)
+	when TRACK_MEMORY_LEAKS {
+		track: mem.Tracking_Allocator
+		mem.tracking_allocator_init(&track, context.allocator)
+		defer mem.tracking_allocator_destroy(&track)
+		context.allocator = mem.tracking_allocator(&track)
 
-	_main()
+		_main()
 
-	for _, leak in track.allocation_map {
-		if strings.contains(leak.location.file_path, "SpyPlayer") {
-			fmt.printf("%v leaked %m\n", leak.location, leak.size)
+		for _, leak in track.allocation_map {
+			if strings.contains(leak.location.file_path, "SpyPlayer") {
+				fmt.printf("%v leaked %m\n", leak.location, leak.size)
+			}
 		}
-	}
-	for bad_free in track.bad_free_array {
-		if strings.contains(bad_free.location.file_path, "SpyPlayer") {
-			fmt.printf("%v allocation %p was freed badly\n", bad_free.location, bad_free.memory)
+		for bad_free in track.bad_free_array {
+			if strings.contains(bad_free.location.file_path, "SpyPlayer") {
+				fmt.printf(
+					"%v allocation %p was freed badly\n",
+					bad_free.location,
+					bad_free.memory,
+				)
+			}
 		}
+	} else {
+		_main()
 	}
 }
 
