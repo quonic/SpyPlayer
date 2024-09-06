@@ -148,6 +148,9 @@ _main :: proc() {
 		case .Playing:
 			{
 
+				if Lists["playlist"].active == -1 {
+					Lists["playlist"].active = currentSongIndex
+				}
 				if Lists["playlist"].active != currentSongIndex {
 					playSelected()
 				}
