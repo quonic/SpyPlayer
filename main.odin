@@ -115,8 +115,8 @@ _main :: proc() {
 
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
-	raylib.GuiLoadStyle("assets/listview.rgs")
-	// raylib.GuiSetStyle(raylib.GuiControl.DEFAULT, i32(raylib.GuiControlProperty.BORDER_WIDTH), 1)
+
+	loadStyle()
 
 	// textFont = raylib.LoadFont("assets/fonts/MyFontHere.ttf")
 	textFont = raylib.GetFontDefault()

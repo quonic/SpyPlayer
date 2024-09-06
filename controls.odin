@@ -317,7 +317,12 @@ DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
 
 	list: [^]cstring = raw_data(Lists[name].items)
 	_ = raylib.GuiListViewEx(
-		Lists[name].positionRec,
+		{
+			Lists[name].positionRec.x + 2,
+			Lists[name].positionRec.y + 2,
+			Lists[name].positionRec.width - 4,
+			Lists[name].positionRec.height - 4,
+		},
 		list,
 		i32(len(Lists[name].items)),
 		&Lists[name].scrollIndex,
