@@ -470,7 +470,18 @@ DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
 		prevScrollSpeed := Lists[name].scrollSpeed
 		Lists[name].scrollSpeed = cast(i32)len(Lists[name].items) - visibleItems
 
-		// startIndex = GuiScrollBar(scrollBarBounds, startIndex, 0, count - visibleItems)
+		startIndex = DrawScrollBar(
+			scrollBarBounds,
+			startIndex,
+			0,
+			cast(i32)len(Lists[name].items) - visibleItems,
+			tint,
+			1,
+			1,
+			cast(i32)scrollBarBounds.height,
+			16,
+			0,
+		)
 
 		Lists[name].scrollSpeed = prevScrollSpeed
 		Lists[name].sliderSize = prevSliderSize
@@ -480,6 +491,167 @@ DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
 	if (Lists[name].active != {}) {Lists[name].active = itemSelected}
 	if (Lists[name].focus != {}) {Lists[name].focus = itemFocused}
 	if (Lists[name].scrollIndex != {}) {Lists[name].scrollIndex = startIndex}
+}
+
+DrawScrollBar :: proc(
+	bounds: raylib.Rectangle,
+	indexValue: i32,
+	minValue: i32,
+	maxValue: i32,
+	tint: raylib.Color = raylib.WHITE,
+	scrollSpeed: i32 = 1,
+	stateBar: i32 = 0, // 0 = normal, 1 = hover, 2 = pressed, 3 = disabled
+	boarderWidth: i32 = 0,
+	scrollSliderSize: i32 = 16,
+	scrollPadding: i32 = 0,
+) -> i32 {
+	value: i32 = indexValue
+	state: i32 = stateBar
+	isVertical := bounds.height > bounds.width
+
+	arrowsVisible: bool = false
+	spinnerSize :=
+		arrowsVisible ? (isVertical ? i32(bounds.width) - 2 * boarderWidth : i32(bounds.height) - 2 * boarderWidth) : 0
+	arrowUpLeft: raylib.Rectangle
+	arrowDownRight: raylib.Rectangle
+
+	scrollbar: raylib.Rectangle
+
+	slider: raylib.Rectangle
+
+	if value > maxValue {
+		value = maxValue
+	}
+	if value < minValue {
+		value = minValue
+	}
+	valueRange := maxValue - minValue
+	if valueRange <= 0 {
+		valueRange = 1
+	}
+
+	sliderSize := scrollSliderSize
+	if sliderSize < 1 {
+		sliderSize = 1
+	}
+
+	arrowUpLeft = {
+		bounds.x + f32(boarderWidth),
+		bounds.y + f32(boarderWidth),
+		f32(spinnerSize),
+		f32(spinnerSize),
+	}
+
+	if isVertical {
+		arrowDownRight = {
+			bounds.x + f32(boarderWidth),
+			bounds.y + bounds.height - f32(spinnerSize) - f32(boarderWidth),
+			f32(spinnerSize),
+			f32(spinnerSize),
+		}
+		scrollbar = {
+			bounds.x + f32(boarderWidth + scrollPadding),
+			arrowUpLeft.y + arrowUpLeft.height,
+			bounds.width - f32(2 * boarderWidth - 2 * scrollPadding - spinnerSize),
+			arrowUpLeft.height - 2 * f32(boarderWidth),
+		}
+
+		sliderSize = f32(sliderSize) >= scrollbar.height ? i32(scrollbar.height - 2) : sliderSize
+		slider = {
+			bounds.x + f32(boarderWidth + scrollPadding),
+			scrollbar.y + f32(value - minValue) * (scrollbar.height - f32(sliderSize)),
+			bounds.width - 2 * f32(boarderWidth + scrollPadding),
+			f32(sliderSize),
+		}
+	} else // horizontal
+	{
+		arrowDownRight = {
+			bounds.x + bounds.width - f32(spinnerSize) - f32(boarderWidth),
+			bounds.y + f32(boarderWidth),
+			f32(spinnerSize),
+			f32(spinnerSize),
+		}
+		scrollbar = {
+			arrowUpLeft.x + arrowUpLeft.width,
+			bounds.y + f32(boarderWidth + scrollPadding),
+			arrowUpLeft.width - arrowDownRight.width - 2 * f32(boarderWidth),
+			bounds.height - f32(2 * boarderWidth + scrollPadding),
+		}
+
+		sliderSize = f32(sliderSize) >= scrollbar.width ? i32(scrollbar.width - 2) : sliderSize
+		slider = {
+			scrollbar.x + f32(value - minValue) * (scrollbar.width - f32(sliderSize)),
+			bounds.y + f32(boarderWidth + scrollPadding),
+			f32(sliderSize),
+			bounds.height - 2 * f32(boarderWidth + scrollPadding),
+		}
+	}
+
+	// Update control
+	if state != 3 {
+		mousePoint := raylib.GetMousePosition()
+		if raylib.CheckCollisionPointRec(mousePoint, bounds) {
+			state = 1 // hover / focused
+
+			wheel := i32(raylib.GetMouseWheelMove())
+			if wheel != 0 {{value += wheel}
+
+				if raylib.IsMouseButtonDown(raylib.MouseButton.LEFT) {
+					if raylib.CheckCollisionPointRec(mousePoint, arrowUpLeft) {
+						value -= valueRange / scrollSpeed
+					} else if raylib.CheckCollisionPointRec(mousePoint, arrowDownRight) {
+						value += valueRange / scrollSpeed
+					} else if !raylib.CheckCollisionPointRec(mousePoint, scrollbar) {
+						if isVertical {
+							value =
+								i32(
+									(mousePoint.y - scrollbar.y - slider.height / 2) *
+									f32(valueRange),
+								) /
+									i32(scrollbar.height - slider.height) +
+								minValue
+						} else {
+							value =
+								i32(
+									(mousePoint.x - scrollbar.x - slider.width / 2) *
+									f32(valueRange),
+								) /
+									i32(scrollbar.width - slider.width) +
+								minValue
+						}
+						state = 2 // pressed
+					}
+				}
+			}
+			state = 1
+			if raylib.IsMouseButtonPressed(raylib.MouseButton.LEFT) {
+				state = 2
+			}
+		}
+		if value > maxValue {
+			value = maxValue
+		}
+		if value < minValue {
+			value = minValue
+		}
+	}
+
+	// Draw control
+	raylib.DrawRectanglePro(bounds, raylib.Vector2{bounds.width, bounds.height}, 0, tint)
+
+	raylib.DrawRectanglePro(
+		scrollbar,
+		raylib.Vector2{scrollbar.width, scrollbar.height},
+		0,
+		raylib.Fade(tint, 0.5),
+	)
+	raylib.DrawRectanglePro(
+		slider,
+		raylib.Vector2{slider.width, slider.height},
+		0,
+		raylib.Fade(tint, 0.5),
+	)
+	return value
 }
 
 
