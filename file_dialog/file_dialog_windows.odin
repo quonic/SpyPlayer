@@ -4,7 +4,7 @@ import "core:strings"
 import win32 "core:sys/windows"
 import glfw "vendor:glfw"
 
-file_dialog_window: ^glfw.Window
+file_dialog_window: ^glfw.WindowHandle
 
 open_file_dialog :: proc(filter: ..string, directory: bool = false) -> string {
 	when ODIN_OS == .Windows {
