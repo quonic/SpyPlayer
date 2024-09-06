@@ -8,7 +8,7 @@ file_dialog_window: ^glfw.WindowHandle
 
 open_file_dialog :: proc(filter: ..string, directory: bool = false) -> string {
 	when ODIN_OS == .Windows {
-		window := glfw.GetWin32Window(file_dialog_window.window)
+		window := glfw.GetWin32Window(file_dialog_window)
 	}
 
 	file := [260]win32.WCHAR{}
@@ -58,6 +58,6 @@ show_popup :: proc(title: string, message: string, type: PopupType) {
 	}
 	win_type |= win32.MB_OK
 
-	hwnd := glfw.GetWin32Window(EngineInstance.window)
+	hwnd := glfw.GetWin32Window(file_dialog_window)
 	win32.MessageBoxW(hwnd, raw_data(message), raw_data(caption), win_type)
 }
