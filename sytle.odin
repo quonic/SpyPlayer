@@ -38,6 +38,17 @@ loadStyle :: proc() {
 	raylib.GuiSetStyle(
 		raylib.GuiControl.LISTVIEW,
 		i32(raylib.GuiControlProperty.TEXT_PADDING),
-		i32(2),
+		i32(1),
+	)
+
+	raylib.GuiSetStyle(
+		raylib.GuiControl.LISTVIEW,
+		i32(raylib.GuiListViewProperty.LIST_ITEMS_SPACING),
+		i32(1),
+	)
+	raylib.GuiSetStyle(
+		raylib.GuiControl.LISTVIEW,
+		i32(raylib.GuiListViewProperty.LIST_ITEMS_HEIGHT),
+		i32(15),
 	)
 }
