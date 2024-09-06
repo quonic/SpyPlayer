@@ -149,8 +149,7 @@ _main :: proc() {
 			{
 
 				if Lists["playlist"].active != currentSongIndex {
-					currentSongIndex = Lists["playlist"].active
-					playSelected(currentSongIndex)
+					playSelected()
 				}
 
 				UpdatePlayTime()
@@ -240,9 +239,11 @@ play :: proc() {
 	UpdateCurrentSongText()
 }
 
-playSelected :: proc(index: i32) {
+playSelected :: proc() {
 	raylib.StopMusicStream(currentStream)
 	raylib.UnloadMusicStream(currentStream)
+
+	currentSongIndex = Lists["playlist"].active
 
 	current_song_tags = playList[currentSongIndex].tags
 	currentStream = raylib.LoadMusicStream(
@@ -369,13 +370,7 @@ UpdateCurrentSongText :: proc() {
 
 	UpdatePlayTime()
 
-	if currentSongIndex < 3 {
-		Lists["playlist"].scrollIndex = currentSongIndex
-	} else if currentSongIndex > i32(len(playList)) - 3 {
-		Lists["playlist"].scrollIndex = i32(len(playList)) - 3
-	} else {
-		Lists["playlist"].scrollIndex = currentSongIndex - 3
-	}
+	Lists["playlist"].scrollIndex = currentSongIndex
 	Lists["playlist"].active = currentSongIndex
 }
 
