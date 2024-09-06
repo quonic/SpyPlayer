@@ -20,6 +20,8 @@ This is a work in progress, and is not yet feature complete.
 - [x] Seeking
 - [ ] Playlist management
   - [x] Load from folder
+  - [x] Playlist showing loaded songs
+  - [x] Selecting a song plays that song
   - [ ] Add to playlist
   - [ ] Remove from playlist
   - [ ] Clear playlist
