@@ -32,6 +32,11 @@ loadStyle :: proc() {
 	)
 	raylib.GuiSetStyle(
 		raylib.GuiControl.LISTVIEW,
+		i32(raylib.GuiControlProperty.BORDER_WIDTH),
+		i32(0),
+	)
+	raylib.GuiSetStyle(
+		raylib.GuiControl.LISTVIEW,
 		i32(raylib.GuiControlProperty.TEXT_PADDING),
 		i32(2),
 	)
