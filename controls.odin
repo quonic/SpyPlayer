@@ -320,7 +320,7 @@ DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
 		{
 			Lists[name].positionRec.x + 2,
 			Lists[name].positionRec.y + 2,
-			Lists[name].positionRec.width - 4,
+			Lists[name].positionRec.width - 5,
 			Lists[name].positionRec.height - 4,
 		},
 		list,
