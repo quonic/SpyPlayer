@@ -2,11 +2,8 @@ package ffprobe
 
 
 import "../command"
-import "core:encoding/ini"
 import "core:encoding/json"
 import "core:fmt"
-import "core:mem"
-import "core:strings"
 
 Format :: struct {
 	filename:         string,

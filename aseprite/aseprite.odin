@@ -2,11 +2,7 @@ package aseprite
 
 import "core:encoding/json"
 import "core:fmt"
-import "core:io"
-import "core:mem"
 import "core:os"
-import "core:strconv"
-import "core:strings"
 
 Aseprite :: struct {
 	frames: map[string]Frame,

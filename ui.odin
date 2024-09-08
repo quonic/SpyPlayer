@@ -1,12 +1,7 @@
 package main
 
 import "aseprite"
-import "core:encoding/json"
 import "core:fmt"
-import "core:io"
-import "core:os"
-import "core:strings"
-import "core:time"
 import "ffprobe"
 import "vendor:raylib"
 

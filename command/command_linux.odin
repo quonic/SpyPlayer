@@ -2,14 +2,8 @@ package command
 
 import "core:bytes"
 import "core:fmt"
-import "core:log"
 import "core:mem"
-import "core:os"
-import "core:os/os2"
-import "core:path/filepath"
-import "core:path/slashpath"
 import "core:strings"
-import win32 "core:sys/windows"
 
 
 foreign libc 

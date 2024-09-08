@@ -1,14 +1,8 @@
 package main
 
-import "base:intrinsics"
 import "base:runtime"
 import "command"
-import "core:encoding/json"
 import "core:fmt"
-import "core:io"
-import "core:math"
-import "core:mem"
-import "core:os"
 import "core:prof/spall"
 import "core:strings"
 import "core:sync"
