@@ -1,5 +1,6 @@
 package command
 
+import "core:mem"
 import "core:strings"
 import win32 "core:sys/windows"
 
