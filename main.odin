@@ -3,6 +3,7 @@ package main
 import "base:runtime"
 import "command"
 import "core:fmt"
+import "core:mem"
 import "core:prof/spall"
 import "core:strings"
 import "core:sync"
