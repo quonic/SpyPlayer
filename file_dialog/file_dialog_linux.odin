@@ -1,17 +1,20 @@
 package file_dialog
 
-import c "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strings"
 
-foreign import libc "system:c"
 
-@(default_calling_convention = "c")
-foreign libc {
-	popen :: proc(command, type: cstring) -> ^c.FILE ---
-	pclose :: proc(f: ^c.FILE) -> c.int ---
+foreign libc 
+{
+	popen :: proc(command: cstring, type: cstring) -> ^FILE ---
+	pclose :: proc(stream: ^FILE) -> i32 ---
+	fgets :: proc "cdecl" (s: [^]byte, n: i32, stream: ^FILE) -> [^]u8 ---
 }
+
+foreign import libc "system:c"
+FILE :: struct {}
+
 
 @(private = "file")
 DialogType :: enum {
@@ -59,7 +62,7 @@ find_binary_location :: proc(name: string, allocator := context.temp_allocator) 
 	file := popen(fmt.ctprintf("/usr/bin/env whereis %v", name), "r")
 	defer pclose(file)
 
-	c.fgets(raw_data(location_buf[:]), len(location_buf), file)
+	fgets(raw_data(location_buf[:]), len(location_buf), file)
 	location := string(location_buf[len(fmt.tprintf("%v: ", name)):])
 	location, _ = strings.replace_all(location, "\n", "", context.temp_allocator)
 	return strings.clone(location)
@@ -71,7 +74,7 @@ execute_binary :: proc(fullpath: string) -> (output: string) {
 	file := popen(cstr(fullpath), "r")
 	defer pclose(file)
 
-	c.fgets(raw_data(location_buf[:]), len(location_buf), file)
+	fgets(raw_data(location_buf[:]), len(location_buf), file)
 	output = string(location_buf[:])
 	output, _ = strings.replace_all(output, "\n", "", context.temp_allocator)
 	return strings.clone(output)

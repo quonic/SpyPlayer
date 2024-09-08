@@ -3,7 +3,6 @@ package main
 import "base:intrinsics"
 import "base:runtime"
 import "command"
-import c "core:c/libc"
 import "core:encoding/json"
 import "core:fmt"
 import "core:io"
