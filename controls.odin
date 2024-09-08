@@ -82,14 +82,14 @@ CleanUpControls :: proc() {
 	for name, _ in Lists {
 		delete(Lists[name].items)
 	}
-	Lists = {}
-	ProgressBars = {}
-	Sliders = {}
-	Spinners = {}
-	Toggles = {}
-	Texts = {}
-	Buttons = {}
-	Labels = {}
+	delete_map(Lists)
+	delete_map(ProgressBars)
+	delete_map(Sliders)
+	delete_map(Spinners)
+	delete_map(Toggles)
+	delete_map(Texts)
+	delete_map(Buttons)
+	delete_map(Labels)
 }
 
 IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
