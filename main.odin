@@ -16,8 +16,6 @@ spall_buffer: spall.Buffer
 
 // SpyPlayer is a Music player that use raylib for the UI and miniaudio for the audio
 
-stream: raylib.AudioStream
-
 camera: raylib.Camera2D = {
 	offset   = {0, 0},
 	target   = {0, 0},
@@ -55,14 +53,6 @@ currentStream: raylib.Music
 
 textFont: raylib.Font
 textSpacing: f32 = 2
-
-current_time: f64
-dt: f64
-last_time: f64
-fixed_step_timer: f64
-fps_timer: f64
-fps_counter: int
-fps_value: f64
 
 songProgress: f32 = 0
 
