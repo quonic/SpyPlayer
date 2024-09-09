@@ -8,7 +8,6 @@ import "core:strings"
 import "core:thread"
 import "core:time"
 import "file_dialog"
-import "vendor:raylib"
 
 did_acquire :: proc(m: ^b64) -> (acquired: bool) {
 	res, ok := intrinsics.atomic_compare_exchange_strong(m, false, true)

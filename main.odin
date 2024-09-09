@@ -1,16 +1,13 @@
 package main
 
 import "base:runtime"
-import "command"
 import "core:fmt"
 import "core:mem"
 import "core:prof/spall"
 import "core:strings"
 import "core:sync"
 import "core:thread"
-import "core:time"
 import "ffprobe"
-import "file_dialog"
 import "vendor:raylib"
 
 spall_ctx: spall.Context
