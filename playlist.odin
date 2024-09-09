@@ -43,7 +43,7 @@ ShufflePlaylist :: proc() {
 }
 
 UpdatePlaylistList :: proc() {
-	for song, i in playList {
+	for song, _ in playList {
 		append(&Lists["playlist"].items, fmt.caprint(song.tags.title))
 	}
 }

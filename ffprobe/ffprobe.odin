@@ -38,7 +38,7 @@ GetTags :: proc(file_name: string) -> (result: struct {
 	cmd := fmt.aprintf("ffprobe -v quiet -print_format json -show_format \"%s\"", file_name)
 	root_buf: [1024 * 16]byte
 	data := root_buf[:]
-	code, ok, stdout := command.run_executable(cmd, &data)
+	_, ok, stdout := command.run_executable(cmd, &data)
 	if !ok {
 		return {}
 	}

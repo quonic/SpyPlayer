@@ -86,9 +86,9 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 	}
 
 	open_file_dialog :: proc(filter: ..string, directory: bool = false) -> string {
-		switch path, type, ok := find_installed_dialog_binary(); type {
+		switch _, type, _ := find_installed_dialog_binary(); type {
 		case .KDialog:
-			filter := strings.join(filter, "")
+			// filter := strings.join(filter, "")
 			command: string
 			if directory {
 				command = fmt.tprintf("kdialog --getexistingdirectory")
@@ -98,7 +98,7 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 			output := execute_binary(command)
 			return output
 		case .Zenity:
-			filter := strings.join(filter, "")
+			// filter := strings.join(filter, "")
 			command: string
 			if directory {
 				command = fmt.tprintf("zenity --file-selection --directory")
@@ -113,12 +113,12 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 
 	show_popup :: proc(title: string, message: string, type: PopupType) {
 		notification_type := type
-		switch path, type, ok := find_installed_dialog_binary(); type {
+		switch _, type, _ := find_installed_dialog_binary(); type {
 		case .KDialog:
 			command: string
 			switch notification_type {
 			case .Info:
-				command := fmt.tprintf("kdialog --title '%v' --msgbox '%v' 5", title, message)
+				command = fmt.tprintf("kdialog --title '%v' --msgbox '%v' 5", title, message)
 			case .Warning:
 				command = fmt.tprintf("kdialog --title '%v' --sorry '%v'", title, message)
 			case .Error:
