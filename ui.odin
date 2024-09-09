@@ -44,7 +44,7 @@ CreateUI :: proc() {
 
 	for slice, _ in spriteSheet.meta.slices {
 		name := slice.name
-		color := slice.color
+		// color := slice.color
 		keys := slice.keys
 
 		for key, _ in keys {
