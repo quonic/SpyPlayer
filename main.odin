@@ -145,6 +145,10 @@ _main :: proc() {
 
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
+	defer raylib.CloseWindow()
+
+	// Move the window to the primary monitor
+	SetWindowToPrimaryMonitor(setFps = true)
 
 	loadStyle()
 
@@ -153,9 +157,7 @@ _main :: proc() {
 
 	// Create the UI elements
 	CreateUserInterface()
-
-	// Move the window to the primary monitor
-	SetWindowToPrimaryMonitor(setFps = true)
+	defer CleanUpControls()
 
 	// Initialize the audio device
 	raylib.InitAudioDevice()
@@ -238,8 +240,6 @@ _main :: proc() {
 		raylib.EndMode2D()
 		raylib.EndDrawing()
 	}
-	raylib.CloseWindow()
-	CleanUpControls()
 }
 
 AddSong :: proc(path: string) {
