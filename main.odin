@@ -148,7 +148,9 @@ _main :: proc() {
 	defer raylib.CloseWindow()
 
 	// Move the window to the primary monitor
-	SetWindowToPrimaryMonitor(setFps = true)
+	when ODIN_OS == .Linux {
+		SetWindowToPrimaryMonitor(setFps = true)
+	}
 
 	loadStyle()
 
