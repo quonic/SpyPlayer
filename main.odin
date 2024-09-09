@@ -80,10 +80,10 @@ N :: 1
 pool: thread.Pool
 
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
-OUPUT_SPALL_TRACE :: #config(trace, false)
+OUTPUT_SPALL_TRACE :: #config(trace, false)
 
 main :: proc() {
-	when OUPUT_SPALL_TRACE {
+	when OUTPUT_SPALL_TRACE {
 		spall_ctx = spall.context_create("trace_test.spall")
 		defer spall.context_destroy(&spall_ctx)
 
@@ -191,7 +191,7 @@ _main :: proc() {
 				UpdatePlayTime()
 
 
-				// Scrool the current song text when scrolling is enabled
+				// Scroll the current song text when scrolling is enabled
 				if Texts["current song"].text != "" && Texts["current song"].scrolling {
 					// Scroll the text every scrollTime seconds
 					if raylib.GetTime() - lastScrollTime > scrollTime {
