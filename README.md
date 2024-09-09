@@ -56,7 +56,7 @@ I'm currently focusing on supporting Linux first. If you want other platforms to
 
 All, except Odin, should already be installed on most Linux distributions.
 
-### Install Odin
+### Install Odin Linux
 
 ```sh
 cd ~/
@@ -71,14 +71,22 @@ You can add odin to your path by creating a symlink to the odin binary in your l
 ln -s ~/Odin/odin ~/.local/bin
 ```
 
-### Build
+### Install Odin Windows
+
+See [Build Odin from Source](https://odin-lang.org/docs/install/#windows)
+
+### Build and Run
+
+#### Linux
 
 ```sh
-odin build .
+./build.sh
+./SpyPlayer
 ```
 
-### How to run
+#### Windows
 
-```sh
-./SpyPlayer
+```powershell
+./build.ps1
+SpyPlayer.exe
 ```
