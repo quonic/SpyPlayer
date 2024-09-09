@@ -43,10 +43,10 @@ Example Usage:
 
 		for fgets(&read_buffer[0], size_of(read_buffer), fp) != nil {
 			read := bytes.index_byte(read_buffer[:], 0)
-			defer index += cast(int)read
+			defer index += read
 
-			if read > 0 && index + cast(int)read <= len(stdout) {
-				mem.copy(&stdout[index], &read_buffer[0], cast(int)read)
+			if read > 0 && index + read <= len(stdout) {
+				mem.copy(&stdout[index], &read_buffer[0], read)
 			}
 		}
 
