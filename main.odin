@@ -7,7 +7,6 @@ import "core:prof/spall"
 import "core:strings"
 import "core:sync"
 import "core:thread"
-import "ffprobe"
 import "vendor:raylib"
 
 spall_ctx: spall.Context
@@ -31,23 +30,6 @@ PlayerState :: enum {
 }
 
 player_state: PlayerState = .NoMusic
-
-Song :: struct {
-	path:  string,
-	frame: f32,
-	tags:  ffprobe.Tags,
-}
-
-playList: [dynamic]Song
-
-playListLoaded: bool = false
-
-currentSongIndex: i32 = 0
-currentSongPath: string
-currentSongVolume: f32 = 0.5
-loadedSongPath: string
-
-PlayListLoading: bool = false
 
 currentStream: raylib.Music
 
@@ -228,42 +210,6 @@ _main :: proc() {
 
 		raylib.EndMode2D()
 		raylib.EndDrawing()
-	}
-}
-
-AddSong :: proc(path: string) {
-	frame := ffprobe.GetTags(path)
-	append(&playList, Song{path = path, tags = frame.format.tags})
-}
-
-RemoveSong :: proc(path: string) {
-	for song, i in playList {
-		if song.path == path {
-			ordered_remove(&playList, i)
-			break
-		}
-	}
-}
-
-IsSongLoaded :: proc(path: string) -> bool {
-	if playList[currentSongIndex].path == currentSongPath {
-		return true
-	}
-	return false
-}
-
-LoadSong :: proc(path: string) {
-	if loadedSongPath == path && raylib.IsMusicReady(currentStream) {
-		return
-	} else if loadedSongPath != path {
-		current_song_tags = playList[currentSongIndex].tags
-		currentStream = raylib.LoadMusicStream(
-			strings.clone_to_cstring(playList[currentSongIndex].path),
-		)
-		for !raylib.IsMusicReady(currentStream) {
-			thread.yield()
-		}
-		loadedSongPath = path
 	}
 }
 

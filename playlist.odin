@@ -7,7 +7,26 @@ import "core:os"
 import "core:strings"
 import "core:thread"
 import "core:time"
+import "ffprobe"
 import "file_dialog"
+import "vendor:raylib"
+
+Song :: struct {
+	path:  string,
+	frame: f32,
+	tags:  ffprobe.Tags,
+}
+
+playList: [dynamic]Song
+
+playListLoaded: bool = false
+
+currentSongIndex: i32 = 0
+currentSongPath: string
+currentSongVolume: f32 = 0.5
+loadedSongPath: string
+
+PlayListLoading: bool = false
 
 did_acquire :: proc(m: ^b64) -> (acquired: bool) {
 	res, ok := intrinsics.atomic_compare_exchange_strong(m, false, true)
@@ -49,5 +68,41 @@ UpdatePlaylistList :: proc() {
 			&Lists["playlist"].items,
 			fmt.caprintf("%v - %v", song.tags.title, song.tags.artist),
 		)
+	}
+}
+
+AddSong :: proc(path: string) {
+	frame := ffprobe.GetTags(path)
+	append(&playList, Song{path = path, tags = frame.format.tags})
+}
+
+RemoveSong :: proc(path: string) {
+	for song, i in playList {
+		if song.path == path {
+			ordered_remove(&playList, i)
+			break
+		}
+	}
+}
+
+IsSongLoaded :: proc(path: string) -> bool {
+	if playList[currentSongIndex].path == currentSongPath {
+		return true
+	}
+	return false
+}
+
+LoadSong :: proc(path: string) {
+	if loadedSongPath == path && raylib.IsMusicReady(currentStream) {
+		return
+	} else if loadedSongPath != path {
+		current_song_tags = playList[currentSongIndex].tags
+		currentStream = raylib.LoadMusicStream(
+			strings.clone_to_cstring(playList[currentSongIndex].path),
+		)
+		for !raylib.IsMusicReady(currentStream) {
+			thread.yield()
+		}
+		loadedSongPath = path
 	}
 }
