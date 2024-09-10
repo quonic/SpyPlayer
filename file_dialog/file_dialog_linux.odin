@@ -88,22 +88,34 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 	open_file_dialog :: proc(filter: ..string, directory: bool = false) -> string {
 		switch _, type, _ := find_installed_dialog_binary(); type {
 		case .KDialog:
-			// filter := strings.join(filter, "")
 			command: string
 			if directory {
 				command = fmt.tprintf("kdialog --getexistingdirectory")
 			} else {
-				command = fmt.tprintf("kdialog --getopenfilename")
+				if len(filter) == 0 {
+					command = fmt.tprintf("kdialog --getopenfilename")
+				} else {
+					command = fmt.tprintf(
+						"kdialog --getopenfilename '%v'",
+						strings.join(filter, " "),
+					)
+				}
 			}
 			output := execute_binary(command)
 			return output
 		case .Zenity:
-			// filter := strings.join(filter, "")
 			command: string
 			if directory {
 				command = fmt.tprintf("zenity --file-selection --directory")
 			} else {
-				command = fmt.tprintf("zenity --file-selection")
+				if len(filter) == 0 {
+					command = fmt.tprintf("zenity --file-selection")
+				} else {
+					command = fmt.tprintf(
+						"zenity --file-selection --file-filter='%v'",
+						strings.join(filter, " "),
+					)
+				}
 			}
 			output := execute_binary(command)
 			return output

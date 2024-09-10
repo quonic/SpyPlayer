@@ -23,8 +23,10 @@ task_prompt_load_playlist :: proc(t: thread.Task) {
 	fileinfo, fileinfoerror := os.read_dir(handle, 100)
 	assert(fileinfoerror == nil, fmt.tprintf("Error reading directory: %v", fileinfoerror))
 	for file in fileinfo {
-		// check if file extension is mp3
-		if strings.ends_with(file.name, ".mp3") {
+		// Check if file extension is mp3, wav, or flac supported by miniaudio
+		if strings.ends_with(file.name, ".mp3") ||
+		   strings.ends_with(file.name, ".wav") ||
+		   strings.ends_with(file.name, ".flac") {
 			AddSong(file.fullpath)
 		}
 	}
@@ -43,6 +45,9 @@ ShufflePlaylist :: proc() {
 
 UpdatePlaylistList :: proc() {
 	for song, _ in playList {
-		append(&Lists["playlist"].items, fmt.caprint(song.tags.title))
+		append(
+			&Lists["playlist"].items,
+			fmt.caprintf("%v - %v", song.tags.title, song.tags.artist),
+		)
 	}
 }
