@@ -13,3 +13,7 @@ aseprite.bin
 SpyPlayer
 trace_test.spall
 SpyPlayer.obj
+bin/
+
+# IDE
+.idea
