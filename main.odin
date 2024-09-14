@@ -303,7 +303,6 @@ previous :: proc() {
 
 LoadingUpdate :: proc() {
 	if PlayListLoading {
-		Texts["current song"].text = fmt.caprintf("Playlist loading...")
 		if thread.pool_num_done(&pool) >= N {
 			thread.terminate(pool.threads[N - 1], 0)
 			Texts["current song"].text = fmt.caprintf("Playlist loaded!")
