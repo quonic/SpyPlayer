@@ -6,6 +6,7 @@ import "core:math/rand"
 import "core:os"
 import "core:strings"
 import "core:thread"
+import "core:math"
 import "core:time"
 import "ffprobe"
 import "file_dialog"
@@ -41,11 +42,15 @@ task_prompt_load_playlist :: proc(t: thread.Task) {
 	assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
 	fileinfo, fileinfoerror := os.read_dir(handle, 100)
 	assert(fileinfoerror == nil, fmt.tprintf("Error reading directory: %v", fileinfoerror))
+	totalProgress :f16= f16(len(fileinfo) - 1)
+	progress:f16=0
 	for file in fileinfo {
 		// Check if file extension is mp3, wav, or flac supported by miniaudio
 		if strings.ends_with(file.name, ".mp3") ||
 		   strings.ends_with(file.name, ".wav") ||
 		   strings.ends_with(file.name, ".flac") {
+			progress = progress + 1
+			Texts["current song"].text = fmt.caprintf("Loading: %v%%", math.round(progress / totalProgress * 100))
 			AddSong(file.fullpath)
 		}
 	}
