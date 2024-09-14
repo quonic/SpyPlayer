@@ -27,11 +27,12 @@
    { "name": "meter", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 132, "y": 31, "w": 104, "h": 52 } }] },
    { "name": "load", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 565, "y": 175, "w": 29, "h": 20 } }] },
    { "name": "seek bar", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 4, "y": 113, "w": 272, "h": 24 } }] },
-   { "name": "song length", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 220, "y": 91, "w": 56, "h": 20 } }] },
-   { "name": "play time", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 158, "y": 91, "w": 56, "h": 20 } }] },
+   { "name": "song length", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 66, "y": 91, "w": 56, "h": 20 } }] },
+   { "name": "play time", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 4, "y": 91, "w": 56, "h": 20 } }] },
    { "name": "playlist", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 281, "y": 38, "w": 316, "h": 133 } }] },
-   { "name": "slider bar", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 386, "y": 182, "w": 5, "h": 11 } }] },
-   { "name": "seeker bar", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 394, "y": 179, "w": 5, "h": 14 } }] }
+   { "name": "slider bar", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 274, "y": 182, "w": 5, "h": 11 } }] },
+   { "name": "seeker bar", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 276, "y": 118, "w": 5, "h": 14 } }] },
+   { "name": "loop song", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 245, "y": 38, "w": 32, "h": 17 } }] }
   ]
  }
 }
