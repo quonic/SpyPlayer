@@ -658,7 +658,7 @@ DrawToggles :: proc() {
 
 HandleButtonActions :: proc() {
 	if GetButtonPressedState("load") == 1 {
-		load()
+		load_from_dir()
 	}
 	if playListLoaded {
 		if Buttons["play"].enabled == false {

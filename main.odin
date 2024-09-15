@@ -320,7 +320,7 @@ LoadingUpdate :: proc() {
 	}
 }
 
-load :: proc() {
+load_from_dir :: proc() {
 	thread.pool_add_task(
 		&pool,
 		allocator = context.allocator,
