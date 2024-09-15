@@ -179,6 +179,7 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 				command = fmt.tprintf("zenity --question --title='%v' --text='%v'", title, message)
 			}
 			_, output = execute_binary(command)
+		}
 		if output == 0 {
 			return true
 		} else {
