@@ -35,16 +35,20 @@ did_acquire :: proc(m: ^b64) -> (acquired: bool) {
 	return ok && res == false
 }
 
-task_prompt_load_playlist :: proc(t: thread.Task) {
+task_prompt_load_from_dir :: proc(t: thread.Task) {
 	// TODO: Add a way to remember the last folder/playlist
 	folder := file_dialog.open_file_dialog("*.mp3", directory = true)
 	assert(os.exists(folder))
+
 	handle, handleerror := os.open(folder)
 	assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
+
 	fileinfo, fileinfoerror := os.read_dir(handle, 100)
 	assert(fileinfoerror == nil, fmt.tprintf("Error reading directory: %v", fileinfoerror))
+
 	totalProgress: f16 = f16(len(fileinfo) - 1)
 	progress: f16 = 0
+
 	for file in fileinfo {
 		// Check if file extension is mp3, wav, or flac supported by miniaudio
 		if strings.ends_with(file.name, ".mp3") ||
@@ -58,11 +62,14 @@ task_prompt_load_playlist :: proc(t: thread.Task) {
 			AddSong(file.fullpath)
 		}
 	}
+
 	ShufflePlaylist()
 
 	time.sleep(1 * time.Millisecond)
+
 	playListLoaded = true
 	player_state = .Stopped
+
 	UpdatePlaylistList()
 }
 

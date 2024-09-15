@@ -324,7 +324,7 @@ load :: proc() {
 	thread.pool_add_task(
 		&pool,
 		allocator = context.allocator,
-		procedure = task_prompt_load_playlist,
+		procedure = task_prompt_load_from_dir,
 		data = nil,
 		user_index = 0,
 	)
