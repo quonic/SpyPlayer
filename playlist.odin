@@ -73,6 +73,37 @@ task_prompt_load_from_dir :: proc(t: thread.Task) {
 	UpdatePlaylistList()
 }
 
+task_prompt_load_from_json :: proc(t: thread.Task) {
+	// TODO: Add a way to remember the last folder/playlist
+	playlist_file := file_dialog.open_file_dialog("*.json")
+	if playlist_file == "" {
+		return
+	}
+	playlist_data, read_error := os.read_entire_file(playlist_file)
+	if read_error != {} {
+		fmt.eprintf("Error reading file: %v", read_error)
+		Texts["current song"].text = fmt.caprintf("Error loading playlist! Read error.")
+		return
+	}
+	defer delete(playlist_data)
+	paths: [dynamic]string
+	defer delete(paths)
+	err := json.unmarshal(playlist_data, &paths)
+	if err != nil {
+		fmt.eprintf("Error unmarshalling data: %v", err)
+		Texts["current song"].text = fmt.caprintf("Error loading playlist! Unmarshal error.")
+		return
+	}
+	for path, _ in paths {
+		AddSong(path)
+	}
+
+	time.sleep(1 * time.Millisecond)
+	playListLoaded = true
+	player_state = .Stopped
+	UpdatePlaylistList()
+}
+
 
 ShufflePlaylist :: proc() {
 	rand.shuffle(playList[:])
