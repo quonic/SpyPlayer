@@ -6,4 +6,5 @@ PopupType :: enum {
 	Info,
 	Warning,
 	Error,
+	Question,
 }
