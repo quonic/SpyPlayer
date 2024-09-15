@@ -32,7 +32,15 @@
    { "name": "playlist", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 281, "y": 38, "w": 316, "h": 133 } }] },
    { "name": "slider bar", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 274, "y": 182, "w": 5, "h": 11 } }] },
    { "name": "seeker bar", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 276, "y": 118, "w": 5, "h": 14 } }] },
-   { "name": "loop song", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 245, "y": 38, "w": 32, "h": 17 } }] }
+   { "name": "loop song", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 245, "y": 38, "w": 32, "h": 17 } }] },
+   { "name": "add song", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 259, "y": 56, "w": 18, "h": 17 } }] },
+   { "name": "remove song", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 259, "y": 74, "w": 18, "h": 17 } }] },
+   { "name": "x unchecked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 236, "y": 27, "w": 9, "h": 9 } }] },
+   { "name": "x checked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 245, "y": 27, "w": 9, "h": 9 } }] },
+   { "name": "check unchecked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 254, "y": 27, "w": 9, "h": 9 } }] },
+   { "name": "check checked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 263, "y": 27, "w": 9, "h": 9 } }] },
+   { "name": "radio unchecked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 272, "y": 27, "w": 9, "h": 9 } }] },
+   { "name": "radio checked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 281, "y": 27, "w": 9, "h": 9 } }] }
   ]
  }
 }
