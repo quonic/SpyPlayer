@@ -693,10 +693,10 @@ HandleButtonActions :: proc() {
 			stop()
 		}
 		if GetButtonPressedState("add song") == 1 {
-			unimplemented("Add song")
+			fmt.printf("Add song\n")
 		}
 		if GetButtonPressedState("remove song") == 1 {
-			unimplemented("Remove song")
+			fmt.printf("Remove song\n")
 		}
 	} else {
 		Buttons["previous"].enabled = false
