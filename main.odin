@@ -218,7 +218,7 @@ play :: proc() {
 	raylib.PlayMusicStream(currentStream)
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	player_state = .Playing
-	currentStream.looping = false // Prevent current song from looping TODO: Add a setting for this
+	currentStream.looping = loop_song_toggle.checked
 	UpdateCurrentSongText()
 }
 
@@ -240,6 +240,7 @@ playSelected :: proc() {
 	loadSelected()
 	if player_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
+		currentStream.looping = loop_song_toggle.checked
 	}
 }
 
@@ -275,7 +276,7 @@ next :: proc() {
 	if player_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
 	}
-	currentStream.looping = false
+	currentStream.looping = loop_song_toggle.checked
 	UpdateCurrentSongText()
 }
 
@@ -297,7 +298,7 @@ previous :: proc() {
 	if player_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
 	}
-	currentStream.looping = false
+	currentStream.looping = loop_song_toggle.checked
 	UpdateCurrentSongText()
 }
 

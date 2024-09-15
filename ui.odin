@@ -21,6 +21,7 @@ song_length_text: TextControl
 play_time_text: TextControl
 playlist_list: ListControl
 slider_bar: raylib.Rectangle
+loop_song_toggle: ToggleControl
 
 playlist_scrollbar: raylib.Rectangle
 playlist_minus_button: raylib.Rectangle
@@ -28,6 +29,8 @@ playlist_position_button: raylib.Rectangle
 playlist_plus_button: raylib.Rectangle
 playlist_background: raylib.Rectangle
 
+radio_unchecked: raylib.Rectangle
+radio_checked: raylib.Rectangle
 
 spriteSheet: aseprite.Aseprite
 
@@ -493,12 +496,61 @@ CreateUI :: proc() {
 					sliderSize = 20,
 					scrollbarVertical = true,
 				}
+			case "loop song":
+				for k, _ in spriteSheet.meta.slices {
+					switch k.name {
+					case "radio unchecked":
+						radio_unchecked = {
+							k.keys[0].bounds.x,
+							k.keys[0].bounds.y,
+							k.keys[0].bounds.w,
+							k.keys[0].bounds.h,
+						}
+					case "radio checked":
+						radio_checked = {
+							k.keys[0].bounds.x,
+							k.keys[0].bounds.y,
+							k.keys[0].bounds.w,
+							k.keys[0].bounds.h,
+						}
+					}
+				}
+
+				loop_song_toggle = {
+					name = "loop song",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					wasPressed = false,
+					togglePositionOffset = {x = 2, y = 4, width = 9, height = 9},
+					toggleTextureUnchecked = radio_unchecked,
+					toggleTextureChecked = radio_checked,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_normal = raylib.WHITE,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.DARKGRAY,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					checked = false,
+					shape = ToggleShape.Toggle_Circle,
+					checkColor = raylib.Color{0, 0, 0, 0},
+				}
 			}
 			AddButton(&previous_button)
 			AddButton(&play_button)
 			AddButton(&pause_button)
 			AddButton(&next_button)
 			AddButton(&stop_button)
+			AddToggle(&loop_song_toggle)
 			AddSlider(&volume_slider)
 			// AddSlider(&eq_slider)
 			// AddSlider(&meter_slider)
@@ -518,6 +570,7 @@ UserInterface :: proc() {
 	DrawSliders()
 	DrawLists()
 	DrawTexts()
+	DrawToggles()
 	HandleButtonActions()
 }
 
@@ -547,6 +600,10 @@ DrawLists :: proc() {
 	DrawListControl("playlist", camera)
 }
 
+DrawToggles :: proc() {
+	DrawToggleControl("loop song", camera)
+}
+
 HandleButtonActions :: proc() {
 	if GetButtonPressedState("load") == 1 {
 		load()
@@ -560,6 +617,11 @@ HandleButtonActions :: proc() {
 			Buttons["stop"].enabled = true
 			Sliders["volume"].enabled = true
 			Sliders["seek bar"].enabled = true
+			Toggles["loop song"].enabled = true
+		}
+		if GetTogglePressedState("loop song") == 1 {
+			currentStream.looping = !loop_song_toggle.checked
+			loop_song_toggle.checked = !loop_song_toggle.checked
 		}
 		if GetButtonPressedState("previous") == 1 {
 			previous()
@@ -584,5 +646,6 @@ HandleButtonActions :: proc() {
 		Buttons["stop"].enabled = false
 		Sliders["volume"].enabled = false
 		Sliders["seek bar"].enabled = false
+		Toggles["loop song"].enabled = false
 	}
 }

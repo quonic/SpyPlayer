@@ -491,6 +491,87 @@ DrawScrollBar :: proc(
 	return value
 }
 
+DrawToggleControl :: proc(name: string, camera: raylib.Camera2D) {
+	texture: raylib.Texture2D = Toggles[name].texture
+	sourceRec: raylib.Rectangle = Toggles[name].positionSpriteSheet
+	tint: raylib.Color
+	destRec := raylib.Rectangle {
+		Toggles[name].positionRec.x,
+		Toggles[name].positionRec.y,
+		Toggles[name].positionRec.width,
+		Toggles[name].positionRec.height,
+	}
+	xPosMin := destRec.x + Toggles[name].togglePositionOffset.x
+	xPosMax := destRec.x + destRec.width - Toggles[name].togglePositionOffset.width
+	if Toggles[name].enabled {
+		if IsHovering(destRec, camera) {
+			if raylib.IsMouseButtonDown(raylib.MouseButton.LEFT) {
+				// Pressed state
+				Toggles[name].pressed = true
+				tint = Toggles[name].tint_pressed
+			} else if raylib.IsMouseButtonReleased(raylib.MouseButton.LEFT) {
+				Toggles[name].pressed = false
+				tint = Toggles[name].tint_normal
+			} else {
+				// Hover state
+				Toggles[name].pressed = false
+				tint = Toggles[name].tint_hover
+			}
+		} else {
+			// Normal state
+			Toggles[name].pressed = false
+			tint = Toggles[name].tint_normal
+		}
+	} else {
+		// Disabled state
+		tint = Toggles[name].tint_disabled
+	}
+	raylib.DrawTexturePro(texture, sourceRec, destRec, {0, 0}, 0, tint)
+	if !Toggles[name].checked {
+		raylib.DrawTexturePro(
+			texture,
+			Toggles[name].toggleTextureUnchecked,
+			{
+				destRec.x + Toggles[name].togglePositionOffset.x,
+				destRec.y + Toggles[name].togglePositionOffset.y,
+				Toggles[name].togglePositionOffset.width,
+				Toggles[name].togglePositionOffset.height,
+			},
+			{0, 0},
+			0,
+			tint,
+		)
+	} else {
+		raylib.DrawTexturePro(
+			texture,
+			Toggles[name].toggleTextureChecked,
+			{
+				destRec.x + Toggles[name].togglePositionOffset.x,
+				destRec.y + Toggles[name].togglePositionOffset.y,
+				Toggles[name].togglePositionOffset.width,
+				Toggles[name].togglePositionOffset.height,
+			},
+			{0, 0},
+			0,
+			tint,
+		)
+	}
+}
+
+GetTogglePressedState :: proc(name: string) -> int {
+	if Toggles[name].pressed {
+		if !Toggles[name].wasPressed {
+			Toggles[name].wasPressed = true
+			return 1
+		}
+	} else {
+		if Toggles[name].wasPressed {
+			Toggles[name].wasPressed = false
+			return 2
+		}
+	}
+	return 0
+}
 
 GetButtonPressedState :: proc(name: string) -> int {
 	if Buttons[name].pressed {
@@ -620,23 +701,33 @@ SpinnerControl :: struct {
 
 // ToggleShape is an enum that represents the shape of the toggle
 ToggleShape :: enum {
-	Toggle_Square,
+	Toggle_X,
 	Toggle_Circle,
+	Toggle_Check,
 }
 
 // ToggleControl is a control that can be used to display a toggle
 ToggleControl :: struct {
-	name:            string,
-	enabled:         bool,
-	x, y, w, h:      i32,
-	backgroundColor: raylib.Color,
-	borderColor:     raylib.Color,
-	borderWidth:     i32,
-	checked:         bool,
-	shape:           ToggleShape,
-	checkColor:      raylib.Color,
-	clickAction:     proc(this: ^ToggleControl),
-	hoverAction:     proc(this: ^ToggleControl),
+	name:                   string,
+	enabled:                bool,
+	texture:                raylib.Texture2D,
+	positionSpriteSheet:    raylib.Rectangle,
+	pressed:                bool,
+	tint_pressed:           raylib.Color,
+	tint_normal:            raylib.Color,
+	tint_hover:             raylib.Color,
+	tint_disabled:          raylib.Color,
+	toggleTextureUnchecked: raylib.Rectangle,
+	toggleTextureChecked:   raylib.Rectangle,
+	togglePositionOffset:   raylib.Rectangle,
+	positionRec:            raylib.Rectangle,
+	backgroundColor:        raylib.Color,
+	borderColor:            raylib.Color,
+	wasPressed:             bool,
+	borderWidth:            i32,
+	checked:                bool,
+	shape:                  ToggleShape,
+	checkColor:             raylib.Color,
 }
 
 // ProgressBarControl is a control that can be used to display a progress bar
