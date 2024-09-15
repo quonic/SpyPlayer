@@ -180,7 +180,7 @@ LoadPlaylist :: proc(clear: bool = true) {
 		return
 	}
 	playlist_data, read_error := os.read_entire_file(playlist_file)
-	if read_error != nil {
+	if read_error != {} {
 		fmt.eprintf("Error reading file: %v", read_error)
 		Texts["current song"].text = fmt.caprintf("Error loading playlist! Read error.")
 		return
@@ -203,7 +203,7 @@ LoadPlaylist :: proc(clear: bool = true) {
 	}
 
 	// Add the paths to the playlist
-	for _, path in paths {
+	for path, _ in paths {
 		AddSong(path)
 	}
 }
@@ -214,8 +214,6 @@ ClearPlaylist :: proc() {
 		raylib.StopMusicStream(currentStream)
 	}
 	raylib.UnloadMusicStream(currentStream)
-
-	currentStream = nil
 
 	for song, i in playList {
 		unordered_remove(&playList, i)
