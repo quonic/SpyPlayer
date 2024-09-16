@@ -714,7 +714,7 @@ HandleButtonActions :: proc() {
 		load_from_dir()
 	}
 	if GetButtonPressedState("load playlist") == 1 {
-		LoadPlaylist()
+		load_from_json()
 	}
 	if playListLoaded {
 		if Buttons["play"].enabled == false {
@@ -731,7 +731,7 @@ HandleButtonActions :: proc() {
 			Buttons["save playlist"].enabled = true
 		}
 		if GetButtonPressedState("save playlist") == 1 {
-			SavePlaylist()
+			save_to_json()
 		}
 		if GetTogglePressedState("loop song") == 1 {
 			currentStream.looping = !loop_song_toggle.checked

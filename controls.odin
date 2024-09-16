@@ -501,8 +501,7 @@ DrawToggleControl :: proc(name: string, camera: raylib.Camera2D) {
 		Toggles[name].positionRec.width,
 		Toggles[name].positionRec.height,
 	}
-	xPosMin := destRec.x + Toggles[name].togglePositionOffset.x
-	xPosMax := destRec.x + destRec.width - Toggles[name].togglePositionOffset.width
+
 	if Toggles[name].enabled {
 		if IsHovering(destRec, camera) {
 			if raylib.IsMouseButtonDown(raylib.MouseButton.LEFT) {

@@ -74,34 +74,16 @@ task_prompt_load_from_dir :: proc(t: thread.Task) {
 }
 
 task_prompt_load_from_json :: proc(t: thread.Task) {
-	// TODO: Add a way to remember the last folder/playlist
-	playlist_file := file_dialog.open_file_dialog("*.json")
-	if playlist_file == "" {
-		return
-	}
-	playlist_data, read_error := os.read_entire_file(playlist_file)
-	if read_error != {} {
-		fmt.eprintf("Error reading file: %v", read_error)
-		Texts["current song"].text = fmt.caprintf("Error loading playlist! Read error.")
-		return
-	}
-	defer delete(playlist_data)
-	paths: [dynamic]string
-	defer delete(paths)
-	err := json.unmarshal(playlist_data, &paths)
-	if err != nil {
-		fmt.eprintf("Error unmarshalling data: %v", err)
-		Texts["current song"].text = fmt.caprintf("Error loading playlist! Unmarshal error.")
-		return
-	}
-	for path, _ in paths {
-		AddSong(path)
-	}
+	LoadPlaylist()
 
 	time.sleep(1 * time.Millisecond)
 	playListLoaded = true
 	player_state = .Stopped
 	UpdatePlaylistList()
+}
+
+task_prompt_save_to_json :: proc(t: thread.Task) {
+	SavePlaylist()
 }
 
 
@@ -217,7 +199,7 @@ LoadPlaylist :: proc(clear: bool = true) {
 	if playlist_file == "" {
 		return
 	}
-	playlist_data, read_error := os.read_entire_file(playlist_file)
+	playlist_data, read_error := os.read_entire_file_from_filename_or_err(playlist_file)
 	if read_error != {} {
 		fmt.eprintf("Error reading file: %v", read_error)
 		Texts["current song"].text = fmt.caprintf("Error loading playlist! Read error.")
@@ -253,7 +235,7 @@ ClearPlaylist :: proc() {
 	}
 	raylib.UnloadMusicStream(currentStream)
 
-	for song, i in playList {
+	for _, i in playList {
 		unordered_remove(&playList, i)
 	}
 	currentSongIndex = 0
