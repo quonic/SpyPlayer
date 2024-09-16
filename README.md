@@ -25,8 +25,10 @@ This is a work in progress, and is not yet feature complete.
   - [ ] Add to playlist
   - [ ] Remove from playlist
   - [ ] Clear playlist
-  - [ ] Save playlist
-  - [ ] Load playlist
+  - [x] Save playlist
+  - [x] Load playlist
+  - [x] Automatic loadind of playlist from config
+  - [x] Automatic saving of playlist to config
 - [ ] Show metadata
   - [x] Title
   - [x] Artist
