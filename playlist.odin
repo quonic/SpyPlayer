@@ -86,6 +86,9 @@ task_prompt_save_to_json :: proc(t: thread.Task) {
 	SavePlaylist()
 }
 
+task_load_from_config :: proc(t: thread.Task) {
+	load_config()
+}
 
 ShufflePlaylist :: proc() {
 	rand.shuffle(playList[:])
@@ -194,10 +197,15 @@ SavePlaylist :: proc() {
 	Texts["current song"].text = fmt.caprintf("Playlist saved!")
 }
 
-LoadPlaylist :: proc(clear: bool = true) {
-	playlist_file := file_dialog.open_file_dialog("*.json")
-	if playlist_file == "" {
-		return
+LoadPlaylist :: proc(path: string = "", clear: bool = true) {
+	playlist_file: string
+	if path == "" {
+		playlist_file = file_dialog.open_file_dialog("*.json")
+		if playlist_file == "" {
+			return
+		}
+	} else {
+		playlist_file = path
 	}
 	playlist_data, read_error := os.read_entire_file_from_filename_or_err(playlist_file)
 	if read_error != {} {
