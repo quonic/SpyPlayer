@@ -814,7 +814,7 @@ AudioVisualizerControl :: struct {
 	name:                string,
 	enabled:             bool,
 	positionRec:         raylib.Rectangle,
-	bars:                []int,
+	bars:                []f32,
 	barColors:           []raylib.Color,
 	tint:                raylib.Color,
 	texture:             raylib.Texture2D,

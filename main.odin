@@ -2,6 +2,7 @@ package main
 
 import "base:runtime"
 import "core:fmt"
+import "core:math"
 import "core:mem"
 import "core:os"
 import "core:prof/spall"
@@ -107,19 +108,22 @@ spall_exit :: proc "contextless" (
 	spall._buffer_end(&spall_ctx, &spall_buffer)
 }
 
-// Audio Callback for FFT
-currValues: [^]complex64
-frameCount: u32 = 0
-AudioProcessFFT :: proc "c" (buffer: rawptr, frames: u32) {
-	context = runtime.default_context()
-	samples: []complex64 = (^[]complex64)(buffer)^
-	left: complex64
-	right: complex64
-	frameCount = frames
-	for frame: u32 = 0; frame < frames; frame = frame + 1 {
-		left = samples[frame * 2 + 0]
-		right = samples[frame * 2 + 1]
-		currValues[frame] = left
+AudioProcessEffectLPF :: proc "c" (buffer: rawptr, frames: u32) {
+	low: [2]f32
+	cutoff: f32 : 70 / 44100
+	k: f32 : cutoff / (cutoff + 0.1591549431)
+
+	for i := 0; i < int(frames) * 2; i += 2 {
+		bufptr := (^[]f32)(buffer)^
+
+		l := bufptr[i + 0]
+		r := bufptr[i + 1]
+
+		low[0] += k * (l - low[0])
+		low[1] += k * (r - low[1])
+
+		bufptr[i + 0] = low[0]
+		bufptr[i + 1] = low[1]
 	}
 }
 
@@ -150,10 +154,10 @@ _main :: proc() {
 	raylib.InitAudioDevice()
 	defer raylib.CloseAudioDevice()
 
-	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-
 	// Set the audio buffer size
 	raylib.SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE)
+
+	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessEffectLPF)
 
 
 	{

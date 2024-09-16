@@ -618,7 +618,7 @@ CreateUI :: proc() {
 					},
 					tint_normal = raylib.WHITE,
 					tint_disabled = raylib.DARKGRAY,
-					bars = []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+					bars = []f32{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 					barColors = []raylib.Color {
 						raylib.RED,
 						raylib.RED,
@@ -707,13 +707,13 @@ DrawToggles :: proc() {
 DrawAudioVisualizers :: proc() {
 	// TODO: FFT
 
-	if raylib.IsMusicStreamPlaying(currentStream) {
-		// currentStream.sampleRate
-		// currentStream.buffer
-		for i: u32 = 0; i < frameCount; i += 1 {
-			meter_bar.bars[i] = fft(currValues, int(frameCount))
-		}
-	}
+	// if raylib.IsMusicStreamPlaying(currentStream) {
+	// 	// currentStream.sampleRate
+	// 	// currentStream.buffer
+	// 	for i: int = 0; i < len(meter_bar.bars) - 1; i += 1 {
+	// 		meter_bar.bars[i] = (averageVolume[i] * 32)
+	// 	}
+	// }
 
 	DrawAudioVisualizerControl("meter", camera)
 }

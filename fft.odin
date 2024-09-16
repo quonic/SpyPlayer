@@ -90,7 +90,7 @@ revbits :: proc(v: u32, J: i32) -> u32 {
 	r: u32 = 0
 
 	for j: u32 = 0; j < u32(J); j += 1 {
-		r |= ((v >> j) & 1) << uint(transmute(u32)(J) - 1 - j)
+		r |= ((v >> j) & 1) << uint(cast(u32)(J) - 1 - j)
 	}
 
 	return r
