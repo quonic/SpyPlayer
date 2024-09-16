@@ -31,6 +31,9 @@ playlist_position_button: raylib.Rectangle
 playlist_plus_button: raylib.Rectangle
 playlist_background: raylib.Rectangle
 
+save_playlist_button: ButtonControl
+load_playlist_button: ButtonControl
+
 radio_unchecked: raylib.Rectangle
 radio_checked: raylib.Rectangle
 
@@ -592,6 +595,52 @@ CreateUI :: proc() {
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
 				}
+			case "save playlist":
+				save_playlist_button = {
+					name = "save playlist",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.DARKGRAY,
+				}
+			case "load playlist":
+				load_playlist_button = {
+					name = "load playlist",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.DARKGRAY,
+				}
 			}
 			AddButton(&previous_button)
 			AddButton(&play_button)
@@ -611,6 +660,8 @@ CreateUI :: proc() {
 			AddText(&play_time_text)
 			AddButton(&add_song_button)
 			AddButton(&remove_song_button)
+			AddButton(&save_playlist_button)
+			AddButton(&load_playlist_button)
 		}
 	}
 }
@@ -633,6 +684,8 @@ DrawButtons :: proc() {
 	DrawButtonControl("load", camera)
 	DrawButtonControl("add song", camera)
 	DrawButtonControl("remove song", camera)
+	DrawButtonControl("save playlist", camera)
+	DrawButtonControl("load playlist", camera)
 }
 
 DrawSliders :: proc() {
@@ -660,6 +713,9 @@ HandleButtonActions :: proc() {
 	if GetButtonPressedState("load") == 1 {
 		load_from_dir()
 	}
+	if GetButtonPressedState("load playlist") == 1 {
+		LoadPlaylist()
+	}
 	if playListLoaded {
 		if Buttons["play"].enabled == false {
 			Buttons["previous"].enabled = true
@@ -672,6 +728,10 @@ HandleButtonActions :: proc() {
 			Toggles["loop song"].enabled = true
 			Buttons["add song"].enabled = true
 			Buttons["remove song"].enabled = true
+			Buttons["save playlist"].enabled = true
+		}
+		if GetButtonPressedState("save playlist") == 1 {
+			SavePlaylist()
 		}
 		if GetTogglePressedState("loop song") == 1 {
 			currentStream.looping = !loop_song_toggle.checked
@@ -709,5 +769,6 @@ HandleButtonActions :: proc() {
 		Toggles["loop song"].enabled = false
 		Buttons["add song"].enabled = false
 		Buttons["remove song"].enabled = false
+		Buttons["save playlist"].enabled = false
 	}
 }

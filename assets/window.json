@@ -40,7 +40,9 @@
    { "name": "check unchecked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 254, "y": 27, "w": 9, "h": 9 } }] },
    { "name": "check checked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 263, "y": 27, "w": 9, "h": 9 } }] },
    { "name": "radio unchecked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 272, "y": 27, "w": 9, "h": 9 } }] },
-   { "name": "radio checked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 281, "y": 27, "w": 9, "h": 9 } }] }
+   { "name": "radio checked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 281, "y": 27, "w": 9, "h": 9 } }] },
+   { "name": "save playlist", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 532, "y": 175, "w": 29, "h": 20 } }] },
+   { "name": "load playlist", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 499, "y": 175, "w": 29, "h": 20 } }] }
   ]
  }
 }
