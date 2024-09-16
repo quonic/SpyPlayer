@@ -3,6 +3,7 @@ package main
 import "base:runtime"
 import "core:fmt"
 import "core:mem"
+import "core:os"
 import "core:prof/spall"
 import "core:strings"
 import "core:sync"
@@ -137,6 +138,29 @@ _main :: proc() {
 	// Set the audio buffer size
 	raylib.SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE)
 
+
+	{
+		XDG_CONFIG_HOME := os.get_env("XDG_CONFIG_HOME", context.temp_allocator)
+		if XDG_CONFIG_HOME == "" {
+			XDG_CONFIG_HOME = os.get_env("HOME", context.temp_allocator)
+			XDG_CONFIG_HOME = fmt.aprintf("%v/.config", XDG_CONFIG_HOME)
+		}
+		config_file = fmt.aprintf("%v/SpyPlayer/config.json", XDG_CONFIG_HOME)
+		if os.exists(config_file) {
+			// load_config()
+			thread.pool_add_task(
+				&pool,
+				allocator = context.allocator,
+				procedure = task_load_from_config,
+				data = nil,
+				user_index = 0,
+			)
+			thread.pool_start(&pool)
+			Texts["current song"].text = fmt.caprintf("Playlist loading from config...")
+			PlayListLoading = true
+		}
+	}
+
 	lastScrollTime = raylib.GetTime()
 
 	for !raylib.WindowShouldClose() {
@@ -211,6 +235,7 @@ _main :: proc() {
 		raylib.EndMode2D()
 		raylib.EndDrawing()
 	}
+	save_config()
 }
 
 play :: proc() {
@@ -307,7 +332,6 @@ LoadingUpdate :: proc() {
 		if thread.pool_num_done(&pool) >= N {
 			thread.terminate(pool.threads[N - 1], 0)
 			Texts["current song"].text = fmt.caprintf("Playlist loaded!")
-
 			thread.pool_finish(&pool)
 			currentSongIndex = 0
 			currentSongPath = playList[currentSongIndex].path
@@ -320,17 +344,42 @@ LoadingUpdate :: proc() {
 	}
 }
 
-load :: proc() {
+load_from_dir :: proc() {
 	thread.pool_add_task(
 		&pool,
 		allocator = context.allocator,
-		procedure = task_prompt_load_playlist,
+		procedure = task_prompt_load_from_dir,
 		data = nil,
 		user_index = 0,
 	)
 	thread.pool_start(&pool)
 	Texts["current song"].text = fmt.caprintf("Playlist loading...")
 	PlayListLoading = true
+}
+
+load_from_json :: proc() {
+	PlayListLoading = true
+	thread.pool_add_task(
+		&pool,
+		allocator = context.allocator,
+		procedure = task_prompt_load_from_json,
+		data = nil,
+		user_index = 0,
+	)
+	thread.pool_start(&pool)
+	Texts["current song"].text = fmt.caprintf("Playlist loading...")
+}
+
+save_to_json :: proc() {
+	thread.pool_add_task(
+		&pool,
+		allocator = context.allocator,
+		procedure = task_prompt_save_to_json,
+		data = nil,
+		user_index = 0,
+	)
+	thread.pool_start(&pool)
+	Texts["current song"].text = fmt.caprintf("Playlist saving...")
 }
 
 UpdateCurrentSongText :: proc() {

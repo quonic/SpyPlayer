@@ -74,15 +74,15 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 	}
 
 	@(private = "file")
-	execute_binary :: proc(fullpath: string) -> (output: string) {
+	execute_binary :: proc(fullpath: string) -> (output: string, exitcode: i32) {
 		location_buf: [1024]byte
 		file := popen(cstr(fullpath), "r")
-		defer pclose(file)
 
 		fgets(raw_data(location_buf[:]), len(location_buf), file)
 		output = string(location_buf[:])
 		output, _ = strings.replace_all(output, "\n", "", context.temp_allocator)
-		return strings.clone(output)
+		exit_code := pclose(file)
+		return strings.clone(output), exit_code
 	}
 
 	open_file_dialog :: proc(filter: ..string, directory: bool = false) -> string {
@@ -101,7 +101,7 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 					)
 				}
 			}
-			output := execute_binary(command)
+			output, _ := execute_binary(command)
 			return output
 		case .Zenity:
 			command: string
@@ -117,14 +117,41 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 					)
 				}
 			}
-			output := execute_binary(command)
+			output, _ := execute_binary(command)
+			return output
+		}
+		unimplemented()
+	}
+	save_file_dialog :: proc(filter: ..string) -> string {
+		switch _, type, _ := find_installed_dialog_binary(); type {
+		case .KDialog:
+			command: string
+			if len(filter) == 0 {
+				command = fmt.tprintf("kdialog --getsavefilename")
+			} else {
+				command = fmt.tprintf("kdialog --getsavefilename '%v'", strings.join(filter, " "))
+			}
+			output, _ := execute_binary(command)
+			return output
+		case .Zenity:
+			command: string
+			if len(filter) == 0 {
+				command = fmt.tprintf("zenity --file-selection --save")
+			} else {
+				command = fmt.tprintf(
+					"zenity --file-selection --save --file-filter='%v'",
+					strings.join(filter, " "),
+				)
+			}
+			output, _ := execute_binary(command)
 			return output
 		}
 		unimplemented()
 	}
 
-	show_popup :: proc(title: string, message: string, type: PopupType) {
+	show_popup :: proc(title: string, message: string, type: PopupType) -> (result: bool) {
 		notification_type := type
+		output: i32
 		switch _, type, _ := find_installed_dialog_binary(); type {
 		case .KDialog:
 			command: string
@@ -135,8 +162,10 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 				command = fmt.tprintf("kdialog --title '%v' --sorry '%v'", title, message)
 			case .Error:
 				command = fmt.tprintf("kdialog --title '%v' --error '%v'", title, message)
+			case .Question:
+				command = fmt.tprintf("kdialog --title '%v' --yesno '%v'", title, message)
 			}
-			execute_binary(command)
+			_, output = execute_binary(command)
 		case .Zenity:
 			command: string
 			switch notification_type {
@@ -146,8 +175,15 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 				command = fmt.tprintf("zenity --warning --title='%v' --text='%v'", title, message)
 			case .Error:
 				command = fmt.tprintf("zenity --error --title='%v' --text='%v'", title, message)
+			case .Question:
+				command = fmt.tprintf("zenity --question --title='%v' --text='%v'", title, message)
 			}
-			execute_binary(command)
+			_, output = execute_binary(command)
+		}
+		if output == 0 {
+			return true
+		} else {
+			return false
 		}
 	}
 
