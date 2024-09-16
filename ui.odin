@@ -1,7 +1,9 @@
 package main
 
 import "aseprite"
+import "base:runtime"
 import "core:fmt"
+import "core:mem"
 import "ffprobe"
 import "vendor:raylib"
 
@@ -24,6 +26,7 @@ slider_bar: raylib.Rectangle
 loop_song_toggle: ToggleControl
 add_song_button: ButtonControl
 remove_song_button: ButtonControl
+meter_bar: AudioVisualizerControl
 
 playlist_scrollbar: raylib.Rectangle
 playlist_minus_button: raylib.Rectangle
@@ -251,52 +254,6 @@ CreateUI :: proc() {
 						raylib.SetMusicVolume(currentStream, value)
 						currentSongVolume = value
 					},
-				}
-			case "eq":
-				eq_slider = {
-					name = "eq",
-					enabled = true,
-					positionRec = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint = raylib.WHITE,
-					texture = window_texture,
-					positionSpriteSheet = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint_normal = raylib.WHITE,
-					tint_pressed = raylib.LIGHTGRAY,
-					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.DARKGRAY,
-				}
-			case "meter":
-				meter_slider = {
-					name = "meter",
-					enabled = true,
-					positionRec = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint = raylib.WHITE,
-					texture = window_texture,
-					positionSpriteSheet = {
-						x = key.bounds.x,
-						y = key.bounds.y,
-						width = key.bounds.w,
-						height = key.bounds.h,
-					},
-					tint_normal = raylib.WHITE,
-					tint_pressed = raylib.LIGHTGRAY,
-					tint_hover = raylib.GRAY,
-					tint_disabled = raylib.DARKGRAY,
 				}
 			case "load":
 				load_button = {
@@ -641,6 +598,42 @@ CreateUI :: proc() {
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
 				}
+			case "meter":
+				meter_bar = {
+					name = "meter",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_disabled = raylib.DARKGRAY,
+					bars = []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+					barColors = []raylib.Color {
+						raylib.RED,
+						raylib.RED,
+						raylib.GREEN,
+						raylib.GREEN,
+						raylib.BLUE,
+						raylib.BLUE,
+						raylib.YELLOW,
+						raylib.YELLOW,
+						raylib.ORANGE,
+						raylib.ORANGE,
+						raylib.PURPLE,
+						raylib.PURPLE,
+					},
+				}
 			}
 			AddButton(&previous_button)
 			AddButton(&play_button)
@@ -655,6 +648,7 @@ CreateUI :: proc() {
 			AddSlider(&seek_bar)
 			AddList(&playlist_list)
 			AddText(&current_song_text)
+			AddAudioVisualizer(&meter_bar)
 
 			AddText(&song_length_text)
 			AddText(&play_time_text)
@@ -672,6 +666,7 @@ UserInterface :: proc() {
 	DrawLists()
 	DrawTexts()
 	DrawToggles()
+	DrawAudioVisualizers()
 	HandleButtonActions()
 }
 
@@ -707,6 +702,20 @@ DrawLists :: proc() {
 
 DrawToggles :: proc() {
 	DrawToggleControl("loop song", camera)
+}
+
+DrawAudioVisualizers :: proc() {
+	// TODO: FFT
+
+	if raylib.IsMusicStreamPlaying(currentStream) {
+		// currentStream.sampleRate
+		// currentStream.buffer
+		for i: u32 = 0; i < frameCount; i += 1 {
+			meter_bar.bars[i] = fft(currValues, int(frameCount))
+		}
+	}
+
+	DrawAudioVisualizerControl("meter", camera)
 }
 
 HandleButtonActions :: proc() {

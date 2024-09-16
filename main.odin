@@ -107,6 +107,21 @@ spall_exit :: proc "contextless" (
 	spall._buffer_end(&spall_ctx, &spall_buffer)
 }
 
+// Audio Callback for FFT
+currValues: [^]complex64
+frameCount: u32 = 0
+AudioProcessFFT :: proc "c" (buffer: rawptr, frames: u32) {
+	context = runtime.default_context()
+	samples: []complex64 = (^[]complex64)(buffer)^
+	left: complex64
+	right: complex64
+	frameCount = frames
+	for frame: u32 = 0; frame < frames; frame = frame + 1 {
+		left = samples[frame * 2 + 0]
+		right = samples[frame * 2 + 1]
+		currValues[frame] = left
+	}
+}
 
 _main :: proc() {
 	// Create the thread pool
@@ -134,6 +149,8 @@ _main :: proc() {
 	// Initialize the audio device
 	raylib.InitAudioDevice()
 	defer raylib.CloseAudioDevice()
+
+	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 
 	// Set the audio buffer size
 	raylib.SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE)
