@@ -132,6 +132,7 @@ LoadSong :: proc(path: string) {
 		currentStream = raylib.LoadMusicStream(
 			strings.clone_to_cstring(playList[currentSongIndex].path),
 		)
+		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 		for !raylib.IsMusicReady(currentStream) {
 			thread.yield()
 		}

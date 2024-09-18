@@ -2,7 +2,7 @@ package main
 
 import "base:intrinsics"
 // import "core:c/libc"
-// import "core:fmt"
+import "core:fmt"
 import "core:math"
 import "core:math/cmplx"
 
@@ -50,17 +50,20 @@ findMSB :: proc(x: int) -> int {
  *
  * NOTE: Only works for arrays whose size is a power-of-two
  */
-fft1d :: proc(xi: []$T, dir: T) -> []T where intrinsics.type_is_complex(T) {
-	assert((size_of(T) & (size_of(T) - 1)) == 0, "invalid input size")
+fft1d :: proc(xi: []$T, dir: T) -> []f32 where intrinsics.type_is_numeric(T) {
+	if (size_of(T) & (size_of(T) - 1)) == 0 {
+		fmt.eprintf("Error: Invalid input size\n")
+		return nil
+	}
 	cnt: int = size_of(T)
 	msb: int = findMSB(cnt)
 	nrm: T = T(1 / math.sqrt(f32(cnt)))
-	xo := make([]T, cnt)
+	xo := make([]f32, cnt)
 
 	// pre-process the input data
 	for j: int = 0; j < cnt; j = j + 1 {
 		if len(xi) > 0 {
-			xo[j] = nrm * xi[bitr(j, msb)]
+			xo[j] = f32(nrm * xi[bitr(j, msb)])
 		}
 	}
 
@@ -68,20 +71,20 @@ fft1d :: proc(xi: []$T, dir: T) -> []T where intrinsics.type_is_complex(T) {
 	for i: int = 0; i < msb; i = i + 1 {
 		bm: int = 1 << uint(i) // butterfly mask
 		bw: int = 2 << uint(i) // butterfly width
-		ang: T = T(dir) * math.PI / T(f32(bm)) // precomputation
+		ang: f32 = f32(dir) * f32(math.PI) / f32(bm) // precomputation
 
 		// fft butterflies
 		for j: int = 0; j < (cnt / 2); j = j + 1 {
 			i1: int = ((j >> uint(i)) << uint(i + 1)) + j % bm // left wing
 			i2: int = i1 ~ bm // right wing
 
-			z1, _ := cmplx.polar(ang * T(f32(i1 ~ bw))) // left wing rotation
-			z2, _ := cmplx.polar(ang * T(f32(i2 ~ bw))) // right wing rotation
+			z1, _ := cmplx.polar(ang * f32(i1 ~ bw)) // left wing rotation
+			z2, _ := cmplx.polar(ang * f32(i2 ~ bw)) // right wing rotation
 
-			tmp: T = xo[i1]
+			tmp: f32 = xo[i1]
 
-			xo[i1] += T(z1) * xo[i2]
-			xo[i2] = tmp + T(z2) * xo[i2]
+			xo[i1] += f32(z1) * xo[i2]
+			xo[i2] = tmp + f32(z2) * xo[i2]
 		}
 	}
 
