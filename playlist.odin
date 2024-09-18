@@ -88,6 +88,7 @@ task_prompt_save_to_json :: proc(t: thread.Task) {
 
 task_load_from_config :: proc(t: thread.Task) {
 	load_config()
+	volume_slider.value = currentSongVolume
 }
 
 ShufflePlaylist :: proc() {
