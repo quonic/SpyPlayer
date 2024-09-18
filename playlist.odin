@@ -231,8 +231,8 @@ LoadPlaylist :: proc(path: string = "", clear: bool = true) {
 	}
 
 	// Add the paths to the playlist
-	for path, _ in paths {
-		AddSong(path)
+	for path_i, _ in paths {
+		AddSong(path_i)
 	}
 }
 
@@ -240,6 +240,7 @@ ClearPlaylist :: proc() {
 
 	if raylib.IsMusicStreamPlaying(currentStream) {
 		raylib.StopMusicStream(currentStream)
+		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 	}
 	raylib.UnloadMusicStream(currentStream)
 

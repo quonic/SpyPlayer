@@ -1,241 +1,104 @@
 package main
 
-// Decimation in time radix-2
-
-import "core:c/libc"
-import "core:fmt"
+import "base:intrinsics"
+// import "core:c/libc"
+// import "core:fmt"
 import "core:math"
 import "core:math/cmplx"
-import "core:mem"
 
-// #include "fft.h"
-// #include <math.h>
-// #include <stdlib.h>
-// #include <string.h>
+// Converted from c++ to odin
+// https://github.com/jdupuy/dj_fft/blob/master/dj_fft.h
 
-// static int ctz(size_t N)
-// {
-// 	int ctz1 = 0;
-//
-// 	while (N) {
-// 		ctz1++;
-// 		N >>= 1;
-// 	}
-//
-// 	return ctz1 - 1;
-// }
 
-@(private = "file")
-ctz :: proc(N: u32) -> i32 {
-	N := N
-	ctz1: i32 = 0
+bitr :: proc(y: int, nb: int) -> int {
+	x: int = y
+	assert(nb > 0 && 32 > nb, "invalid bit count")
+	x = (x << 16) | (x >> 16)
+	x = ((x & 0x00FF00FF) << 8) | ((x & 0xFF00FF00) >> 8)
+	x = ((x & 0x0F0F0F0F) << 4) | ((x & 0xF0F0F0F0) >> 4)
+	x = ((x & 0x33333333) << 2) | ((x & 0xCCCCCCCC) >> 2)
+	x = ((x & 0x55555555) << 1) | ((x & 0xAAAAAAAA) >> 1)
 
-	for N != 0 {
-		ctz1 += 1
-		N >>= 1
-	}
-
-	return ctz1 - 1
+	return (x >> uint(32 - nb)) & (0xFFFFFFFF >> uint(32 - nb))
 }
 
-// static void nop_split(const float complex *x, float complex *X, size_t N)
-// {
-// 	for (size_t n = 0; n < N/2; n++) {
-// 		X[0/2 + n] = x[2*n + 0];
-// 		X[N/2 + n] = x[2*n + 1];
-// 	}
-// }
+/*
+ * Returns offset to most significant bit
+ * NOTE: only works for positive power of 2s
+ * examples:
+ * 1b      -> 0d
+ * 100b    -> 2d
+ * 100000b -> 5d
+ */
+findMSB :: proc(x: int) -> int {
+	assert(x > 0, "invalid input")
+	p: int = 0
+	y: int = x
 
-@(private = "file")
-nop_split :: proc(x: [^]complex64, X: [^]complex64, N: int) {
-	for n: int = 0; n < N / 2; n += 1 {
-		X[0 / 2 + n] = x[2 * n + 0]
-		X[N / 2 + n] = x[2 * n + 1]
-	}
-}
-
-// static void fft_split(const float complex *x, float complex *X, size_t N, float complex phi)
-// {
-// 	for (size_t n = 0; n < N/2; n++) {
-// 		X[0/2 + n] = x[2*n + 0] + x[2*n + 1] * cexpf(-2*(float)M_PI*I*phi);
-// 		X[N/2 + n] = x[2*n + 0] - x[2*n + 1] * cexpf(-2*(float)M_PI*I*phi);
-// 	}
-// }
-
-@(private = "file")
-fft_split :: proc(x: [^]complex64, X: [^]complex64, N: u32, phi: complex64) {
-	for n: u32 = 0; n < N / 2; n += 1 {
-		X[0 / 2 + n] =
-			x[2 * n + 0] +
-			x[2 * n + 1] * cmplx.exp_complex64(complex64(complex(0.0, -2 * f32(math.PI))) * phi)
-		X[N / 2 + n] =
-			x[2 * n + 0] -
-			x[2 * n + 1] * cmplx.exp_complex64(complex64(complex(0.0, -2 * f32(math.PI))) * phi)
-	}
-}
-
-// static size_t revbits(size_t v, int J)
-// {
-// 	size_t r = 0;
-//
-// 	for (int j = 0; j < J; j++) {
-// 		r |= ((v >> j) & 1) << (J - 1 - j);
-// 	}
-//
-// 	return r;
-// }
-
-@(private = "file")
-revbits :: proc(v: u32, J: i32) -> u32 {
-	r: u32 = 0
-
-	for j: u32 = 0; j < u32(J); j += 1 {
-		r |= ((v >> j) & 1) << uint(cast(u32)(J) - 1 - j)
+	for y > 1 {
+		y = y >> 1
+		p = p + 1
 	}
 
-	return r
+	return p
 }
 
-// static int nop_reverse(int b, float complex *buffers[2], size_t N)
-// {
-// 	int J = ctz(N);
-//
-// 	for (int j = 0; j < J - 1; j++, b++) {
-// 		size_t delta = N >> j;
-//
-// 		for (size_t n = 0; n < N; n += delta) {
-// 			nop_split(buffers[b&1] + n, buffers[~b&1] + n, delta);
-// 		}
-// 	}
-//
-// 	return b;
-// }
+/*
+ * Computes a Fourier transform, i.e.,
+ * xo[k] = 1/sqrt(N) sum(j=0 -> N-1) xi[j] exp(i 2pi j k / N)
+ * with O(N log N) complexity using the butterfly technique
+ *
+ * NOTE: Only works for arrays whose size is a power-of-two
+ */
+fft1d :: proc(xi: []$T, dir: T) -> []T where intrinsics.type_is_complex(T) {
+	assert((size_of(T) & (size_of(T) - 1)) == 0, "invalid input size")
+	cnt: int = size_of(T)
+	msb: int = findMSB(cnt)
+	nrm: T = T(1 / math.sqrt(f32(cnt)))
+	xo := make([]T, cnt)
 
-@(private = "file")
-nop_reverse :: proc(
-	b: i32,
-	/*float complex *buffers[2]*/
-	buffers: [2][^]complex64,
-	N: u32,
-) -> i32 {
-	b := b
-	J: i32 = ctz(N)
-
-	for j: i32 = 0; j < J - 1; j += 1  /* , b += 1 */{
-		delta: u32 = N >> uint(j)
-
-		for n: u32 = 0; n < N; n += delta {
-			// nop_split( buffers[ b & 1 ] + n, buffers[ ~ b & 1] + n, delta )
-			buf_a := mem.ptr_offset(buffers[b & 1], n)
-			buf_b := mem.ptr_offset(buffers[~b & 1], n)
-			nop_split(buf_a, buf_b, int(delta))
+	// pre-process the input data
+	for j: int = 0; j < cnt; j = j + 1 {
+		if len(xi) > 0 {
+			xo[j] = nrm * xi[bitr(j, msb)]
 		}
-
-		b += 1
 	}
 
-	return b
-}
+	// fft passes
+	for i: int = 0; i < msb; i = i + 1 {
+		bm: int = 1 << uint(i) // butterfly mask
+		bw: int = 2 << uint(i) // butterfly width
+		ang: T = T(dir) * math.PI / T(f32(bm)) // precomputation
 
-// static int fft_reverse(int b, float complex *buffers[2], size_t N)
-// {
-// 	int J = ctz(N);
-//
-// 	for (int j = 0; j < J; j++, b++) {
-// 		size_t delta = N >> j;
-//
-// 		for (size_t n = 0; n < N; n += delta) {
-// 			float complex phi = (float)revbits(n/delta, j) / (float)(2 << j);
-// 			fft_split(buffers[b&1] + n, buffers[~b&1] + n, delta, phi);
-// 		}
-// 	}
-//
-// 	return b;
-// }
+		// fft butterflies
+		for j: int = 0; j < (cnt / 2); j = j + 1 {
+			i1: int = ((j >> uint(i)) << uint(i + 1)) + j % bm // left wing
+			i2: int = i1 ~ bm // right wing
 
-@(private = "file")
-fft_reverse :: proc(
-	b: i32,
-	/* float complex *buffers[2] */
-	buffers: [2][^]complex64,
-	N: u32,
-) -> i32 {
-	b := b
-	J: i32 = ctz(N)
+			z1, _ := cmplx.polar(ang * T(f32(i1 ~ bw))) // left wing rotation
+			z2, _ := cmplx.polar(ang * T(f32(i2 ~ bw))) // right wing rotation
 
-	for j: i32 = 0; j < J; j += 1  /* , b++ */{
-		delta: u32 = N >> uint(j)
+			tmp: T = xo[i1]
 
-		for n: u32 = 0; n < N; n += delta {
-			phi: complex64 = complex64(
-				complex(
-					(transmute(f32)revbits(u32(n) / delta, j)) /
-					(transmute(f32)(u32(2) << uint(j))),
-					0.0,
-				),
-			)
-			buf_a := mem.ptr_offset(buffers[b & 1], n)
-			buf_b := mem.ptr_offset(buffers[~b & 1], n)
-			fft_split(buf_a, buf_b, delta, phi)
+			xo[i1] += T(z1) * xo[i2]
+			xo[i2] = tmp + T(z2) * xo[i2]
 		}
-		b += 1
 	}
 
-	return b
+	return xo
 }
 
-// int fft(float complex *vector, size_t N)
-// {
-// 	if (!N) return 0;
-//
-// 	if (N & (N - 1)) return 1;
-//
-// 	float complex *buffers[2] = { vector, malloc(N*sizeof(float complex)) };
-//
-// 	if (!buffers[1]) return -1;
-//
-// 	int b = 0;
-//
-// 	b = nop_reverse(b, buffers, N);
-// 	b = fft_reverse(b, buffers, N);
-// 	b = nop_reverse(b, buffers, N);
-//
-// 	memmove(vector, buffers[b&1], N*sizeof(float complex));
-//
-// 	free(buffers[1]);
-//
-// 	return 0;
+// fft :: proc(x: ^[]complex64) {
+// 	N := len(x)
+// 	if N <= 1 {return}
+// 	even: []complex64 = x[0: N / 2: 2]
+// 	odd: []complex64 = x[1: N / 2: 2]
+// 	fft(even)
+// 	fft(odd)
+
+// 	for k: int = 0; k < N / 2; k = k + 1 {
+// 		t: complex64 = cmplx.polar_complex64(complex(1.0, 2 * math.PI * k / N)) * odd[k]
+// 		x[k] = even[k] + t
+// 		x[k + N / 2] = even[k] - t
+// 	}
 // }
-
-fft :: proc(vector: [^]complex64, N: int) -> int {
-	if N <= 0 {
-		return 0
-	}
-
-	N_a: u32 = u32(N)
-
-	if (N_a & (N_a - 1)) != 0 {
-		return 1
-	}
-
-	// float complex *buffers[2] = { vector, malloc(N*sizeof(float complex)) };
-	buffers: [2][^]complex64 = [2][^]complex64{}
-	buffers[0] = vector
-	buffers[1] = make([^]complex64, N_a)
-
-	if buffers[1] == nil {
-		return -1
-	}
-
-	b: i32 = 0
-
-	b = nop_reverse(b, buffers, N_a)
-	b = fft_reverse(b, buffers, N_a)
-	b = nop_reverse(b, buffers, N_a)
-
-	libc.memmove(vector, buffers[b & 1], uint(N_a * size_of(complex64)))
-
-	free(buffers[1])
-
-	return 0
-}

@@ -3,7 +3,6 @@ package main
 import "core:encoding/json"
 import "core:fmt"
 import "core:os"
-import "file_dialog"
 
 Config :: struct {
 	playlist:            [dynamic]Song,
