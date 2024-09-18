@@ -51,8 +51,12 @@ findMSB :: proc(x: int) -> int {
  * NOTE: Only works for arrays whose size is a power-of-two
  */
 fft1d :: proc(xi: []$T, dir: T) -> []f32 where intrinsics.type_is_numeric(T) {
-	if (size_of(T) & (size_of(T) - 1)) == 0 {
-		fmt.eprintf("Error: Invalid input size\n")
+	if (size_of(T) & (size_of(T) - 1)) != 0 {
+		fmt.eprintf(
+			"Error: Invalid input size: %v, %v\n",
+			size_of(T),
+			size_of(T) & (size_of(T) - 1),
+		)
 		return nil
 	}
 	cnt: int = size_of(T)
@@ -63,7 +67,10 @@ fft1d :: proc(xi: []$T, dir: T) -> []f32 where intrinsics.type_is_numeric(T) {
 	// pre-process the input data
 	for j: int = 0; j < cnt; j = j + 1 {
 		if len(xi) > 0 {
-			xo[j] = f32(nrm * xi[bitr(j, msb)])
+			br := bitr(j, msb)
+			xi_r := f32(xi[br]) // TODO: Fix Segfault here. Due to xi pointer being unknown according to debugger
+			xo[j] = f32(nrm) * xi_r
+			// xo[j] = f32(nrm * xi[bitr(j, msb)])
 		}
 	}
 
