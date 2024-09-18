@@ -12,7 +12,15 @@ Toggles: map[string]^ToggleControl
 Texts: map[string]^TextControl
 ProgressBars: map[string]^ProgressBarControl
 Lists: map[string]^ListControl
+AudioVisualizers: map[string]^AudioVisualizerControl
 
+AddAudioVisualizer :: proc(audioVisualizer: ^AudioVisualizerControl) -> bool {
+	if audioVisualizer.name == "" {
+		return false
+	}
+	AudioVisualizers[audioVisualizer.name] = audioVisualizer
+	return true
+}
 
 AddLabel :: proc(label: ^LabelControl) -> bool {
 	if label.name != "" || Labels[label.name] == nil {
@@ -97,6 +105,32 @@ IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
 		raylib.GetScreenToWorld2D(raylib.GetMousePosition(), camera),
 		box,
 	)
+}
+
+DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
+	texture: raylib.Texture2D = AudioVisualizers[name].texture
+	sourceRec: raylib.Rectangle = AudioVisualizers[name].positionSpriteSheet
+	tint: raylib.Color =
+		AudioVisualizers[name].enabled ? AudioVisualizers[name].tint_normal : AudioVisualizers[name].tint_disabled
+
+	// Draw the background image
+	raylib.DrawTexturePro(texture, sourceRec, AudioVisualizers[name].positionRec, {0, 0}, 0, tint)
+	// Draw the bars
+	if AudioVisualizers[name].enabled {
+		// Normal state
+		for bar, i in AudioVisualizers[name].bars {
+			raylib.DrawRectangle(
+				i32(AudioVisualizers[name].positionRec.x) + i32(i),
+				i32(AudioVisualizers[name].positionRec.y) + i32(i),
+				i32(AudioVisualizers[name].positionRec.width) + i32(i - i * 2),
+				i32(AudioVisualizers[name].positionRec.height) + i32(i - i * 2),
+				AudioVisualizers[name].barColors[i32(bar)],
+			)
+		}
+	} else {
+		// Disabled state
+	}
+
 }
 
 DrawLabelControl :: proc(name: string) {
@@ -774,4 +808,17 @@ ListControl :: struct {
 	scrollbarWidth:      f32,
 	scrollSpeed:         i32,
 	sliderSize:          f32,
+}
+
+AudioVisualizerControl :: struct {
+	name:                string,
+	enabled:             bool,
+	positionRec:         raylib.Rectangle,
+	bars:                []f32,
+	barColors:           []raylib.Color,
+	tint:                raylib.Color,
+	texture:             raylib.Texture2D,
+	positionSpriteSheet: raylib.Rectangle,
+	tint_normal:         raylib.Color,
+	tint_disabled:       raylib.Color,
 }

@@ -18,7 +18,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Build with or without our debug options
-odin build . -define:leaks=$(if ($leaks) { "true" } else { "false" }) -define:trace=$(if ($trace) { "true" } else { "false" })
+odin build . -debug -define:leaks=$(if ($leaks) { "true" } else { "false" }) -define:trace=$(if ($trace) { "true" } else { "false" })
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Build failed"
     exit 1
