@@ -122,7 +122,7 @@ AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 		return
 	}
 
-	// Working, but seems to be incorrect as channels are mixed?
+	// NOTE: Working, but seems to be incorrect as channels are mixed?
 	fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
 	currValues = fs[0]
 	// NOTE: This does work, but this processes only one frame with both "channels"
