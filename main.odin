@@ -108,23 +108,40 @@ spall_exit :: proc "contextless" (
 	spall._buffer_end(&spall_ctx, &spall_buffer)
 }
 
-currValues: []f32
+currValues: [2]f32
+// currValues: []f32
 frameCount: u32 = 0
 
 AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
-	// TODO: Fix fft1d segfaulting
-	// context = runtime.default_context()
-	// if currentStream.sampleSize == 8 {
-	// 	samples: []u8 = (^[]u8)(buffer)^
-	// 	currValues = fft1d(samples, 0)
-	// } else if currentStream.sampleSize == 16 {
-	// 	samples: []f16 = (^[]f16)(buffer)^
-	// 	currValues = fft1d(samples, 0)
-	// } else if currentStream.sampleSize == 32 {
-	// 	samples: []f32 = (^[]f32)(buffer)^
-	// 	currValues = fft1d(samples, 0)
+	context = runtime.default_context()
+	if buffer == nil || frames == 0 {
+		return
+	}
+	if mem.check_zero_ptr(buffer, int(currentStream.frameCount)) {
+		fmt.printfln("Buffer is zero")
+		return
+	}
+
+	// Working, but seems to be incorrect as channels are mixed?
+	fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
+	currValues = fs[0]
+	// NOTE: This does work, but this processes only one frame with both "channels"
+	// currValues = fft1d(fs[0][:], 0)
+
+	// NOTE: Slow! This does work, but this processes only one frame with both "channels"
+	// https://github.com/manjaroman2/musializer/blob/master/src/plug.c#L427-L436
+	// for i in 0 ..< frames {
+	// 	currValues = fft1d(fs[i][:], 0)
 	// }
 
+	// Compiles, but incorrect results
+	// currValues = fft1d(mem.reinterpret_copy([]f32, buffer), 0)
+
+	// Compiles, but incorrect results
+	// frames := make([]f32, currentStream.frameCount)
+	// samples := (^[]f32)(buffer)^
+	// samples: []f32 = (^[]f32)(buffer)^
+	// currValues = fft1d(samples, 0)
 
 }
 
