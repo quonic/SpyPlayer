@@ -116,33 +116,25 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, AudioVisualizers[name].positionRec, {0, 0}, 0, tint)
 
-	// Draw the bars with a space of 1 pixel between each bar
-	// Only draw every 8th bar from AudioVisualizers[name].bars
-	// Each bar uses the color raylib.BLACK
-	// Each bar height is dependent on the values from the array AudioVisualizers[name].bars
+	// If the left channel bars array is empty, return and draw nothing
+	if len(AudioVisualizers[name].leftChannelBars) == 0 {
+		return
+	}
 
-	for bar, i in AudioVisualizers[name].bars[:512 / 4] {
-		x := i32(AudioVisualizers[name].positionRec.x + f32(i))
-		if bar < 0 {
-			raylib.DrawRectangle(
-				x,
-				i32(AudioVisualizers[name].positionRec.y),
-				1,
-				i32(bar * AudioVisualizers[name].positionRec.height / 2),
-				raylib.BLACK,
-			)
-		} else if bar > 0 {
-			raylib.DrawRectangle(
-				x,
-				i32(
-					AudioVisualizers[name].positionRec.y +
-					bar * AudioVisualizers[name].positionRec.height / 2,
-				),
-				1,
-				i32(AudioVisualizers[name].positionRec.height / 2),
-				raylib.BLACK,
-			)
-		}
+	Width := AudioVisualizers[name].positionRec.width
+	Height := AudioVisualizers[name].positionRec.height
+	// Draw the left channel waveform
+	for bar, i in AudioVisualizers[name].leftChannelBars[:int(Width - 2)] {
+		x := i32(i) + i32(AudioVisualizers[name].positionRec.x) + 1
+		y := i32(
+			AudioVisualizers[name].positionRec.y +
+			AudioVisualizers[name].positionRec.height -
+			(f32(bar) * Height),
+		)
+		width := 2
+		height := i32(bar * Height)
+		color := raylib.BLACK
+		raylib.DrawRectangle(x, y, i32(width), i32(min(height, i32(Height))), color)
 	}
 }
 
@@ -827,7 +819,8 @@ AudioVisualizerControl :: struct {
 	name:                string,
 	enabled:             bool,
 	positionRec:         raylib.Rectangle,
-	bars:                [512]f32,
+	leftChannelBars:     []f32,
+	rightChannelBars:    []f32,
 	barColors:           []raylib.Color,
 	tint:                raylib.Color,
 	texture:             raylib.Texture2D,
