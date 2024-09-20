@@ -116,20 +116,34 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, AudioVisualizers[name].positionRec, {0, 0}, 0, tint)
 	// Draw the bars
-	if AudioVisualizers[name].enabled {
-		// Normal state
-		for bar, i in AudioVisualizers[name].bars {
-			raylib.DrawRectangle(
-				i32(AudioVisualizers[name].positionRec.x) + i32(i),
-				i32(AudioVisualizers[name].positionRec.y) + i32(i),
-				i32(AudioVisualizers[name].positionRec.width) + i32(i - i * 2),
-				i32(AudioVisualizers[name].positionRec.height) + i32(i - i * 2),
-				AudioVisualizers[name].barColors[i32(bar)],
-			)
-		}
-	} else {
-		// Disabled state
-	}
+
+	// Left Channel
+	barWidth := AudioVisualizers[name].positionRec.width / 2
+	leftChannel: f32 = AudioVisualizers[name].bars[0] * barWidth
+	// Right Channel
+	rightChannel: f32 = AudioVisualizers[name].bars[1] * barWidth
+
+	halfHeight := i32(AudioVisualizers[name].positionRec.height / 2)
+
+	// TODO: Draw the channels more in the center and spaced apart virtically
+
+	// Draw the left channel as a rectangle
+	raylib.DrawRectangle(
+		i32(AudioVisualizers[name].positionRec.x),
+		i32(AudioVisualizers[name].positionRec.y),
+		i32(leftChannel),
+		halfHeight,
+		raylib.BLACK,
+	)
+	// Draw the right channel as a rectangle
+	raylib.DrawRectangle(
+		i32(AudioVisualizers[name].positionRec.x),
+		i32(AudioVisualizers[name].positionRec.y) + halfHeight,
+		i32(rightChannel),
+		halfHeight,
+		raylib.RED,
+	)
+
 
 }
 
@@ -814,7 +828,7 @@ AudioVisualizerControl :: struct {
 	name:                string,
 	enabled:             bool,
 	positionRec:         raylib.Rectangle,
-	bars:                []f32,
+	bars:                [2]f32,
 	barColors:           []raylib.Color,
 	tint:                raylib.Color,
 	texture:             raylib.Texture2D,
