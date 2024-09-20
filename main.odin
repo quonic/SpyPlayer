@@ -108,7 +108,7 @@ spall_exit :: proc "contextless" (
 	spall._buffer_end(&spall_ctx, &spall_buffer)
 }
 
-currValues: [2]f32
+currValues: [512]f32
 // currValues: []f32
 frameCount: u32 = 0
 
@@ -121,10 +121,26 @@ AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 		fmt.printfln("Buffer is zero")
 		return
 	}
+	fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
+	if frames == 512 {
+		leftChannel: [512]f32
+		rightChannel: [512]f32
+		for i in 0 ..< int(frames) {
+			leftChannel[i] = fs[i][0]
+			rightChannel[i] = fs[i][1]
+		}
+		currValues = leftChannel
+	}
 
 	// NOTE: Working, but seems to be incorrect as channels are mixed?
-	fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
-	currValues = fs[0]
+	// fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
+	// currValues = fs[0]
+
+	// NOTE: This seg faults: fft.odin(90:27) Index 388 is out of range 0..<388
+	// fs := (mem.slice_ptr(cast(^f32)(buffer), int(frames)))
+	// fft1d(fs, 0)
+	// currValues = {fs[0], fs[1]}
+
 	// NOTE: This does work, but this processes only one frame with both "channels"
 	// currValues = fft1d(fs[0][:], 0)
 

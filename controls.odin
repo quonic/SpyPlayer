@@ -115,36 +115,35 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, AudioVisualizers[name].positionRec, {0, 0}, 0, tint)
-	// Draw the bars
 
-	// Left Channel
-	barWidth := AudioVisualizers[name].positionRec.width / 2
-	leftChannel: f32 = AudioVisualizers[name].bars[0] * barWidth
-	// Right Channel
-	rightChannel: f32 = AudioVisualizers[name].bars[1] * barWidth
+	// Draw the bars with a space of 1 pixel between each bar
+	// Only draw every 8th bar from AudioVisualizers[name].bars
+	// Each bar uses the color raylib.BLACK
+	// Each bar height is dependent on the values from the array AudioVisualizers[name].bars
 
-	halfHeight := i32(AudioVisualizers[name].positionRec.height / 2)
-
-	// TODO: Draw the channels more in the center and spaced apart virtically
-
-	// Draw the left channel as a rectangle
-	raylib.DrawRectangle(
-		i32(AudioVisualizers[name].positionRec.x),
-		i32(AudioVisualizers[name].positionRec.y),
-		i32(leftChannel),
-		halfHeight,
-		raylib.BLACK,
-	)
-	// Draw the right channel as a rectangle
-	raylib.DrawRectangle(
-		i32(AudioVisualizers[name].positionRec.x),
-		i32(AudioVisualizers[name].positionRec.y) + halfHeight,
-		i32(rightChannel),
-		halfHeight,
-		raylib.RED,
-	)
-
-
+	for bar, i in AudioVisualizers[name].bars[:512 / 4] {
+		x := i32(AudioVisualizers[name].positionRec.x + f32(i))
+		if bar < 0 {
+			raylib.DrawRectangle(
+				x,
+				i32(AudioVisualizers[name].positionRec.y),
+				1,
+				i32(bar * AudioVisualizers[name].positionRec.height / 2),
+				raylib.BLACK,
+			)
+		} else if bar > 0 {
+			raylib.DrawRectangle(
+				x,
+				i32(
+					AudioVisualizers[name].positionRec.y +
+					bar * AudioVisualizers[name].positionRec.height / 2,
+				),
+				1,
+				i32(AudioVisualizers[name].positionRec.height / 2),
+				raylib.BLACK,
+			)
+		}
+	}
 }
 
 DrawLabelControl :: proc(name: string) {
@@ -828,7 +827,7 @@ AudioVisualizerControl :: struct {
 	name:                string,
 	enabled:             bool,
 	positionRec:         raylib.Rectangle,
-	bars:                [2]f32,
+	bars:                [512]f32,
 	barColors:           []raylib.Color,
 	tint:                raylib.Color,
 	texture:             raylib.Texture2D,

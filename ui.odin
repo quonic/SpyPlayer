@@ -617,7 +617,7 @@ CreateUI :: proc() {
 					},
 					tint_normal = raylib.WHITE,
 					tint_disabled = raylib.DARKGRAY,
-					bars = [2]f32{0, 0},
+					bars = {},
 					barColors = []raylib.Color {
 						raylib.RED,
 						raylib.RED,
@@ -713,7 +713,7 @@ DrawAudioVisualizers :: proc() {
 		if len(currValues) == 0 {
 			return
 		}
-		meter_bar.bars = currValues[0]
+		meter_bar.bars = currValues
 	}
 
 	DrawAudioVisualizerControl("meter", camera)
