@@ -18,6 +18,11 @@ This is a work in progress, and is not yet feature complete.
 - [x] Current time and total time
 - [x] Play next song when finished playing current song
 - [x] Seeking
+- [ ] Visualizer
+  - [x] Volume
+    - [ ] Fix channels being mixed?
+  - [ ] Spectrum
+    - [ ] FFT
 - [ ] Playlist management
   - [x] Load from folder
   - [x] Playlist showing loaded songs
