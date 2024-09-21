@@ -112,8 +112,6 @@ audioPeriod: int : 3600
 currentLeftChannel: [audioPeriod]complex64
 currentRightChannel: [audioPeriod]complex64
 currentPeriod: int = 0
-// currValues: []f32
-frameCount: u32 = 0
 
 AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 	context = runtime.default_context()
