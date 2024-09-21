@@ -1,7 +1,6 @@
 package main
 
 import "base:runtime"
-import "core:c"
 import "core:fmt"
 import "core:mem"
 import "core:os"
@@ -106,43 +105,6 @@ spall_exit :: proc "contextless" (
 	loc: runtime.Source_Code_Location,
 ) {
 	spall._buffer_end(&spall_ctx, &spall_buffer)
-}
-
-audioPeriod: int : 3600
-currentLeftChannel: [audioPeriod]complex64
-currentRightChannel: [audioPeriod]complex64
-currentPeriod: int = 0
-
-AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
-	context = runtime.default_context()
-	if buffer == nil || frames == 0 {
-		return
-	}
-	if mem.check_zero_ptr(buffer, int(currentStream.frameCount)) {
-		fmt.printfln("Buffer is zero")
-		return
-	}
-	#no_bounds_check {
-		if currentPeriod >= audioPeriod {
-			currentPeriod = 0
-			currentLeftChannel = {}
-			currentRightChannel = {}
-		}
-		fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
-		if frames == 512 {
-			for i in 0 ..< int(frames) {
-				currentLeftChannel[currentPeriod + i] = fs[i][0]
-				currentRightChannel[currentPeriod + i] = fs[i][1]
-			}
-			currentPeriod += 512
-		} else if frames == 388 {
-			for i in 0 ..< int(frames) {
-				currentLeftChannel[currentPeriod + i] = fs[i][0]
-				currentRightChannel[currentPeriod + i] = fs[i][1]
-			}
-			currentPeriod += 388
-		}
-	}
 }
 
 _main :: proc() {
