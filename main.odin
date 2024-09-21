@@ -108,8 +108,10 @@ spall_exit :: proc "contextless" (
 	spall._buffer_end(&spall_ctx, &spall_buffer)
 }
 
-currentLeftChannel: []complex64
-// currentRightChannel: []complex64
+audioPeriod: int : 3600
+currentLeftChannel: [audioPeriod]complex64
+currentRightChannel: [audioPeriod]complex64
+currentPeriod: int = 0
 // currValues: []f32
 frameCount: u32 = 0
 
@@ -122,16 +124,26 @@ AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 		fmt.printfln("Buffer is zero")
 		return
 	}
-	fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
-	if frames == 512 {
-		leftChannel: [512]complex64
-		// rightChannel: [512]complex64
-		for i in 0 ..< int(frames) {
-			leftChannel[i] = fs[i][0]
-			// rightChannel[i] = fs[i][1]
+	#no_bounds_check {
+		if currentPeriod >= audioPeriod {
+			currentPeriod = 0
+			currentLeftChannel = {}
+			currentRightChannel = {}
 		}
-		currentLeftChannel = leftChannel[:]
-		// currentRightChannel = rightChannel[:]
+		fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
+		if frames == 512 {
+			for i in 0 ..< int(frames) {
+				currentLeftChannel[currentPeriod + i] = fs[i][0]
+				currentRightChannel[currentPeriod + i] = fs[i][1]
+			}
+			currentPeriod += 512
+		} else if frames == 388 {
+			for i in 0 ..< int(frames) {
+				currentLeftChannel[currentPeriod + i] = fs[i][0]
+				currentRightChannel[currentPeriod + i] = fs[i][1]
+			}
+			currentPeriod += 388
+		}
 	}
 }
 

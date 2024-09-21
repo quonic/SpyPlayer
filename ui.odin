@@ -709,8 +709,10 @@ DrawAudioVisualizers :: proc() {
 		if len(currentLeftChannel) == 0 {
 			return
 		}
-		meter_bar.leftChannelBars = fft(currentLeftChannel[:])
-		// meter_bar.rightChannelBars = fft(currentRightChannel[:])
+		if currentPeriod == audioPeriod {
+			meter_bar.leftChannelBars = fft(currentLeftChannel[:])
+			meter_bar.rightChannelBars = fft(currentRightChannel[:])
+		}
 	}
 
 	DrawAudioVisualizerControl("meter", camera)

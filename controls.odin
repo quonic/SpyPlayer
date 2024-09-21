@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:math"
 import "core:strings"
 import "vendor:raylib"
 
@@ -121,20 +122,66 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 		return
 	}
 
-	Width := AudioVisualizers[name].positionRec.width
-	Height := AudioVisualizers[name].positionRec.height
+	Width := int(AudioVisualizers[name].positionRec.width) - 2
+	Height := (AudioVisualizers[name].positionRec.height * 0.5) - 2
+	boarder: f32 = 1
 	// Draw the left channel waveform
-	for bar, i in AudioVisualizers[name].leftChannelBars[:int(Width - 2)] {
-		x := i32(i) + i32(AudioVisualizers[name].positionRec.x) + 1
-		y := i32(
-			AudioVisualizers[name].positionRec.y +
-			AudioVisualizers[name].positionRec.height -
-			(f32(bar) * Height),
-		)
-		width := 2
-		height := i32(bar * Height)
-		color := raylib.BLACK
-		raylib.DrawRectangle(x, y, i32(width), i32(min(height, i32(Height))), color)
+	j := 0
+	color := raylib.BLACK
+	#no_bounds_check {
+		for _, i in AudioVisualizers[name].leftChannelBars[:audioPeriod] {
+			if i % int(audioPeriod / Width) == 0 {
+				averageLeft: f32
+				averageRight: f32
+				if i + Width > len(AudioVisualizers[name].leftChannelBars) {
+					averageLeft =
+						math.sum(AudioVisualizers[name].leftChannelBars[i:audioPeriod]) /
+						f32(len(AudioVisualizers[name].leftChannelBars[i:audioPeriod]))
+					averageRight =
+						math.sum(AudioVisualizers[name].rightChannelBars[i:audioPeriod]) /
+						f32(len(AudioVisualizers[name].rightChannelBars[i:audioPeriod]))
+				} else {
+					averageLeft =
+						math.sum(AudioVisualizers[name].leftChannelBars[i:i + Width]) /
+						f32(len(AudioVisualizers[name].leftChannelBars[i:i + Width]))
+					averageRight =
+						math.sum(AudioVisualizers[name].rightChannelBars[i:i + Width]) /
+						f32(len(AudioVisualizers[name].rightChannelBars[i:i + Width]))
+				}
+				averageLeft = math.abs(averageLeft)
+				averageRight = math.abs(averageRight) * -1
+
+				x := i32(j) + i32(AudioVisualizers[name].positionRec.x + boarder)
+				// Left Channel
+				raylib.DrawLine(
+					x,
+					i32(AudioVisualizers[name].positionRec.y + boarder),
+					x,
+					i32(
+						AudioVisualizers[name].positionRec.y + boarder + f32(averageLeft * Height),
+					),
+					color,
+				)
+				// Right Channel
+				raylib.DrawLine(
+					x,
+					i32(
+						AudioVisualizers[name].positionRec.y -
+						boarder +
+						AudioVisualizers[name].positionRec.height,
+					),
+					x,
+					i32(
+						AudioVisualizers[name].positionRec.y -
+						boarder +
+						AudioVisualizers[name].positionRec.height +
+						f32(averageRight * Height),
+					),
+					color,
+				)
+				j = j + 1
+			}
+		}
 	}
 }
 
