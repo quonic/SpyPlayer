@@ -122,14 +122,19 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 		return
 	}
 
+	// Width of the control minus the borders
 	Width := int(AudioVisualizers[name].positionRec.width) - 2
+	// Half the height of the control minus the borders
 	Height := (AudioVisualizers[name].positionRec.height * 0.5) - 2
+	// Border width
 	boarder: f32 = 1
 
-	j := 0
+	barCount := 0
 	color := raylib.BLACK
+	// Don't check bounds as we are doing our own bounds checking
 	#no_bounds_check {
 		for _, i in AudioVisualizers[name].leftChannelBars[:audioPeriod] {
+			// Only do act every time the audio period is divisible by the width of the control (Width)
 			if i % int(audioPeriod / Width) == 0 {
 				// Average the left and right channel bars to fit with in the control
 				averageLeft: f32
@@ -156,7 +161,7 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 				averageRight = math.abs(averageRight) * -1
 
 				// x position of the current line
-				x := i32(j) + i32(AudioVisualizers[name].positionRec.x + boarder)
+				x := i32(barCount) + i32(AudioVisualizers[name].positionRec.x + boarder)
 				// Left Channel - Drawn from the top of the control, downwards
 				raylib.DrawLine(
 					x,
@@ -184,7 +189,7 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 					),
 					color,
 				)
-				j = j + 1
+				barCount = barCount + 1
 			}
 		}
 	}
