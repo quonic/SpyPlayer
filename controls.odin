@@ -125,14 +125,16 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	Width := int(AudioVisualizers[name].positionRec.width) - 2
 	Height := (AudioVisualizers[name].positionRec.height * 0.5) - 2
 	boarder: f32 = 1
-	// Draw the left channel waveform
+
 	j := 0
 	color := raylib.BLACK
 	#no_bounds_check {
 		for _, i in AudioVisualizers[name].leftChannelBars[:audioPeriod] {
 			if i % int(audioPeriod / Width) == 0 {
+				// Average the left and right channel bars to fit with in the control
 				averageLeft: f32
 				averageRight: f32
+				// Make sure that we are not drawing outside the control positionRec width
 				if i + Width > len(AudioVisualizers[name].leftChannelBars) {
 					averageLeft =
 						math.sum(AudioVisualizers[name].leftChannelBars[i:audioPeriod]) /
@@ -148,11 +150,14 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 						math.sum(AudioVisualizers[name].rightChannelBars[i:i + Width]) /
 						f32(len(AudioVisualizers[name].rightChannelBars[i:i + Width]))
 				}
+				// Make sure that Left is always positive
 				averageLeft = math.abs(averageLeft)
+				// Make sure that Right is always negative
 				averageRight = math.abs(averageRight) * -1
 
+				// x position of the current line
 				x := i32(j) + i32(AudioVisualizers[name].positionRec.x + boarder)
-				// Left Channel
+				// Left Channel - Drawn from the top of the control, downwards
 				raylib.DrawLine(
 					x,
 					i32(AudioVisualizers[name].positionRec.y + boarder),
@@ -162,7 +167,7 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 					),
 					color,
 				)
-				// Right Channel
+				// Right Channel - Drawn from the bottom of the control, upwards
 				raylib.DrawLine(
 					x,
 					i32(
