@@ -25,13 +25,14 @@ This is a work in progress, and is not yet feature complete.
   - [x] Load from folder
   - [x] Playlist showing loaded songs
   - [x] Selecting a song plays that song
-  - [ ] Add to playlist
-  - [ ] Remove from playlist
-  - [ ] Clear playlist
   - [x] Save playlist
   - [x] Load playlist
   - [x] Automatic loadind of playlist from config
   - [x] Automatic saving of playlist to config
+  - [x] Shuffle playlist
+  - [ ] Add to playlist
+  - [ ] Remove from playlist
+  - [ ] Clear playlist
 - [ ] Show metadata
   - [x] Title
   - [x] Artist
