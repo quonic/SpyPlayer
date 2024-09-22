@@ -108,7 +108,7 @@ UpdatePlaylistList :: proc() {
 	}
 }
 
-ClearPlatlistList :: proc() {
+ClearPlaylistList :: proc() {
 	playList = nil
 	Lists["playlist"].items = nil
 }

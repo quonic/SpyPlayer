@@ -355,7 +355,7 @@ load_from_dir :: proc() {
 	player_state = .Stopped
 	playListLoaded = false
 	ClearPlaylist()
-	ClearPlatlistList()
+	ClearPlaylistList()
 	thread.pool_add_task(
 		&pool,
 		allocator = context.allocator,
