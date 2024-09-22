@@ -34,7 +34,11 @@ load_config :: proc() {
 
 	// Load the playlist
 	for song, _ in config.playlist {
-		AddSong(song.path)
+		if os.exists(song.path) {
+			AddSong(song.path)
+		} else {
+			fmt.eprintf("[Warn] File (%v) does not exist, skipping.", song.path)
+		}
 	}
 	player_state = .Stopped
 	UpdatePlaylistList()
