@@ -3,6 +3,7 @@ package main
 import "aseprite"
 // import "base:runtime"
 import "core:fmt"
+import "core:strings"
 import "ffprobe"
 import "vendor:raylib"
 
@@ -26,6 +27,8 @@ loop_song_toggle: ToggleControl
 add_song_button: ButtonControl
 remove_song_button: ButtonControl
 meter_bar: AudioVisualizerControl
+song_time_divider: PictureControl
+shuffle_button: ButtonControl
 
 playlist_scrollbar: raylib.Rectangle
 playlist_minus_button: raylib.Rectangle
@@ -634,6 +637,49 @@ CreateUI :: proc() {
 						raylib.PURPLE,
 					},
 				}
+			case "song time divider":
+				song_time_divider = {
+					name = "song time divider",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_disabled = raylib.DARKGRAY,
+				}
+			case "shuffle":
+				shuffle_button = {
+					name = "shuffle",
+					enabled = true,
+					positionRec = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint = raylib.WHITE,
+					texture = window_texture,
+					positionSpriteSheet = {
+						x = key.bounds.x,
+						y = key.bounds.y,
+						width = key.bounds.w,
+						height = key.bounds.h,
+					},
+					tint_normal = raylib.WHITE,
+					tint_pressed = raylib.LIGHTGRAY,
+					tint_hover = raylib.GRAY,
+					tint_disabled = raylib.DARKGRAY,
+				}
 			}
 			AddButton(&previous_button)
 			AddButton(&play_button)
@@ -649,6 +695,8 @@ CreateUI :: proc() {
 			AddList(&playlist_list)
 			AddText(&current_song_text)
 			AddAudioVisualizer(&meter_bar)
+			AddPicture(&song_time_divider)
+			AddButton(&shuffle_button)
 
 			AddText(&song_length_text)
 			AddText(&play_time_text)
@@ -662,6 +710,7 @@ CreateUI :: proc() {
 
 UserInterface :: proc() {
 	DrawButtons()
+	DrawPictures()
 	DrawSliders()
 	DrawLists()
 	DrawTexts()
@@ -681,6 +730,7 @@ DrawButtons :: proc() {
 	DrawButtonControl("remove song", camera)
 	DrawButtonControl("save playlist", camera)
 	DrawButtonControl("load playlist", camera)
+	DrawButtonControl("shuffle", camera)
 }
 
 DrawSliders :: proc() {
@@ -688,6 +738,10 @@ DrawSliders :: proc() {
 	DrawSliderControl("seek bar", camera)
 	// DrawSliderControl("eq_slider", camera)
 	// DrawSliderControl("meter_slider", camera)
+}
+
+DrawPictures :: proc() {
+	DrawPictureControl("song time divider", camera)
 }
 
 DrawTexts :: proc() {
@@ -738,6 +792,7 @@ HandleButtonActions :: proc() {
 			Buttons["add song"].enabled = true
 			Buttons["remove song"].enabled = true
 			Buttons["save playlist"].enabled = true
+			Buttons["shuffle"].enabled = true
 		}
 		if GetButtonPressedState("save playlist") == 1 {
 			save_to_json()
@@ -767,6 +822,16 @@ HandleButtonActions :: proc() {
 		if GetButtonPressedState("remove song") == 1 {
 			fmt.printf("Remove song\n")
 		}
+		if GetButtonPressedState("shuffle") == 1 {
+			stop()
+			ClearList(&playlist_list)
+			ShufflePlaylist()
+			currentSongIndex = 0
+			Lists["playlist"].items = nil
+			UpdatePlaylistList()
+			UpdateCurrentSongText()
+			loadSelected()
+		}
 	} else {
 		Buttons["previous"].enabled = false
 		Buttons["play"].enabled = false
@@ -779,5 +844,6 @@ HandleButtonActions :: proc() {
 		Buttons["add song"].enabled = false
 		Buttons["remove song"].enabled = false
 		Buttons["save playlist"].enabled = false
+		Buttons["shuffle"].enabled = false
 	}
 }

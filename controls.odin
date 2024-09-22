@@ -14,6 +14,7 @@ Texts: map[string]^TextControl
 ProgressBars: map[string]^ProgressBarControl
 Lists: map[string]^ListControl
 AudioVisualizers: map[string]^AudioVisualizerControl
+Pictures: map[string]^PictureControl
 
 AddAudioVisualizer :: proc(audioVisualizer: ^AudioVisualizerControl) -> bool {
 	if audioVisualizer.name == "" {
@@ -85,6 +86,18 @@ AddList :: proc(list: ^ListControl) -> bool {
 	}
 	Lists[list.name] = list
 	return true
+}
+
+AddPicture :: proc(picture: ^PictureControl) -> bool {
+	if picture.name == "" {
+		return false
+	}
+	Pictures[picture.name] = picture
+	return true
+}
+
+ClearList :: proc(list: ^ListControl) {
+	list.items = nil
 }
 
 CleanUpControls :: proc() {
@@ -193,6 +206,19 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 			}
 		}
 	}
+}
+
+DrawPictureControl :: proc(name: string, camera: raylib.Camera2D) {
+	// Assert that the control exists
+	assert(Pictures[name] != {}, fmt.tprintf("Control %v does not exist", name))
+	texture: raylib.Texture2D = Pictures[name].texture
+	sourceRec: raylib.Rectangle = Pictures[name].positionSpriteSheet
+	tint: raylib.Color =
+		Pictures[name].enabled ? Pictures[name].tint_normal : Pictures[name].tint_disabled
+
+	// Draw the background image
+	raylib.DrawTexturePro(texture, sourceRec, Pictures[name].positionRec, {0, 0}, 0, tint)
+
 }
 
 DrawLabelControl :: proc(name: string) {
@@ -880,6 +906,16 @@ AudioVisualizerControl :: struct {
 	rightChannelBars:    []f32,
 	barColors:           []raylib.Color,
 	tint:                raylib.Color,
+	texture:             raylib.Texture2D,
+	positionSpriteSheet: raylib.Rectangle,
+	tint_normal:         raylib.Color,
+	tint_disabled:       raylib.Color,
+}
+
+PictureControl :: struct {
+	name:                string,
+	enabled:             bool,
+	positionRec:         raylib.Rectangle,
 	texture:             raylib.Texture2D,
 	positionSpriteSheet: raylib.Rectangle,
 	tint_normal:         raylib.Color,

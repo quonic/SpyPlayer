@@ -36,6 +36,8 @@ did_acquire :: proc(m: ^b64) -> (acquired: bool) {
 }
 
 task_prompt_load_from_dir :: proc(t: thread.Task) {
+	PlayListLoading = true
+	playListLoaded = false
 	// TODO: Add a way to remember the last folder/playlist
 	folder := file_dialog.open_file_dialog("*.mp3", directory = true)
 	assert(os.exists(folder))
@@ -74,6 +76,8 @@ task_prompt_load_from_dir :: proc(t: thread.Task) {
 }
 
 task_prompt_load_from_json :: proc(t: thread.Task) {
+	PlayListLoading = true
+	playListLoaded = false
 	LoadPlaylist()
 
 	time.sleep(1 * time.Millisecond)
@@ -102,6 +106,11 @@ UpdatePlaylistList :: proc() {
 			fmt.caprintf("%v - %v", song.tags.title, song.tags.artist),
 		)
 	}
+}
+
+ClearPlatlistList :: proc() {
+	playList = nil
+	Lists["playlist"].items = nil
 }
 
 AddSong :: proc(path: string) {
@@ -240,15 +249,12 @@ LoadPlaylist :: proc(path: string = "", clear: bool = true) {
 
 ClearPlaylist :: proc() {
 
-	if raylib.IsMusicStreamPlaying(currentStream) {
-		raylib.StopMusicStream(currentStream)
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-	}
-	raylib.UnloadMusicStream(currentStream)
+	stop()
+	playList = nil
+	// for _, i in playList {
+	// 	unordered_remove(&playList, i)
+	// }
 
-	for _, i in playList {
-		unordered_remove(&playList, i)
-	}
 	currentSongIndex = 0
 	currentSongPath = ""
 	current_song_tags = ffprobe.Tags{}

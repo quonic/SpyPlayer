@@ -352,6 +352,10 @@ LoadingUpdate :: proc() {
 }
 
 load_from_dir :: proc() {
+	player_state = .Stopped
+	playListLoaded = false
+	ClearPlaylist()
+	ClearPlatlistList()
 	thread.pool_add_task(
 		&pool,
 		allocator = context.allocator,
@@ -361,7 +365,6 @@ load_from_dir :: proc() {
 	)
 	thread.pool_start(&pool)
 	Texts["current song"].text = fmt.caprintf("Playlist loading...")
-	PlayListLoading = true
 }
 
 load_from_json :: proc() {
