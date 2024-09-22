@@ -147,7 +147,6 @@ _main :: proc() {
 		}
 		config_file = fmt.aprintf("%v/SpyPlayer/config.json", XDG_CONFIG_HOME)
 		if os.exists(config_file) {
-			// load_config()
 			thread.pool_add_task(
 				&pool,
 				allocator = context.allocator,
@@ -354,6 +353,7 @@ LoadingUpdate :: proc() {
 load_from_dir :: proc() {
 	player_state = .Stopped
 	playListLoaded = false
+	PlayListLoading = true
 	ClearPlaylist()
 	ClearPlaylistList()
 	thread.pool_add_task(
