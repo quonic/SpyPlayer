@@ -45,7 +45,7 @@ task_prompt_load_from_dir :: proc(t: ^thread.Thread) {
 	handle, handleerror := os.open(folder)
 	assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
 
-	fileinfo, fileinfoerror := os.read_dir(handle, 100)
+	fileinfo, fileinfoerror := os.read_dir(handle, -1)
 	assert(fileinfoerror == nil, fmt.tprintf("Error reading directory: %v", fileinfoerror))
 
 	totalProgress: f16 = f16(len(fileinfo) - 1)

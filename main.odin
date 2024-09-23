@@ -203,7 +203,9 @@ _main :: proc() {
 					raylib.GetMusicTimePlayed(currentStream) /
 					raylib.GetMusicTimeLength(currentStream)
 
-				raylib.UpdateMusicStream(currentStream)
+				if raylib.IsMusicReady(currentStream) {
+					raylib.UpdateMusicStream(currentStream)
+				}
 				if !raylib.IsMusicStreamPlaying(currentStream) {
 					next()
 				}
@@ -242,11 +244,15 @@ _main :: proc() {
 
 play :: proc() {
 
-	raylib.PlayMusicStream(currentStream)
-	raylib.SetMusicVolume(currentStream, currentSongVolume)
-	media_play_state = .Playing
-	currentStream.looping = loop_song_toggle.checked
-	UpdateCurrentSongText()
+	if raylib.IsMusicReady(currentStream) {
+		raylib.PlayMusicStream(currentStream)
+		raylib.SetMusicVolume(currentStream, currentSongVolume)
+		media_play_state = .Playing
+		currentStream.looping = loop_song_toggle.checked
+		UpdateCurrentSongText()
+	} else {
+		fmt.printfln("Error: Music not ready")
+	}
 }
 
 loadSelected :: proc() {
@@ -256,8 +262,15 @@ loadSelected :: proc() {
 		raylib.UnloadMusicStream(currentStream)
 	}
 
-	currentSongIndex = Lists["playlist"].active
+	if Lists["playlist"].active == -1 {
+		currentSongIndex = 0
+	} else {
+		currentSongIndex = Lists["playlist"].active
+	}
 
+	if len(playList) == 0 {
+		return
+	}
 	current_song_tags = playList[currentSongIndex].tags
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
@@ -343,7 +356,7 @@ LoadingUpdate :: proc() {
 }
 
 load_from_dir :: proc() {
-	media_play_state = .Stopped
+	media_play_state = .NoMusic
 	playListLoaded = false
 	PlayListLoading = true
 	ClearPlaylist()
@@ -361,7 +374,7 @@ load_from_dir :: proc() {
 }
 
 load_from_json :: proc() {
-	// TODO: Fix this - main.odin(272:31) Index 1 is out of range 0..<0
+	media_play_state = .NoMusic
 	PlayListLoading = true
 	t := thread.create(proc(t: ^thread.Thread) {
 		task_prompt_load_from_json(t)
@@ -441,7 +454,7 @@ threads: [dynamic]^thread.Thread
 
 @(init)
 create_thread_pool :: proc() {
-	threads := make([dynamic]^thread.Thread, 0)
+	threads = make([dynamic]^thread.Thread, 0)
 	thread_cleaner()
 }
 
@@ -478,12 +491,13 @@ thread_cleaner :: proc() {
 						PlayListLoading = false
 					}
 				}
-				if t := threads[i]; thread.is_done(t) {
+
+				if threads_cleaner := threads[i]; thread.is_done(threads_cleaner) {
 					when ODIN_DEBUG {
-						fmt.printf("Thread %d is done\n", t.user_index)
+						fmt.printf("Thread %d is done\n", threads_cleaner.user_index)
 					}
-					t.data = nil
-					thread.destroy(t)
+					threads_cleaner.data = nil
+					thread.destroy(threads_cleaner)
 
 					ordered_remove(&threads, i)
 				} else {

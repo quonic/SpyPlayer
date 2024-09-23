@@ -822,6 +822,7 @@ HandleButtonActions :: proc() {
 		}
 		if GetButtonPressedState("shuffle") == 1 {
 			stop()
+			media_play_state = .Stopped
 			ClearList(&playlist_list)
 			ShufflePlaylist()
 			currentSongIndex = 0

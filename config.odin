@@ -3,6 +3,8 @@ package main
 import "core:encoding/json"
 import "core:fmt"
 import "core:os"
+import "core:strings"
+import "vendor:raylib"
 
 Config :: struct {
 	playlist:            [dynamic]Song,
@@ -46,6 +48,12 @@ load_config :: proc() {
 
 	// Set the config values
 	currentSongVolume = config.current_song_volume
+	currentSongIndex = 0
+	current_song_tags = playList[currentSongIndex].tags
+	currentStream = raylib.LoadMusicStream(
+		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
+	)
+	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 
 	fmt.printf("Config loaded\n")
 }
