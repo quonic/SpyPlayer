@@ -1,9 +1,7 @@
 package main
 
 import "aseprite"
-// import "base:runtime"
 import "core:fmt"
-import "core:strings"
 import "ffprobe"
 import "vendor:raylib"
 

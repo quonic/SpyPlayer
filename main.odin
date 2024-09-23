@@ -247,9 +247,11 @@ play :: proc() {
 }
 
 loadSelected :: proc() {
-	raylib.StopMusicStream(currentStream)
-	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-	raylib.UnloadMusicStream(currentStream)
+	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
+		raylib.StopMusicStream(currentStream)
+		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		raylib.UnloadMusicStream(currentStream)
+	}
 
 	currentSongIndex = Lists["playlist"].active
 
@@ -278,8 +280,10 @@ pause :: proc() {
 }
 
 stop :: proc() {
-	raylib.StopMusicStream(currentStream)
-	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
+		raylib.StopMusicStream(currentStream)
+		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	}
 	player_state = .Stopped
 
 	UpdateCurrentSongText()
