@@ -35,7 +35,7 @@ did_acquire :: proc(m: ^b64) -> (acquired: bool) {
 	return ok && res == false
 }
 
-task_prompt_load_from_dir :: proc(t: thread.Task) {
+task_prompt_load_from_dir :: proc(t: ^thread.Thread) {
 	PlayListLoading = true
 	playListLoaded = false
 	// TODO: Add a way to remember the last folder/playlist
@@ -75,10 +75,10 @@ task_prompt_load_from_dir :: proc(t: thread.Task) {
 	UpdatePlaylistList()
 }
 
-task_prompt_load_from_json :: proc(t: thread.Task) {
+task_prompt_load_from_json :: proc(t: ^thread.Thread) {
 	PlayListLoading = true
 	playListLoaded = false
-	LoadPlaylist()
+	LoadPlaylist(clear = true)
 
 	time.sleep(1 * time.Millisecond)
 	playListLoaded = true
@@ -86,11 +86,11 @@ task_prompt_load_from_json :: proc(t: thread.Task) {
 	UpdatePlaylistList()
 }
 
-task_prompt_save_to_json :: proc(t: thread.Task) {
+task_prompt_save_to_json :: proc(t: ^thread.Thread) {
 	SavePlaylist()
 }
 
-task_load_from_config :: proc(t: thread.Task) {
+task_load_from_config :: proc(t: ^thread.Thread) {
 	load_config()
 	volume_slider.value = currentSongVolume
 }
@@ -239,11 +239,19 @@ LoadPlaylist :: proc(path: string = "", clear: bool = true) {
 	if clear {
 		// Clear the current playlist
 		ClearPlaylist()
+		ClearPlaylistList()
 	}
 
 	// Add the paths to the playlist
-	for path_i, _ in paths {
-		AddSong(path_i)
+	for current_item, _ in paths {
+		current_path := current_item
+		if os.is_file_path(current_item) {
+			// Check for leading "./" and replace with current working directory
+			if strings.starts_with(current_item, "./") {
+				current_path = fmt.aprintf("%v/%v", os.get_current_directory(), current_item[2:])
+			}
+			AddSong(current_path)
+		}
 	}
 }
 

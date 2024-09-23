@@ -8,6 +8,7 @@ import "core:prof/spall"
 import "core:strings"
 import "core:sync"
 import "core:thread"
+import "core:time"
 import "vendor:raylib"
 
 spall_ctx: spall.Context
@@ -51,6 +52,10 @@ pool: thread.Pool
 
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
+
+LOAD_FROM_CONFIG :: 0
+LOAD_FROM_DIR :: 1
+
 
 main :: proc() {
 	when OUTPUT_SPALL_TRACE {
@@ -147,14 +152,15 @@ _main :: proc() {
 		}
 		config_file = fmt.aprintf("%v/SpyPlayer/config.json", XDG_CONFIG_HOME)
 		if os.exists(config_file) {
-			thread.pool_add_task(
-				&pool,
-				allocator = context.allocator,
-				procedure = task_load_from_config,
-				data = nil,
-				user_index = 0,
-			)
-			thread.pool_start(&pool)
+			t := thread.create(proc(t: ^thread.Thread) {
+				task_load_from_config(t)
+			})
+			if t == nil {
+				fmt.eprintln("Error creating task_load_from_config")
+			}
+			t.user_index = len(threads)
+			append(&threads, t)
+			thread.start(t)
 			Texts["current song"].text = fmt.caprintf("Playlist loading from config...")
 			PlayListLoading = true
 		}
@@ -178,6 +184,7 @@ _main :: proc() {
 					Lists["playlist"].active = currentSongIndex
 				}
 				if Lists["playlist"].active != currentSongIndex {
+					loadSelected()
 					playSelected()
 					UpdateCurrentSongText()
 				}
@@ -265,7 +272,6 @@ loadSelected :: proc() {
 }
 
 playSelected :: proc() {
-	loadSelected()
 	if media_play_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
 		currentStream.looping = loop_song_toggle.checked
@@ -338,18 +344,29 @@ previous :: proc() {
 
 LoadingUpdate :: proc() {
 	if PlayListLoading {
-		if thread.pool_num_done(&pool) >= N {
-			thread.terminate(pool.threads[N - 1], 0)
-			Texts["current song"].text = fmt.caprintf("Playlist loaded!")
-			thread.pool_finish(&pool)
-			currentSongIndex = 0
-			currentSongPath = playList[currentSongIndex].path
-			current_song_tags = playList[currentSongIndex].tags
-			currentStream = raylib.LoadMusicStream(
-				strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
-			)
-			raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-			PlayListLoading = false
+		threads_done := 0
+		for cur_thread in pool.threads {
+			if thread.is_done(cur_thread) {
+				threads_done += 1
+				if cur_thread.user_index == LOAD_FROM_CONFIG {
+					Texts["current song"].text = fmt.caprintf("Playlist loaded!")
+					thread.pool_finish(&pool)
+					currentSongIndex = 0
+					currentSongPath = playList[currentSongIndex].path
+					current_song_tags = playList[currentSongIndex].tags
+					currentStream = raylib.LoadMusicStream(
+						strings.clone_to_cstring(
+							playList[currentSongIndex].path,
+							context.temp_allocator,
+						),
+					)
+					raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+					PlayListLoading = false
+				}
+			}
+		}
+		if len(pool.threads) == threads_done {
+			thread.pool_join(&pool)
 		}
 	}
 }
@@ -360,39 +377,43 @@ load_from_dir :: proc() {
 	PlayListLoading = true
 	ClearPlaylist()
 	ClearPlaylistList()
-	thread.pool_add_task(
-		&pool,
-		allocator = context.allocator,
-		procedure = task_prompt_load_from_dir,
-		data = nil,
-		user_index = 0,
-	)
-	thread.pool_start(&pool)
+	t := thread.create(proc(t: ^thread.Thread) {
+		task_prompt_load_from_dir(t)
+	})
+	if t == nil {
+		fmt.eprintln("Error creating task_load_from_config")
+	}
+	t.user_index = len(threads)
+	append(&threads, t)
+	thread.start(t)
 	Texts["current song"].text = fmt.caprintf("Playlist loading...")
 }
 
 load_from_json :: proc() {
+	// TODO: Fix this - main.odin(272:31) Index 1 is out of range 0..<0
 	PlayListLoading = true
-	thread.pool_add_task(
-		&pool,
-		allocator = context.allocator,
-		procedure = task_prompt_load_from_json,
-		data = nil,
-		user_index = 0,
-	)
-	thread.pool_start(&pool)
+	t := thread.create(proc(t: ^thread.Thread) {
+		task_prompt_load_from_json(t)
+	})
+	if t == nil {
+		fmt.eprintln("Error creating task_load_from_config")
+	}
+	t.user_index = len(threads)
+	append(&threads, t)
+	thread.start(t)
 	Texts["current song"].text = fmt.caprintf("Playlist loading...")
 }
 
 save_to_json :: proc() {
-	thread.pool_add_task(
-		&pool,
-		allocator = context.allocator,
-		procedure = task_prompt_save_to_json,
-		data = nil,
-		user_index = 0,
-	)
-	thread.pool_start(&pool)
+	t := thread.create(proc(t: ^thread.Thread) {
+		task_prompt_save_to_json(t)
+	})
+	if t == nil {
+		fmt.eprintln("Error creating task_load_from_config")
+	}
+	t.user_index = len(threads)
+	append(&threads, t)
+	thread.start(t)
 	Texts["current song"].text = fmt.caprintf("Playlist saving...")
 }
 
@@ -439,4 +460,45 @@ UpdatePlayTime :: proc() {
 	songProgress =
 		raylib.GetMusicTimePlayed(currentStream) / raylib.GetMusicTimeLength(currentStream)
 	Sliders["seek bar"].value = songProgress
+}
+
+// Thread Pool
+
+threads: [dynamic]^thread.Thread
+
+@(init)
+create_thread_pool :: proc() {
+	threads := make([dynamic]^thread.Thread, 0)
+	thread_cleaner()
+}
+
+destroy_thread_pool :: proc() {
+	delete(threads)
+}
+
+thread_cleaner :: proc() {
+	t := thread.create(proc(t: ^thread.Thread) {
+		for {
+			time.sleep(1 * time.Second)
+
+			if len(threads) == 0 {
+				continue
+			}
+
+			for i := 0; i < len(threads); {
+				if t := threads[i]; thread.is_done(t) {
+					when ODIN_DEBUG {
+						fmt.printf("Thread %d is done\n", t.user_index)
+					}
+					t.data = nil
+					thread.destroy(t)
+
+					ordered_remove(&threads, i)
+				} else {
+					i += 1
+				}
+			}
+		}
+	})
+	thread.start(t)
 }
