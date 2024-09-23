@@ -70,7 +70,7 @@ task_prompt_load_from_dir :: proc(t: thread.Task) {
 	time.sleep(1 * time.Millisecond)
 
 	playListLoaded = true
-	player_state = .Stopped
+	media_play_state = .Stopped
 
 	UpdatePlaylistList()
 }
@@ -82,7 +82,7 @@ task_prompt_load_from_json :: proc(t: thread.Task) {
 
 	time.sleep(1 * time.Millisecond)
 	playListLoaded = true
-	player_state = .Stopped
+	media_play_state = .Stopped
 	UpdatePlaylistList()
 }
 

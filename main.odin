@@ -23,14 +23,14 @@ camera: raylib.Camera2D = {
 	zoom     = 1,
 }
 
-PlayerState :: enum {
+PlaybackState :: enum {
 	Playing,
 	Paused,
 	Stopped,
 	NoMusic,
 }
 
-player_state: PlayerState = .NoMusic
+media_play_state: PlaybackState = .NoMusic
 
 currentStream: raylib.Music
 
@@ -45,7 +45,7 @@ lastScrollTime: f64 = 0
 MAX_SAMPLES :: 512
 MAX_SAMPLES_PER_UPDATE :: 4096
 
-N :: 1
+N :: 4
 
 pool: thread.Pool
 
@@ -170,7 +170,7 @@ _main :: proc() {
 		UserInterface()
 
 		LoadingUpdate()
-		switch player_state {
+		switch media_play_state {
 		case .Playing:
 			{
 
@@ -241,7 +241,7 @@ play :: proc() {
 
 	raylib.PlayMusicStream(currentStream)
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
-	player_state = .Playing
+	media_play_state = .Playing
 	currentStream.looping = loop_song_toggle.checked
 	UpdateCurrentSongText()
 }
@@ -266,7 +266,7 @@ loadSelected :: proc() {
 
 playSelected :: proc() {
 	loadSelected()
-	if player_state == .Playing {
+	if media_play_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
 		currentStream.looping = loop_song_toggle.checked
 	}
@@ -274,7 +274,7 @@ playSelected :: proc() {
 
 pause :: proc() {
 	raylib.PauseMusicStream(currentStream)
-	player_state = .Paused
+	media_play_state = .Paused
 
 	UpdateCurrentSongText()
 }
@@ -284,7 +284,7 @@ stop :: proc() {
 		raylib.StopMusicStream(currentStream)
 		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 	}
-	player_state = .Stopped
+	media_play_state = .Stopped
 
 	UpdateCurrentSongText()
 }
@@ -305,7 +305,7 @@ next :: proc() {
 	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
-	if player_state == .Playing {
+	if media_play_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
 	}
 	currentStream.looping = loop_song_toggle.checked
@@ -329,7 +329,7 @@ previous :: proc() {
 	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
-	if player_state == .Playing {
+	if media_play_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
 	}
 	currentStream.looping = loop_song_toggle.checked
@@ -355,7 +355,7 @@ LoadingUpdate :: proc() {
 }
 
 load_from_dir :: proc() {
-	player_state = .Stopped
+	media_play_state = .Stopped
 	playListLoaded = false
 	PlayListLoading = true
 	ClearPlaylist()

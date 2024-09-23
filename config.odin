@@ -40,7 +40,7 @@ load_config :: proc() {
 			fmt.eprintf("[Warn] File (%v) does not exist, skipping.", song.path)
 		}
 	}
-	player_state = .Stopped
+	media_play_state = .Stopped
 	UpdatePlaylistList()
 	playListLoaded = true
 
