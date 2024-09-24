@@ -254,7 +254,22 @@ play :: proc() {
 		currentStream.looping = loop_song_toggle.checked
 		UpdateCurrentSongText()
 	} else {
-		fmt.printfln("Error: Music not ready")
+		if len(playList) == 0 {
+			media_play_state = .NoMusic
+			return
+		}
+		currentSongIndex = 0
+		currentSongPath = playList[currentSongIndex].path
+		current_song_tags = playList[currentSongIndex].tags
+		currentStream = raylib.LoadMusicStream(
+			strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
+		)
+		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		media_play_state = .Playing
+		currentStream.looping = loop_song_toggle.checked
+		raylib.PlayMusicStream(currentStream)
+		raylib.SetMusicVolume(currentStream, currentSongVolume)
+		UpdateCurrentSongText()
 	}
 }
 
@@ -291,6 +306,10 @@ playSelected :: proc() {
 }
 
 pause :: proc() {
+	if len(playList) == 0 {
+		media_play_state = .NoMusic
+		return
+	}
 	raylib.PauseMusicStream(currentStream)
 	media_play_state = .Paused
 
@@ -298,6 +317,10 @@ pause :: proc() {
 }
 
 stop :: proc() {
+	if len(playList) == 0 {
+		media_play_state = .NoMusic
+		return
+	}
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
 		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
@@ -308,6 +331,10 @@ stop :: proc() {
 }
 
 next :: proc() {
+	if len(playList) == 0 {
+		media_play_state = .NoMusic
+		return
+	}
 	raylib.StopMusicStream(currentStream)
 	raylib.UnloadMusicStream(currentStream)
 	if len(playList) > 0 {
@@ -331,6 +358,10 @@ next :: proc() {
 }
 
 previous :: proc() {
+	if len(playList) == 0 {
+		media_play_state = .NoMusic
+		return
+	}
 	raylib.StopMusicStream(currentStream)
 	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 	raylib.UnloadMusicStream(currentStream)
