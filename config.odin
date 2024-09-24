@@ -34,6 +34,15 @@ load_config :: proc() {
 		return
 	}
 
+	if config.playlist == nil {
+		media_play_state = .NoMusic
+		playListLoaded = true
+		currentSongVolume = config.current_song_volume
+		currentSongIndex = 0
+		fmt.printf("Config loaded\n")
+		return
+	}
+
 	// Load the playlist
 	for song, _ in config.playlist {
 		if os.exists(song.path) {
