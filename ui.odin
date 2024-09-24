@@ -82,6 +82,7 @@ CreateUI :: proc() {
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
+					tooltip = "Previous",
 				}
 			case "play":
 				play_button = {
@@ -105,6 +106,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Play",
 				}
 			case "next":
 				next_button = {
@@ -128,6 +130,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Next",
 				}
 			case "stop":
 				stop_button = {
@@ -151,6 +154,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Stop",
 				}
 			case "pause":
 				pause_button = {
@@ -174,6 +178,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Pause",
 				}
 			case "current song":
 				current_song_text = {
@@ -254,6 +259,7 @@ CreateUI :: proc() {
 						raylib.SetMusicVolume(currentStream, value)
 						currentSongVolume = value
 					},
+					tooltip = "Volume",
 				}
 			case "load":
 				load_button = {
@@ -277,6 +283,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Load music from a directory",
 				}
 			case "seek bar":
 				for k, _ in spriteSheet.meta.slices {
@@ -505,6 +512,7 @@ CreateUI :: proc() {
 					checked = false,
 					shape = ToggleShape.Toggle_Circle,
 					checkColor = raylib.Color{0, 0, 0, 0},
+					tooltip = "Loop current song",
 				}
 			case "add song":
 				add_song_button = {
@@ -528,6 +536,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Add a song to playlist",
 				}
 			case "remove song":
 				remove_song_button = {
@@ -551,6 +560,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Remove selected song from playlist",
 				}
 			case "save playlist":
 				save_playlist_button = {
@@ -574,6 +584,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Save playlist",
 				}
 			case "load playlist":
 				load_playlist_button = {
@@ -597,6 +608,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Load playlist",
 				}
 			case "meter":
 				meter_bar = {
@@ -677,6 +689,7 @@ CreateUI :: proc() {
 					tint_pressed = raylib.LIGHTGRAY,
 					tint_hover = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
+					tooltip = "Shuffle",
 				}
 			}
 			AddButton(&previous_button)
@@ -714,7 +727,33 @@ UserInterface :: proc() {
 	DrawTexts()
 	DrawToggles()
 	DrawAudioVisualizers()
+	if EnableToolTips {DrawToolTips()}
 	HandleButtonActions()
+}
+
+DrawToolTips :: proc() {
+	for button in Buttons {
+		DrawToolTip(
+			Buttons[button].tooltip,
+			Buttons[button].positionRec.x,
+			Buttons[button].positionRec.y,
+			camera,
+			textFont,
+			textFontSize,
+			Buttons[button].hovering,
+		)
+	}
+	for toggle in Toggles {
+		DrawToolTip(
+			Toggles[toggle].tooltip,
+			Toggles[toggle].positionRec.x,
+			Toggles[toggle].positionRec.y,
+			camera,
+			textFont,
+			textFontSize,
+			Toggles[toggle].hovering,
+		)
+	}
 }
 
 DrawButtons :: proc() {

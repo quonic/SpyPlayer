@@ -1,5 +1,6 @@
 package main
 
+import "base:intrinsics"
 import "core:fmt"
 import "core:math"
 import "core:strings"
@@ -323,12 +324,17 @@ DrawButtonControl :: proc(name: string, camera: raylib.Camera2D) {
 				// Hover state
 				Buttons[name].pressed = false
 				tint = Buttons[name].tint_hover
+				Buttons[name].hovering = true
+				ToolTipIsHovering = true
+				ToolTipText = Buttons[name].tooltip
 			}
 
 		} else {
 			// Normal state
 			Buttons[name].pressed = false
 			tint = Buttons[name].tint_normal
+			Buttons[name].hovering = false
+			ResetToolTip(Buttons[name])
 		}
 	} else {
 		// Disabled state
@@ -336,7 +342,6 @@ DrawButtonControl :: proc(name: string, camera: raylib.Camera2D) {
 	}
 
 	raylib.DrawTexturePro(texture, sourceRec, Buttons[name].positionRec, {0, 0}, 0, tint)
-
 }
 
 DrawSliderControl :: proc(name: string, camera: raylib.Camera2D) {
@@ -637,11 +642,16 @@ DrawToggleControl :: proc(name: string, camera: raylib.Camera2D) {
 				// Hover state
 				Toggles[name].pressed = false
 				tint = Toggles[name].tint_hover
+				Toggles[name].hovering = true
+				ToolTipIsHovering = true
+				ToolTipText = Toggles[name].tooltip
 			}
 		} else {
 			// Normal state
 			Toggles[name].pressed = false
 			tint = Toggles[name].tint_normal
+			Toggles[name].hovering = false
+			ResetToolTip(Toggles[name])
 		}
 	} else {
 		// Disabled state
@@ -676,6 +686,96 @@ DrawToggleControl :: proc(name: string, camera: raylib.Camera2D) {
 			0,
 			tint,
 		)
+	}
+}
+
+ToolTipDelay: i32 = 0
+ToolTipDelayTimer: i32 = 0
+ToolTipIsHovering: bool = false
+ToolTipText: string
+
+/*
+```bash
+
+# The text to display
+text: string
+# The x and y position of the tooltip
+posx: int
+posy: int
+# The camera to use for drawing
+camera: raylib.Camera2D
+# The font to use for drawing
+textFont: raylib.Font
+# The font size to use for drawing
+textFontSize: f32
+# Whether the tooltip is currently hovering
+isHovering: bool
+# The delay, in frames, before the tooltip is displayed
+delay: i32 = 60
+```
+*/
+DrawToolTip :: proc(
+	text: string,
+	posx, posy: f32,
+	camera: raylib.Camera2D,
+	textFont: raylib.Font,
+	textFontSize: f32,
+	isHovering: bool,
+	delay: i32 = 60,
+) {
+	posx := posx
+	posy := posy
+	ToolTipDelay = delay
+	ToolTipText = text
+
+	textOutput := strings.clone_to_cstring(text, context.temp_allocator)
+
+	if isHovering {
+		textDimentions := raylib.MeasureTextEx(textFont, textOutput, textFontSize, 1)
+		if textDimentions.x < 0 {textDimentions.x = 0}
+		if textDimentions.y < 0 {textDimentions.y = 0}
+		if posx + textDimentions.x > f32(raylib.GetScreenWidth()) {
+			posx = posx - textDimentions.x
+		}
+		if posx < 0 {
+			posx = textDimentions.x / 2
+		}
+		if textDimentions.y > f32(raylib.GetScreenHeight()) {
+			posy = posy - textDimentions.y
+		} else {
+			posy = posy - textDimentions.y
+		}
+		raylib.DrawRectangle(
+			i32(posx),
+			i32(posy),
+			i32(textDimentions.x),
+			i32(textDimentions.y),
+			raylib.Color{0, 0, 0, 128},
+		)
+		raylib.DrawTextEx(
+			textFont,
+			textOutput,
+			raylib.Vector2{posx, posy},
+			textFontSize,
+			1,
+			raylib.WHITE,
+		)
+	}
+}
+
+ToolTippableControls :: union {
+	ButtonControl,
+	ToggleControl,
+}
+
+ResetToolTip :: proc(
+	Control: $T,
+) where intrinsics.type_is_struct(ButtonControl) ||
+	intrinsics.type_is_struct(ToggleControl) {
+	if ToolTipText != Control.name {
+		ToolTipText = ""
+		ToolTipDelayTimer = 0
+		ToolTipIsHovering = false
 	}
 }
 
@@ -753,6 +853,7 @@ TextControl :: struct {
 	tint_disabled:       raylib.Color,
 	positionSpriteSheet: raylib.Rectangle,
 	wasPressed:          bool,
+	tooltip:             string,
 }
 
 // ButtonControl is a control that can be used to display a button
@@ -775,6 +876,7 @@ ButtonControl :: struct {
 	tint_disabled:       raylib.Color,
 	positionSpriteSheet: raylib.Rectangle,
 	wasPressed:          bool,
+	tooltip:             string,
 }
 
 // SliderControl is a control that can be used to display a slider
@@ -797,6 +899,7 @@ SliderControl :: struct {
 	sliderPositionInset: f32,
 	value:               f32,
 	valueReturnCallback: proc(value: f32),
+	tooltip:             string,
 }
 
 SliderBar :: struct {
@@ -849,6 +952,8 @@ ToggleControl :: struct {
 	checked:                bool,
 	shape:                  ToggleShape,
 	checkColor:             raylib.Color,
+	hovering:               bool,
+	tooltip:                string,
 }
 
 // ProgressBarControl is a control that can be used to display a progress bar
@@ -865,6 +970,7 @@ ProgressBarControl :: struct {
 	barColor:        raylib.Color,
 	clickAction:     proc(this: ^ProgressBarControl),
 	hoverAction:     proc(this: ^ProgressBarControl),
+	tooltip:         string,
 }
 
 // ListControl
@@ -896,6 +1002,7 @@ ListControl :: struct {
 	scrollbarWidth:      f32,
 	scrollSpeed:         i32,
 	sliderSize:          f32,
+	tooltip:             string,
 }
 
 AudioVisualizerControl :: struct {
@@ -910,6 +1017,7 @@ AudioVisualizerControl :: struct {
 	positionSpriteSheet: raylib.Rectangle,
 	tint_normal:         raylib.Color,
 	tint_disabled:       raylib.Color,
+	tooltip:             string,
 }
 
 PictureControl :: struct {
@@ -920,4 +1028,5 @@ PictureControl :: struct {
 	positionSpriteSheet: raylib.Rectangle,
 	tint_normal:         raylib.Color,
 	tint_disabled:       raylib.Color,
+	tooltip:             string,
 }

@@ -37,11 +37,14 @@ currentStream: raylib.Music
 
 textFont: raylib.Font
 textSpacing: f32 = 2
+textFontSize: f32 = 20
 
 songProgress: f32 = 0
 
 scrollTime: f64 = 0.1
 lastScrollTime: f64 = 0
+
+EnableToolTips: bool : true
 
 MAX_SAMPLES :: 512
 MAX_SAMPLES_PER_UPDATE :: 4096
