@@ -45,8 +45,8 @@ load_config :: proc() {
 
 	// Load the playlist
 	for song, _ in config.playlist {
-		if os.exists(song.path) {
-			AddSong(song.path)
+		if raylib.FileExists(strings.clone_to_cstring(song.path, context.temp_allocator)) {
+			append(&playList, Song{path = song.path, tags = song.tags})
 		} else {
 			fmt.eprintf("[Warn] File (%v) does not exist, skipping.", song.path)
 		}
