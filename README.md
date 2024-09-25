@@ -25,9 +25,11 @@ If you want a feature that isn't there, please create a pull request or open an 
 - [x] Visualizer
   - [x] Spectrum
     - [x] FFT
-- [X] Keyboard shortcuts
-  - [X] Save and load key bindings
-  - [X] Default key bindings
+- [x] Tooltips for controls
+  - [ ] Delay before showing tooltips
+- [x] Keyboard shortcuts
+  - [x] Save and load key bindings
+  - [x] Default key bindings
 - [ ] Playlist management
   - [x] Load from folder
   - [x] Playlist showing loaded songs
