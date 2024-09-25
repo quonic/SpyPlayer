@@ -140,83 +140,78 @@ GetKeyBindins :: proc() -> map[string]string {
 }
 
 CheckKeys :: proc() {
-	// Play
-	if raylib.IsKeyPressed(raylib.KeyboardKey.X) {
-		play()
-	}
-	// Pause / Play
-	if raylib.IsKeyPressed(raylib.KeyboardKey.C) {
-		pause()
-	}
-	// Stop
-	if raylib.IsKeyPressed(raylib.KeyboardKey.V) {
-		stop()
-	}
-	// Previous
-	if raylib.IsKeyPressed(raylib.KeyboardKey.Z) {
-		previous()
-	}
-	// Next
-	if raylib.IsKeyPressed(raylib.KeyboardKey.B) {
-		next()
-	}
-	// Volume Up
-	if raylib.IsKeyPressed(raylib.KeyboardKey.UP) {
-		if volume_slider.value >= 1.0 {
-			volume_slider.value = 1.0
-		} else {
-			volume_slider.value += 0.1
+	if playListLoaded {
+		// Play
+		if raylib.IsKeyPressed(raylib.KeyboardKey.X) {
+			play()
 		}
-		raylib.SetMusicVolume(currentStream, volume_slider.value)
-		currentSongVolume = volume_slider.value
+		// Pause / Play
+		if raylib.IsKeyPressed(raylib.KeyboardKey.C) {
+			pause()
+		}
+		// Stop
+		if raylib.IsKeyPressed(raylib.KeyboardKey.V) {
+			stop()
+		}
+		// Previous
+		if raylib.IsKeyPressed(raylib.KeyboardKey.Z) {
+			previous()
+		}
+		// Next
+		if raylib.IsKeyPressed(raylib.KeyboardKey.B) {
+			next()
+		}
+		// Seek backwards
+		if raylib.IsKeyPressed(raylib.KeyboardKey.LEFT) {
+			if raylib.IsMusicStreamPlaying(currentStream) {
+				Sliders["seek bar"].value -= SEEK_SECONDS
+				raylib.SeekMusicStream(
+					currentStream,
+					raylib.GetMusicTimePlayed(currentStream) - SEEK_SECONDS,
+				)
+			}
+		}
+		// Seek forwards
+		if raylib.IsKeyPressed(raylib.KeyboardKey.RIGHT) {
+			if raylib.IsMusicStreamPlaying(currentStream) {
+				Sliders["seek bar"].value += SEEK_SECONDS
+				raylib.SeekMusicStream(
+					currentStream,
+					raylib.GetMusicTimePlayed(currentStream) + SEEK_SECONDS,
+				)
+			}
+		}
+		// Shuffle
+		if raylib.IsKeyPressed(raylib.KeyboardKey.S) {
+			ShufflePlaylist()
+		}
+		// Volume Up
+		if raylib.IsKeyPressed(raylib.KeyboardKey.UP) {
+			if volume_slider.value >= 1.0 {
+				volume_slider.value = 1.0
+			} else {
+				volume_slider.value += 0.1
+			}
+			raylib.SetMusicVolume(currentStream, volume_slider.value)
+			currentSongVolume = volume_slider.value
 
-	}
-	// Volume Down
-	if raylib.IsKeyPressed(raylib.KeyboardKey.DOWN) {
-		if volume_slider.value <= 0.0 {
-			volume_slider.value = 0.0
-		} else {
-			volume_slider.value -= 0.1
 		}
-		raylib.SetMusicVolume(currentStream, volume_slider.value)
-		currentSongVolume = volume_slider.value
-	}
-	// Seek backwards
-	if raylib.IsKeyPressed(raylib.KeyboardKey.LEFT) {
-		if raylib.IsMusicStreamPlaying(currentStream) {
-			Sliders["seek bar"].value -= SEEK_SECONDS
-			raylib.SeekMusicStream(
-				currentStream,
-				raylib.GetMusicTimePlayed(currentStream) - SEEK_SECONDS,
-			)
+		// Volume Down
+		if raylib.IsKeyPressed(raylib.KeyboardKey.DOWN) {
+			if volume_slider.value <= 0.0 {
+				volume_slider.value = 0.0
+			} else {
+				volume_slider.value -= 0.1
+			}
+			raylib.SetMusicVolume(currentStream, volume_slider.value)
+			currentSongVolume = volume_slider.value
 		}
-	}
-	// Seek forwards
-	if raylib.IsKeyPressed(raylib.KeyboardKey.RIGHT) {
-		if raylib.IsMusicStreamPlaying(currentStream) {
-			Sliders["seek bar"].value += SEEK_SECONDS
-			raylib.SeekMusicStream(
-				currentStream,
-				raylib.GetMusicTimePlayed(currentStream) + SEEK_SECONDS,
-			)
-		}
-	}
 
-	// Repeat current song
-	if raylib.IsKeyPressed(raylib.KeyboardKey.R) {
-		currentStream.looping = !loop_song_toggle.checked
-		loop_song_toggle.checked = !loop_song_toggle.checked
-	}
-	// Shuffle
-	if raylib.IsKeyPressed(raylib.KeyboardKey.S) {
-		stop()
-		media_play_state = .Stopped
-		ClearList(&playlist_list)
-		ShufflePlaylist()
-		currentSongIndex = 0
-		Lists["playlist"].items = nil
-		UpdatePlaylistList()
-		UpdateCurrentSongText()
-		loadSelected()
+
+		// Repeat current song
+		if raylib.IsKeyPressed(raylib.KeyboardKey.R) {
+			currentStream.looping = !loop_song_toggle.checked
+			loop_song_toggle.checked = !loop_song_toggle.checked
+		}
 	}
 }
