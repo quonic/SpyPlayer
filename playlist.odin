@@ -96,7 +96,55 @@ task_load_from_config :: proc(t: ^thread.Thread) {
 }
 
 ShufflePlaylist :: proc() {
-	rand.shuffle(playList[:])
+	// If we have at least 2 songs in the playlist shhuffle
+	if len(Lists["playlist"].items) >= 2 {
+		// Save the current song
+		currentSongPlaying := playList[Lists["playlist"].active]
+		currentSongPlayingIndex := Lists["playlist"].active
+		currentSongTime := raylib.GetMusicTimePlayed(currentStream)
+		if media_play_state == .Playing || media_play_state == .Paused {
+			ClearList(Lists["playlist"])
+			rand.shuffle(playList[:])
+			currentSongIndex = currentSongPlayingIndex
+			UpdatePlaylistList()
+			Texts["current song"].text = fmt.caprintf(
+				"%v - %v",
+				current_song_tags.title,
+				current_song_tags.artist,
+			)
+			for song, i in playList[:] {
+				if song.path == currentSongPlaying.path {
+					Lists["playlist"].active = i32(i)
+					Lists["playlist"].scrollIndex = i32(i)
+					Texts["current song"].text = fmt.caprintf(
+						"%v - %v",
+						song.tags.title,
+						song.tags.artist,
+					)
+					break
+				}
+			}
+			raylib.SeekMusicStream(currentStream, currentSongTime)
+		} else if media_play_state == .Stopped {
+			ClearList(Lists["playlist"])
+			rand.shuffle(playList[:])
+			currentSongIndex = currentSongPlayingIndex
+			UpdatePlaylistList()
+			for song, i in playList[:] {
+				if song.path == currentSongPlaying.path {
+					Lists["playlist"].active = i32(i)
+					Lists["playlist"].scrollIndex = i32(i)
+					Texts["current song"].text = fmt.caprintf(
+						"%v - %v",
+						song.tags.title,
+						song.tags.artist,
+					)
+					break
+				}
+			}
+			loadSelected()
+		}
+	}
 }
 
 UpdatePlaylistList :: proc() {
