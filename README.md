@@ -8,7 +8,11 @@ Raylib is used for playback and UI rendering. A custom Aseprite sprite sheet par
 
 ## Features
 
-This is a work in progress, and is not yet feature complete.
+This is a work in progress.
+
+I'm adding features as I go, so if you want something that isn't there, please create a pull request. I use this daily and I add feautres when I encounter a need for them.
+
+If you want a feature that isn't there, please create a pull request or open an issue and I'll see what I can do.
 
 - [x] Plays audio files - only tested on mp3 files
 - [x] Play, pause, stop, next, previous
@@ -41,6 +45,9 @@ This is a work in progress, and is not yet feature complete.
   - [x] Artist
   - [ ] Album
   - [ ] Genre
+- [x] Supported operating systems
+  - [ ] Windows - It should compile, but I can't verify that it works as OpenGL is not supported on Windows in my VM's
+  - [x] Linux - Daily tested on Fedora 40
 - [ ] Other things I haven't figured out yet
 
 ## Contributions
