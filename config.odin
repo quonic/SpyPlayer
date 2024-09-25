@@ -7,6 +7,7 @@ import "core:strings"
 import "vendor:raylib"
 
 Config :: struct {
+	keys:                map[string]string,
 	playlist:            [dynamic]Song,
 	current_song_volume: f32,
 }
@@ -32,6 +33,12 @@ load_config :: proc() {
 	if err != nil {
 		fmt.eprintf("Error unmarshalling data: %v", err)
 		return
+	}
+
+	if config.keys == nil {
+		SetDefaultKeyBindings()
+	} else {
+		SetKeyBindings(config.keys)
 	}
 
 	if config.playlist == nil {
@@ -92,6 +99,7 @@ save_config :: proc() {
 	}
 
 	config: Config = {
+		keys                = GetKeyBindins(),
 		playlist            = playList,
 		current_song_volume = currentSongVolume,
 	}

@@ -175,6 +175,7 @@ _main :: proc() {
 		UserInterface()
 
 		LoadingUpdate()
+		CheckKeys()
 		switch media_play_state {
 		case .Playing:
 			{
@@ -310,10 +311,14 @@ pause :: proc() {
 		media_play_state = .NoMusic
 		return
 	}
-	raylib.PauseMusicStream(currentStream)
-	media_play_state = .Paused
+	if raylib.IsMusicStreamPlaying(currentStream) {
+		raylib.PauseMusicStream(currentStream)
+		media_play_state = .Paused
 
-	UpdateCurrentSongText()
+		UpdateCurrentSongText()
+	} else {
+		play()
+	}
 }
 
 stop :: proc() {
