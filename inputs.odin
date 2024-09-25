@@ -3,6 +3,8 @@ package main
 import "core:fmt"
 import "vendor:raylib"
 
+SEEK_SECONDS :: 5
+
 // Default Key Bindings
 // X - Play
 // C - Pause / Play
@@ -181,21 +183,21 @@ CheckKeys :: proc() {
 	}
 	// Seek backwards
 	if raylib.IsKeyPressed(raylib.KeyboardKey.LEFT) {
-		seek_bar.value -= 1
 		if raylib.IsMusicStreamPlaying(currentStream) {
+			Sliders["seek bar"].value -= SEEK_SECONDS
 			raylib.SeekMusicStream(
 				currentStream,
-				raylib.GetMusicTimeLength(currentStream) * seek_bar.value,
+				raylib.GetMusicTimePlayed(currentStream) - SEEK_SECONDS,
 			)
 		}
 	}
 	// Seek forwards
 	if raylib.IsKeyPressed(raylib.KeyboardKey.RIGHT) {
-		seek_bar.value += 1
 		if raylib.IsMusicStreamPlaying(currentStream) {
+			Sliders["seek bar"].value += SEEK_SECONDS
 			raylib.SeekMusicStream(
 				currentStream,
-				raylib.GetMusicTimeLength(currentStream) * seek_bar.value,
+				raylib.GetMusicTimePlayed(currentStream) + SEEK_SECONDS,
 			)
 		}
 	}
