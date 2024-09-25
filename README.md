@@ -21,6 +21,9 @@ This is a work in progress, and is not yet feature complete.
 - [x] Visualizer
   - [x] Spectrum
     - [x] FFT
+- [X] Keyboard shortcuts
+  - [X] Save and load key bindings
+  - [X] Default key bindings
 - [ ] Playlist management
   - [x] Load from folder
   - [x] Playlist showing loaded songs
