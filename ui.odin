@@ -860,15 +860,7 @@ HandleButtonActions :: proc() {
 			fmt.printf("Remove song\n")
 		}
 		if GetButtonPressedState("shuffle") == 1 {
-			stop()
-			media_play_state = .Stopped
-			ClearList(&playlist_list)
 			ShufflePlaylist()
-			currentSongIndex = 0
-			Lists["playlist"].items = nil
-			UpdatePlaylistList()
-			UpdateCurrentSongText()
-			loadSelected()
 		}
 	} else {
 		Buttons["previous"].enabled = false
