@@ -797,13 +797,16 @@ DrawToggles :: proc() {
 
 DrawAudioVisualizers :: proc() {
 	if raylib.IsMusicStreamPlaying(currentStream) {
+		AudioVisualizers["meter"].isPlaying = true
 		if len(currentLeftChannel) == 0 {
 			return
 		}
 		if currentPeriod == audioPeriod {
-			meter_bar.leftChannelBars = fft(currentLeftChannel[:])
-			meter_bar.rightChannelBars = fft(currentRightChannel[:])
+			AudioVisualizers["meter"].leftChannelBars = fft(currentLeftChannel[:])
+			AudioVisualizers["meter"].rightChannelBars = fft(currentRightChannel[:])
 		}
+	} else {
+		AudioVisualizers["meter"].isPlaying = false
 	}
 
 	DrawAudioVisualizerControl("meter", camera)
