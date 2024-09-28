@@ -430,10 +430,6 @@ DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
 	// https://github.com/raysan5/raygui/blob/master/src/raygui.h#L3351
 	// https://github.com/raysan5/raygui/blob/master/src/raygui.h#L5305
 
-	// Assert that the control exists
-	assert(Lists[name] != {}, fmt.tprintf("Control %v does not exist", name))
-	if len(Lists[name].items) == 0 {return}
-
 	texture: raylib.Texture2D = Lists[name].texture
 	sourceRec: raylib.Rectangle = Lists[name].positionSpriteSheet
 	tint: raylib.Color = Lists[name].enabled ? Lists[name].tint_normal : Lists[name].tint_disabled
@@ -441,13 +437,22 @@ DrawListControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, Lists[name].positionRec, {0, 0}, 0, tint)
 
+	// Assert that the control exists
+	assert(Lists[name] != {}, fmt.tprintf("Control %v does not exist", name))
+	if Lists[name].items == nil {return}
+	if len(Lists[name].items) == 0 {return}
+
+	inset: f32 = 2
+	insetHalf: f32 = inset / 2
+	insetDouble: f32 = inset * 2
+
 	list: [^]cstring = raw_data(Lists[name].items)
 	_ = raylib.GuiListViewEx(
 		{
-			Lists[name].positionRec.x + 2,
-			Lists[name].positionRec.y + 2,
-			Lists[name].positionRec.width - 5,
-			Lists[name].positionRec.height - 4,
+			Lists[name].positionRec.x + inset,
+			Lists[name].positionRec.y + inset,
+			Lists[name].positionRec.width - insetDouble - insetHalf,
+			Lists[name].positionRec.height - insetDouble - insetHalf,
 		},
 		list,
 		i32(len(Lists[name].items)),
@@ -1018,6 +1023,7 @@ AudioVisualizerControl :: struct {
 	tint_normal:         raylib.Color,
 	tint_disabled:       raylib.Color,
 	tooltip:             string,
+	isPlaying:           bool,
 }
 
 PictureControl :: struct {
