@@ -1,6 +1,6 @@
 # SpyPlayer
 
-Yet another music player inspired by the likes of WinAmp, written in [Odin](https://github.com/odin-lang/Odin).
+Yet another music player, written in [Odin](https://github.com/odin-lang/Odin).
 
 Raylib is used for playback and UI rendering. A custom Aseprite sprite sheet parser is used to load sprites and to help position the sprites for custom controls. Currently only Button, Slider and Text controls are implemented. `ffprobe` is used to get metadata from audio files.
 
