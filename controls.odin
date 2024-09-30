@@ -131,8 +131,9 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, AudioVisualizers[name].positionRec, {0, 0}, 0, tint)
 
+	barLength := len(AudioVisualizers[name].leftChannelBars)
 	// If the left channel bars array is empty, return and draw nothing
-	if len(AudioVisualizers[name].leftChannelBars) == 0 {
+	if barLength == 0 {
 		return
 	}
 
@@ -143,68 +144,55 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Border width
 	boarder: f32 = 1
 
+	magnitude: f32 = 5
+
 	barCount := 0
 	color := raylib.BLACK
 	// Don't check bounds as we are doing our own bounds checking
 	#no_bounds_check {
-		for _, i in AudioVisualizers[name].leftChannelBars[:audioPeriod] {
-			// Only do act every time the audio period is divisible by the width of the control (Width)
-			if i % int(audioPeriod / Width) == 0 {
-				// Average the left and right channel bars to fit with in the control
-				averageLeft: f32
-				averageRight: f32
-				// Make sure that we are not drawing outside the control positionRec width
-				if i + Width > len(AudioVisualizers[name].leftChannelBars) {
-					averageLeft =
-						math.sum(AudioVisualizers[name].leftChannelBars[i:audioPeriod]) /
-						f32(len(AudioVisualizers[name].leftChannelBars[i:audioPeriod]))
-					averageRight =
-						math.sum(AudioVisualizers[name].rightChannelBars[i:audioPeriod]) /
-						f32(len(AudioVisualizers[name].rightChannelBars[i:audioPeriod]))
-				} else {
-					averageLeft =
-						math.sum(AudioVisualizers[name].leftChannelBars[i:i + Width]) /
-						f32(len(AudioVisualizers[name].leftChannelBars[i:i + Width]))
-					averageRight =
-						math.sum(AudioVisualizers[name].rightChannelBars[i:i + Width]) /
-						f32(len(AudioVisualizers[name].rightChannelBars[i:i + Width]))
-				}
-				// Make sure that Left is always positive
-				averageLeft = math.abs(averageLeft)
-				// Make sure that Right is always negative
-				averageRight = math.abs(averageRight) * -1
+		w := barLength / Width
+		for i := 0; i < barLength; i = i + w {
+			averageLeft: f32 = math.abs(
+				math.sum(AudioVisualizers[name].leftChannelBars[i:i + w]) /
+				f32(len(AudioVisualizers[name].leftChannelBars[i:i + w])) *
+				magnitude,
+			)
+			averageRight: f32 =
+				math.abs(
+					math.sum(AudioVisualizers[name].rightChannelBars[i:i + w]) /
+					f32(len(AudioVisualizers[name].rightChannelBars[i:i + w])) *
+					magnitude,
+				) *
+				-1
 
-				// x position of the current line
-				x := i32(barCount) + i32(AudioVisualizers[name].positionRec.x + boarder)
-				// Left Channel - Drawn from the top of the control, downwards
-				raylib.DrawLine(
-					x,
-					i32(AudioVisualizers[name].positionRec.y + boarder),
-					x,
-					i32(
-						AudioVisualizers[name].positionRec.y + boarder + f32(averageLeft * Height),
-					),
-					color,
-				)
-				// Right Channel - Drawn from the bottom of the control, upwards
-				raylib.DrawLine(
-					x,
-					i32(
-						AudioVisualizers[name].positionRec.y -
-						boarder +
-						AudioVisualizers[name].positionRec.height,
-					),
-					x,
-					i32(
-						AudioVisualizers[name].positionRec.y -
-						boarder +
-						AudioVisualizers[name].positionRec.height +
-						f32(averageRight * Height),
-					),
-					color,
-				)
-				barCount = barCount + 1
-			}
+			// x position of the current line
+			x := i32(barCount) + i32(AudioVisualizers[name].positionRec.x + boarder)
+			// Left Channel - Drawn from the top of the control, downwards
+			raylib.DrawLine(
+				x,
+				i32(AudioVisualizers[name].positionRec.y + boarder),
+				x,
+				i32(AudioVisualizers[name].positionRec.y + boarder + f32(averageLeft * Height)),
+				color,
+			)
+			// Right Channel - Drawn from the bottom of the control, upwards
+			raylib.DrawLine(
+				x,
+				i32(
+					AudioVisualizers[name].positionRec.y -
+					boarder +
+					AudioVisualizers[name].positionRec.height,
+				),
+				x,
+				i32(
+					AudioVisualizers[name].positionRec.y -
+					boarder +
+					AudioVisualizers[name].positionRec.height +
+					f32(averageRight * Height),
+				),
+				color,
+			)
+			barCount = barCount + 1
 		}
 	}
 }

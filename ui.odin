@@ -801,9 +801,10 @@ DrawAudioVisualizers :: proc() {
 		if len(currentLeftChannel) == 0 {
 			return
 		}
-		if currentPeriod == audioPeriod {
+		if canCopyVizualizerBuffer {
 			AudioVisualizers["meter"].leftChannelBars = fft(currentLeftChannel[:])
 			AudioVisualizers["meter"].rightChannelBars = fft(currentRightChannel[:])
+			canFillVizualizerBuffer = true
 		}
 	} else {
 		AudioVisualizers["meter"].isPlaying = false

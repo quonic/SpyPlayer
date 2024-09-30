@@ -8,9 +8,11 @@ import "core:math"
 import "core:mem"
 
 audioPeriod: int : 3600
-currentLeftChannel: [audioPeriod]complex64
-currentRightChannel: [audioPeriod]complex64
+currentLeftChannel: [dynamic]complex64
+currentRightChannel: [dynamic]complex64
 currentPeriod: int = 0
+canFillVizualizerBuffer: bool = true
+canCopyVizualizerBuffer: bool = false
 
 AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 	context = runtime.default_context()
@@ -21,25 +23,33 @@ AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 		fmt.printfln("Buffer is zero")
 		return
 	}
+	if !canFillVizualizerBuffer {
+		return
+	}
+	if canFillVizualizerBuffer && currentPeriod >= audioPeriod {
+		// If we can fill the buffer and the current period is 3600, reset the buffer
+		currentPeriod = 0
+		currentLeftChannel = {}
+		currentRightChannel = {}
+		canCopyVizualizerBuffer = false
+	}
+
 	#no_bounds_check {
-		if currentPeriod >= audioPeriod {
-			currentPeriod = 0
-			currentLeftChannel = {}
-			currentRightChannel = {}
-		}
 		fs := mem.slice_ptr(cast(^[2]f32)(buffer), int(frames))
-		if frames == 512 {
-			for i in 0 ..< int(frames) {
-				currentLeftChannel[currentPeriod + i] = fs[i][0]
-				currentRightChannel[currentPeriod + i] = fs[i][1]
+		for i in 0 ..< int(frames) {
+			if fs[i][0] != 0 {
+				append(&currentLeftChannel, fs[i][0])
 			}
-			currentPeriod += 512
-		} else if frames == 388 {
-			for i in 0 ..< int(frames) {
-				currentLeftChannel[currentPeriod + i] = fs[i][0]
-				currentRightChannel[currentPeriod + i] = fs[i][1]
+			if fs[i][1] != 0 {
+				append(&currentRightChannel, fs[i][1])
 			}
-			currentPeriod += 388
+		}
+		currentPeriod += int(frames)
+		if currentPeriod >= audioPeriod {
+			// Stop filling the buffer
+			canFillVizualizerBuffer = false
+			// We can copy the buffer
+			canCopyVizualizerBuffer = true
 		}
 	}
 }
