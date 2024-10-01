@@ -247,7 +247,6 @@ _main :: proc() {
 }
 
 play :: proc() {
-
 	if raylib.IsMusicReady(currentStream) {
 		raylib.PlayMusicStream(currentStream)
 		raylib.SetMusicVolume(currentStream, currentSongVolume)
@@ -333,12 +332,6 @@ stop :: proc() {
 	media_play_state = .Stopped
 
 	UpdateCurrentSongText()
-	// Ensure that the visualizer is reset when we stop
-	currentPeriod = 0
-	currentLeftChannel = {}
-	currentRightChannel = {}
-	canCopyVizualizerBuffer = false
-	canFillVizualizerBuffer = true
 }
 
 next :: proc() {

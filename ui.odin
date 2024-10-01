@@ -799,15 +799,17 @@ DrawAudioVisualizers :: proc() {
 	if raylib.IsMusicStreamPlaying(currentStream) {
 		AudioVisualizers["meter"].isPlaying = true
 		if len(currentLeftChannel) == 0 {
+			ResetVizualizerState()
 			return
 		}
-		if canCopyVizualizerBuffer {
+		if vizualizerState == .Copying {
 			AudioVisualizers["meter"].leftChannelBars = fft(currentLeftChannel[:])
 			AudioVisualizers["meter"].rightChannelBars = fft(currentRightChannel[:])
-			canFillVizualizerBuffer = true
+			ResetVizualizerState()
 		}
 	} else {
 		AudioVisualizers["meter"].isPlaying = false
+		ResetVizualizerState()
 	}
 
 	DrawAudioVisualizerControl("meter", camera)

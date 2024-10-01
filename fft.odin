@@ -7,12 +7,26 @@ import "core:fmt"
 import "core:math"
 import "core:mem"
 
-audioPeriod: int : 3600
+audioPeriod: int : 3600 / 2
 currentLeftChannel: [dynamic]complex64
 currentRightChannel: [dynamic]complex64
 currentPeriod: int = 0
-canFillVizualizerBuffer: bool = true
-canCopyVizualizerBuffer: bool = false
+
+AudioVizualizerStates :: enum {
+	Filling,
+	Copying,
+}
+
+vizualizerState: AudioVizualizerStates = .Filling
+
+
+ResetVizualizerState :: proc() {
+	// Ensure that the visualizer is reset when we stop
+	currentPeriod = 0
+	currentLeftChannel = {}
+	currentRightChannel = {}
+	vizualizerState = .Filling
+}
 
 AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 	context = runtime.default_context()
@@ -23,15 +37,11 @@ AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 		fmt.printfln("Buffer is zero")
 		return
 	}
-	if !canFillVizualizerBuffer {
-		return
+	if currentPeriod >= audioPeriod {
+		vizualizerState = .Copying
 	}
-	if canFillVizualizerBuffer && currentPeriod >= audioPeriod {
-		// If we can fill the buffer and the current period is 3600, reset the buffer
-		currentPeriod = 0
-		currentLeftChannel = {}
-		currentRightChannel = {}
-		canCopyVizualizerBuffer = false
+	if vizualizerState == .Copying {
+		return
 	}
 
 	#no_bounds_check {
@@ -45,12 +55,6 @@ AudioProcessFFT :: proc "c" (buffer: rawptr, frames: c.uint) {
 			}
 		}
 		currentPeriod += int(frames)
-		if currentPeriod >= audioPeriod {
-			// Stop filling the buffer
-			canFillVizualizerBuffer = false
-			// We can copy the buffer
-			canCopyVizualizerBuffer = true
-		}
 	}
 }
 
