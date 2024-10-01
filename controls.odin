@@ -136,7 +136,12 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	if barLength == 0 {
 		return
 	}
-
+	raylib.BeginScissorMode(
+		i32(AudioVisualizers[name].positionRec.x + 2),
+		i32(AudioVisualizers[name].positionRec.y + 2),
+		i32(AudioVisualizers[name].positionRec.width - 4),
+		i32(AudioVisualizers[name].positionRec.height - 4),
+	)
 	// Width of the control minus the borders
 	Width := int(AudioVisualizers[name].positionRec.width) - 2
 	// Half the height of the control minus the borders
@@ -144,7 +149,9 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Border width
 	boarder: f32 = 1
 
-	magnitude: f32 = 5
+	// Magnitude of the bars
+	// Make sure that the magnitude is within a range of 2 to 4
+	magnitude: f32 = math.max(2, 4 * currentSongVolume)
 
 	barCount := 0
 	color := raylib.BLACK
@@ -172,7 +179,7 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 				x,
 				i32(AudioVisualizers[name].positionRec.y + boarder),
 				x,
-				i32(AudioVisualizers[name].positionRec.y + boarder + f32(averageLeft * Height)),
+				i32(AudioVisualizers[name].positionRec.y - boarder + f32(averageLeft * Height)),
 				color,
 			)
 			// Right Channel - Drawn from the bottom of the control, upwards
@@ -195,6 +202,7 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 			barCount = barCount + 1
 		}
 	}
+	raylib.EndScissorMode()
 }
 
 DrawPictureControl :: proc(name: string, camera: raylib.Camera2D) {
