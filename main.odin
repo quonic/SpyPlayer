@@ -46,10 +46,7 @@ lastScrollTime: f64 = 0
 
 EnableToolTips: bool : true
 
-MAX_SAMPLES :: 512
 MAX_SAMPLES_PER_UPDATE :: 4096
-
-N :: 4
 
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
