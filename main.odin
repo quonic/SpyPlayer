@@ -8,7 +8,6 @@ import "core:prof/spall"
 import "core:strings"
 import "core:sync"
 import "core:thread"
-import "core:time"
 import "vendor:raylib"
 
 spall_ctx: spall.Context
@@ -50,12 +49,6 @@ MAX_SAMPLES_PER_UPDATE :: 4096
 
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
-
-// Thread User Indices
-LOAD_FROM_CONFIG :: 0
-LOAD_FROM_DIR :: 1
-LOAD_FROM_JSON :: 2
-SAVE_TO_JSON :: 3
 
 main :: proc() {
 	when OUTPUT_SPALL_TRACE {
@@ -149,7 +142,8 @@ _main :: proc() {
 		config_file = fmt.aprintf("%v/SpyPlayer/config.json", XDG_CONFIG_HOME)
 		if os.exists(config_file) {
 			t := thread.create(proc(t: ^thread.Thread) {
-				task_load_from_config(t)
+				load_config()
+				volume_slider.value = currentSongVolume
 			})
 			if t == nil {
 				fmt.eprintln("Error creating task_load_from_config")
@@ -390,52 +384,6 @@ LoadingUpdate :: proc() {
 
 }
 
-load_from_dir :: proc() {
-	media_play_state = .NoMusic
-	playListLoaded = false
-	PlayListLoading = true
-	ClearPlaylist()
-	ClearPlaylistList()
-	t := thread.create(proc(t: ^thread.Thread) {
-		task_prompt_load_from_dir(t)
-	})
-	if t == nil {
-		fmt.eprintln("Error creating task_load_from_config")
-	}
-	t.user_index = LOAD_FROM_DIR
-	append(&threads, t)
-	thread.start(t)
-	Texts["current song"].text = fmt.caprintf("Playlist loading...")
-}
-
-load_from_json :: proc() {
-	media_play_state = .NoMusic
-	PlayListLoading = true
-	t := thread.create(proc(t: ^thread.Thread) {
-		task_prompt_load_from_json(t)
-	})
-	if t == nil {
-		fmt.eprintln("Error creating task_load_from_config")
-	}
-	t.user_index = LOAD_FROM_JSON
-	append(&threads, t)
-	thread.start(t)
-	Texts["current song"].text = fmt.caprintf("Playlist loading...")
-}
-
-save_to_json :: proc() {
-	t := thread.create(proc(t: ^thread.Thread) {
-		task_prompt_save_to_json(t)
-	})
-	if t == nil {
-		fmt.eprintln("Error creating task_load_from_config")
-	}
-	t.user_index = SAVE_TO_JSON
-	append(&threads, t)
-	thread.start(t)
-	Texts["current song"].text = fmt.caprintf("Playlist saving...")
-}
-
 UpdateCurrentSongText :: proc() {
 	Texts["current song"].text = fmt.caprintf(
 		"%v - %v",
@@ -479,67 +427,4 @@ UpdatePlayTime :: proc() {
 	songProgress =
 		raylib.GetMusicTimePlayed(currentStream) / raylib.GetMusicTimeLength(currentStream)
 	Sliders["seek bar"].value = songProgress
-}
-
-// Thread Pool
-
-// Thanks to VOU-folks for this code: https://github.com/VOU-folks/odin-tcp-server-example/blob/main/main.odin
-
-threads: [dynamic]^thread.Thread
-
-@(init)
-create_thread_pool :: proc() {
-	threads = make([dynamic]^thread.Thread, 0)
-	thread_cleaner()
-}
-
-destroy_thread_pool :: proc() {
-	delete(threads)
-}
-
-thread_cleaner :: proc() {
-	t := thread.create(proc(t: ^thread.Thread) {
-		for {
-			time.sleep(1 * time.Second)
-
-			if len(threads) == 0 {
-				continue
-			}
-
-			for i := 0; i < len(threads); {
-				if PlayListLoading {
-					if thread.is_done(t) &&
-					   (threads[i].user_index == LOAD_FROM_CONFIG ||
-							   threads[i].user_index == LOAD_FROM_JSON ||
-							   threads[i].user_index == LOAD_FROM_DIR) {
-						Texts["current song"].text = fmt.caprintf("Playlist loaded!")
-						currentSongIndex = 0
-						currentSongPath = playList[currentSongIndex].path
-						current_song_tags = playList[currentSongIndex].tags
-						currentStream = raylib.LoadMusicStream(
-							strings.clone_to_cstring(
-								playList[currentSongIndex].path,
-								context.temp_allocator,
-							),
-						)
-						raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-						PlayListLoading = false
-					}
-				}
-
-				if threads_cleaner := threads[i]; thread.is_done(threads_cleaner) {
-					when ODIN_DEBUG {
-						fmt.printf("Thread %d is done\n", threads_cleaner.user_index)
-					}
-					threads_cleaner.data = nil
-					thread.destroy(threads_cleaner)
-
-					ordered_remove(&threads, i)
-				} else {
-					i += 1
-				}
-			}
-		}
-	})
-	thread.start(t)
 }
