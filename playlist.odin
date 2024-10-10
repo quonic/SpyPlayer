@@ -75,26 +75,6 @@ task_prompt_load_from_dir :: proc(t: ^thread.Thread) {
 	UpdatePlaylistList()
 }
 
-task_prompt_load_from_json :: proc(t: ^thread.Thread) {
-	PlayListLoading = true
-	playListLoaded = false
-	LoadPlaylist(clear = true)
-
-	time.sleep(1 * time.Millisecond)
-	playListLoaded = true
-	media_play_state = .Stopped
-	UpdatePlaylistList()
-}
-
-task_prompt_save_to_json :: proc(t: ^thread.Thread) {
-	SavePlaylist()
-}
-
-task_load_from_config :: proc(t: ^thread.Thread) {
-	load_config()
-	volume_slider.value = currentSongVolume
-}
-
 ShufflePlaylist :: proc() {
 	// If we have at least 2 songs in the playlist shhuffle
 	if len(Lists["playlist"].items) >= 2 {
