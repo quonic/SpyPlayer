@@ -817,10 +817,19 @@ DrawAudioVisualizers :: proc() {
 
 HandleButtonActions :: proc() {
 	if GetButtonPressedState("load") == 1 {
+		media_play_state = .NoMusic
+		playListLoaded = false
+		PlayListLoading = true
+		ClearPlaylist()
+		ClearPlaylistList()
 		load_from_dir()
+		Texts["current song"].text = fmt.caprintf("Playlist loading...")
 	}
 	if GetButtonPressedState("load playlist") == 1 {
+		media_play_state = .NoMusic
+		PlayListLoading = true
 		load_from_json()
+		Texts["current song"].text = fmt.caprintf("Playlist loading...")
 	}
 	if playListLoaded {
 		if Buttons["play"].enabled == false {
@@ -839,6 +848,7 @@ HandleButtonActions :: proc() {
 		}
 		if GetButtonPressedState("save playlist") == 1 {
 			save_to_json()
+			Texts["current song"].text = fmt.caprintf("Playlist saving...")
 		}
 		if GetTogglePressedState("loop song") == 1 {
 			currentStream.looping = !loop_song_toggle.checked
