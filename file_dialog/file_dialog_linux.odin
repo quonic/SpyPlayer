@@ -2,6 +2,7 @@ package file_dialog
 
 import "core:fmt"
 import "core:os"
+import "core:os/os2"
 import "core:strings"
 
 when ODIN_OS == .Linux || ODIN_OS == .Darwin {
@@ -74,15 +75,29 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 	}
 
 	@(private = "file")
-	execute_binary :: proc(fullpath: string) -> (output: string, exitcode: i32) {
-		location_buf: [1024]byte
-		file := popen(cstr(fullpath), "r")
+	execute_binary :: proc(fullpath: string) -> (output: string, exitcode: int) {
 
-		fgets(raw_data(location_buf[:]), len(location_buf), file)
-		output = string(location_buf[:])
-		output, _ = strings.replace_all(output, "\n", "", context.temp_allocator)
-		exit_code := pclose(file)
-		return strings.clone(output), exit_code
+		cmd := strings.split(fullpath, " ")
+
+		state, stdout, stderr, proc_err := os2.process_exec(
+			os2.Process_Desc{command = cmd},
+			context.allocator,
+		)
+		defer delete(stdout)
+		defer delete(stderr)
+
+		if state.exit_code != 0 || proc_err != nil {
+			fmt.printfln("Error: Process Error: %v", proc_err)
+			fmt.printfln("----------------- STDOUT --------------------")
+			fmt.printfln("%s", transmute(string)stdout)
+			fmt.printfln("----------------- STDERR --------------------")
+			fmt.printfln("%s", transmute(string)stderr)
+			fmt.printfln("----------------- STATUS --------------------")
+			fmt.printfln("%v", state)
+			return "", state.exit_code
+		}
+
+		return transmute(string)stdout, state.exit_code
 	}
 
 	open_file_dialog :: proc(filter: ..string, directory: bool = false) -> string {
@@ -151,7 +166,7 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 
 	show_popup :: proc(title: string, message: string, type: PopupType) -> (result: bool) {
 		notification_type := type
-		output: i32
+		output: int
 		switch _, type, _ := find_installed_dialog_binary(); type {
 		case .KDialog:
 			command: string
