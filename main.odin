@@ -109,6 +109,7 @@ _main :: proc() {
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
 	raylib.SetWindowState(raylib.ConfigFlags{raylib.ConfigFlag.WINDOW_ALWAYS_RUN})
+	raylib.SetWindowIcon(raylib.LoadImage("assets/SpyPlayer.png"))
 	defer raylib.CloseWindow()
 
 	// Move the window to the primary monitor
