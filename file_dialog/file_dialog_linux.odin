@@ -83,8 +83,6 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 			os2.Process_Desc{command = cmd},
 			context.allocator,
 		)
-		defer delete(stdout)
-		defer delete(stderr)
 
 		if state.exit_code != 0 || proc_err != nil {
 			fmt.printfln("Error: Process Error: %v", proc_err)
@@ -116,7 +114,11 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 					)
 				}
 			}
-			output, _ := execute_binary(command)
+			output, exit_code := execute_binary(command)
+			if exit_code != 0 {
+				fmt.eprintfln("Error: %v", output)
+				return ""
+			}
 			return output
 		case .Zenity:
 			command: string
@@ -132,8 +134,11 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 					)
 				}
 			}
-			output, _ := execute_binary(command)
-			return output
+			output, exit_code := execute_binary(command)
+			if exit_code != 0 {
+				fmt.eprintfln("Error: %v", output)
+				return ""
+			}
 		}
 		unimplemented()
 	}
