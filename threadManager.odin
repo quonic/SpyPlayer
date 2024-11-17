@@ -26,7 +26,7 @@ load_from_dir :: proc() {
 		playListLoaded = false
 		// TODO: Add a way to remember the last folder/playlist
 		folder := file_dialog.open_file_dialog("*.mp3", directory = true)
-		assert(os.exists(folder))
+		assert(os.exists(folder), fmt.tprintf("Folder does not exist: %v", folder))
 
 		handle, handleerror := os.open(folder)
 		assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
