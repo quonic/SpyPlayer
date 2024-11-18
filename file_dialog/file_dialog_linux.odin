@@ -119,6 +119,8 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 				fmt.eprintfln("Error: %v", output)
 				return ""
 			}
+			// Remove newlines
+			output, _ = strings.replace_all(output, "\n", "", context.temp_allocator)
 			return output
 		case .Zenity:
 			command: string
@@ -139,6 +141,9 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 				fmt.eprintfln("Error: %v", output)
 				return ""
 			}
+			// Remove newlines
+			output, _ = strings.replace_all(output, "\n", "", context.temp_allocator)
+			return output
 		}
 		unimplemented()
 	}
