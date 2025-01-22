@@ -726,7 +726,7 @@ UserInterface :: proc() {
 	DrawLists()
 	DrawTexts()
 	DrawToggles()
-	DrawAudioVisualizers()
+	when FEATURE_FFT {DrawAudioVisualizers()}
 	if EnableToolTips {DrawToolTips()}
 	HandleButtonActions()
 }

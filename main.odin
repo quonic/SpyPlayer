@@ -50,6 +50,8 @@ MAX_SAMPLES_PER_UPDATE :: 4096
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
 
+FEATURE_FFT :: false
+
 main :: proc() {
 	when OUTPUT_SPALL_TRACE {
 		spall_ctx = spall.context_create("trace_test.spall")
@@ -256,7 +258,9 @@ play :: proc() {
 		currentStream = raylib.LoadMusicStream(
 			strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 		)
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		when FEATURE_FFT {
+			raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		}
 		media_play_state = .Playing
 		currentStream.looping = loop_song_toggle.checked
 		raylib.PlayMusicStream(currentStream)
@@ -268,7 +272,9 @@ play :: proc() {
 loadSelected :: proc() {
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		when FEATURE_FFT {
+			raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		}
 		raylib.UnloadMusicStream(currentStream)
 	}
 
@@ -285,7 +291,9 @@ loadSelected :: proc() {
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
-	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	when FEATURE_FFT {
+		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 }
@@ -319,7 +327,9 @@ stop :: proc() {
 	}
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		when FEATURE_FFT {
+			raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		}
 	}
 	media_play_state = .Stopped
 
@@ -343,7 +353,9 @@ next :: proc() {
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
-	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	when FEATURE_FFT {
+		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	if media_play_state == .Playing {
@@ -359,7 +371,9 @@ previous :: proc() {
 		return
 	}
 	raylib.StopMusicStream(currentStream)
-	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	when FEATURE_FFT {
+		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	}
 	raylib.UnloadMusicStream(currentStream)
 	if len(playList) > 0 {
 		currentSongIndex -= 1
@@ -371,7 +385,9 @@ previous :: proc() {
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path),
 	)
-	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	when FEATURE_FFT {
+		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	if media_play_state == .Playing {

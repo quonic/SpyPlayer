@@ -136,7 +136,9 @@ thread_cleaner :: proc() {
 								context.temp_allocator,
 							),
 						)
-						raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+						when FEATURE_FFT {
+							raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+						}
 						PlayListLoading = false
 					}
 				}
