@@ -123,7 +123,6 @@ _main :: proc() {
 
 	loadStyle()
 
-	// textFont = raylib.LoadFont("assets/fonts/MyFontHere.ttf")
 	textFont = raylib.GetFontDefault()
 
 	// Create the UI elements
@@ -138,13 +137,13 @@ _main :: proc() {
 	raylib.SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE)
 
 
+	// Load the config file
 	{
-		XDG_CONFIG_HOME := os.get_env("XDG_CONFIG_HOME", context.temp_allocator)
-		if XDG_CONFIG_HOME == "" {
-			XDG_CONFIG_HOME = os.get_env("HOME", context.temp_allocator)
-			XDG_CONFIG_HOME = fmt.aprintf("%v/.config", XDG_CONFIG_HOME)
-		}
-		config_file = fmt.aprintf("%v/SpyPlayer/config.json", XDG_CONFIG_HOME)
+		// Concatenate the config file path to the XDG_CONFIG_HOME path
+		err: os.Error
+		config_file, err = GetConfigFilePath()
+		assert(err == nil, "Error building config file path")
+
 		if os.exists(config_file) {
 			t := thread.create(proc(t: ^thread.Thread) {
 				load_config()
@@ -176,17 +175,19 @@ _main :: proc() {
 		case .Playing:
 			{
 
+				// If the playlist is empty, set the state to NoMusic
 				if Lists["playlist"].active == -1 {
 					Lists["playlist"].active = currentSongIndex
 				}
+				// If the active song is not the current song, load and play the selected song
 				if Lists["playlist"].active != currentSongIndex {
 					loadSelected()
 					playSelected()
 					UpdateCurrentSongText()
 				}
 
+				// Update the current song text
 				UpdatePlayTime()
-
 
 				// Scroll the current song text when scrolling is enabled
 				if Texts["current song"].text != "" && Texts["current song"].scrolling {
@@ -199,22 +200,30 @@ _main :: proc() {
 						lastScrollTime = raylib.GetTime()
 					}
 				}
+
+				// Update the song progress
 				songProgress =
 					raylib.GetMusicTimePlayed(currentStream) /
 					raylib.GetMusicTimeLength(currentStream)
 
+				// Update the seek bar
 				if raylib.IsMusicReady(currentStream) {
 					raylib.UpdateMusicStream(currentStream)
 				}
+
+				// If the song is finished, play the next song
 				if !raylib.IsMusicStreamPlaying(currentStream) {
 					next()
 				}
 			}
 		case .Paused:
 			{
+				// If the playlist is empty, set the state to NoMusic
 				if Lists["playlist"].active == -1 {
 					Lists["playlist"].active = currentSongIndex
 				}
+
+				// If the active song is not the current song, load and play the selected song
 				if Lists["playlist"].active != currentSongIndex {
 					loadSelected()
 					UpdateCurrentSongText()
@@ -222,9 +231,12 @@ _main :: proc() {
 			}
 		case .Stopped:
 			{
+				// If the playlist is empty, set the state to NoMusic
 				if Lists["playlist"].active == -1 {
 					Lists["playlist"].active = currentSongIndex
 				}
+
+				// If the active song is not the current song, load and play the selected song
 				if Lists["playlist"].active != currentSongIndex {
 					loadSelected()
 					UpdateCurrentSongText()
@@ -235,10 +247,11 @@ _main :: proc() {
 			}
 		}
 
-
 		raylib.EndMode2D()
 		raylib.EndDrawing()
 	}
+
+	// Save the config when the program is closed
 	save_config()
 }
 
