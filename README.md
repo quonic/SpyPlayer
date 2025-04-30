@@ -48,7 +48,7 @@ If you want a feature that isn't there, please create a pull request or open an 
   - [ ] Genre
 - [x] Supported operating systems
   - [ ] Windows - It should compile, but I can't verify that it works as OpenGL is not supported on Windows in my VM's
-  - [x] Linux - Daily tested on Fedora 40
+  - [x] Linux - Daily tested on Fedora 41
 - [ ] Other things I haven't figured out yet
 
 ## Contributions
