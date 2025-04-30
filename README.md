@@ -10,7 +10,7 @@ Raylib is used for playback and UI rendering. A custom Aseprite sprite sheet par
 
 This is a work in progress.
 
-I'm adding features as I go, so if you want something that isn't there, please create a pull request. I use this daily and I add feautres when I encounter a need for them.
+I'm adding features as I go, so if you want something that isn't there, please create a issue. I use this daily and I add feautres when I encounter a need for them.
 
 If you want a feature that isn't there, please create a pull request or open an issue and I'll see what I can do.
 
@@ -22,15 +22,15 @@ If you want a feature that isn't there, please create a pull request or open an 
 - [x] Current time and total time
 - [x] Play next song when finished playing current song
 - [x] Seeking
-- [x] Visualizer
-  - [x] Spectrum
-    - [x] FFT
+- [ ] Visualizer
+  - [ ] Spectrum
+    - [ ] FFT - Work in progress
 - [x] Tooltips for controls
   - [ ] Delay before showing tooltips
 - [x] Keyboard shortcuts
   - [x] Save and load key bindings
   - [x] Default key bindings
-- [ ] Playlist management
+- [x] Playlist management
   - [x] Load from folder
   - [x] Playlist showing loaded songs
   - [x] Selecting a song plays that song
@@ -39,9 +39,8 @@ If you want a feature that isn't there, please create a pull request or open an 
   - [x] Automatic loadind of playlist from config
   - [x] Automatic saving of playlist to config
   - [x] Shuffle playlist
-  - [ ] Add to playlist
-  - [ ] Remove from playlist
-  - [ ] Clear playlist
+  - [x] Add to playlist
+  - [x] Remove from playlist
 - [ ] Show metadata
   - [x] Title
   - [x] Artist
