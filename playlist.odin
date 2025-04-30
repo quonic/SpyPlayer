@@ -6,6 +6,7 @@ import "core:fmt"
 import "core:math"
 import "core:math/rand"
 import "core:os"
+import "core:os/os2"
 import "core:strings"
 import "core:thread"
 import "core:time"
@@ -170,9 +171,6 @@ LoadSong :: proc(path: string) {
 		currentStream = raylib.LoadMusicStream(
 			strings.clone_to_cstring(playList[currentSongIndex].path),
 		)
-		when FEATURE_FFT {
-			raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-		}
 		for !raylib.IsMusicReady(currentStream) {
 			thread.yield()
 		}

@@ -274,7 +274,7 @@ play :: proc() {
 			strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 		)
 		when FEATURE_FFT {
-			raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+			GenerateSpectrum()
 		}
 		media_play_state = .Playing
 		currentStream.looping = loop_song_toggle.checked
@@ -287,9 +287,6 @@ play :: proc() {
 loadSelected :: proc() {
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
-		when FEATURE_FFT {
-			raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-		}
 		raylib.UnloadMusicStream(currentStream)
 	}
 
@@ -307,7 +304,7 @@ loadSelected :: proc() {
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
 	when FEATURE_FFT {
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		GenerateSpectrum()
 	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
@@ -343,7 +340,7 @@ stop :: proc() {
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
 		when FEATURE_FFT {
-			raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+			// raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 		}
 	}
 	media_play_state = .Stopped
@@ -369,7 +366,7 @@ next :: proc() {
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
 	when FEATURE_FFT {
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		GenerateSpectrum()
 	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
@@ -387,7 +384,7 @@ previous :: proc() {
 	}
 	raylib.StopMusicStream(currentStream)
 	when FEATURE_FFT {
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		// raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 	}
 	raylib.UnloadMusicStream(currentStream)
 	if len(playList) > 0 {
@@ -401,7 +398,7 @@ previous :: proc() {
 		strings.clone_to_cstring(playList[currentSongIndex].path),
 	)
 	when FEATURE_FFT {
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		GenerateSpectrum()
 	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)

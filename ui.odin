@@ -2,6 +2,7 @@ package main
 
 import "aseprite"
 import "core:fmt"
+import "core:math"
 import "ffprobe"
 import "vendor:raylib"
 
@@ -628,7 +629,7 @@ CreateUI :: proc() {
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
-					tint_normal = raylib.WHITE,
+					tint_normal = raylib.BLACK,
 					tint_disabled = raylib.DARKGRAY,
 					leftChannelBars = {},
 					rightChannelBars = {},
@@ -796,23 +797,7 @@ DrawToggles :: proc() {
 }
 
 DrawAudioVisualizers :: proc() {
-	if raylib.IsMusicStreamPlaying(currentStream) {
-		AudioVisualizers["meter"].isPlaying = true
-		if len(currentLeftChannel) == 0 {
-			ResetVizualizerState()
-			return
-		}
-		if vizualizerState == .Copying {
-			AudioVisualizers["meter"].leftChannelBars = fft(currentLeftChannel[:])
-			AudioVisualizers["meter"].rightChannelBars = fft(currentRightChannel[:])
-			ResetVizualizerState()
-		}
-	} else {
-		AudioVisualizers["meter"].isPlaying = false
-		ResetVizualizerState()
-	}
-
-	DrawAudioVisualizerControl("meter", camera)
+	DrawAudioVisualizerControl("meter", songProgress, camera)
 }
 
 HandleButtonActions :: proc() {
