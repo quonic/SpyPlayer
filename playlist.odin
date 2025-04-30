@@ -6,6 +6,7 @@ import "core:fmt"
 import "core:math"
 import "core:math/rand"
 import "core:os"
+import "core:os/os2"
 import "core:strings"
 import "core:thread"
 import "core:time"
@@ -73,26 +74,6 @@ task_prompt_load_from_dir :: proc(t: ^thread.Thread) {
 	media_play_state = .Stopped
 
 	UpdatePlaylistList()
-}
-
-task_prompt_load_from_json :: proc(t: ^thread.Thread) {
-	PlayListLoading = true
-	playListLoaded = false
-	LoadPlaylist(clear = true)
-
-	time.sleep(1 * time.Millisecond)
-	playListLoaded = true
-	media_play_state = .Stopped
-	UpdatePlaylistList()
-}
-
-task_prompt_save_to_json :: proc(t: ^thread.Thread) {
-	SavePlaylist()
-}
-
-task_load_from_config :: proc(t: ^thread.Thread) {
-	load_config()
-	volume_slider.value = currentSongVolume
 }
 
 ShufflePlaylist :: proc() {
@@ -190,7 +171,6 @@ LoadSong :: proc(path: string) {
 		currentStream = raylib.LoadMusicStream(
 			strings.clone_to_cstring(playList[currentSongIndex].path),
 		)
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 		for !raylib.IsMusicReady(currentStream) {
 			thread.yield()
 		}

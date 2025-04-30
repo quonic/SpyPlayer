@@ -2,6 +2,7 @@ package main
 
 import "aseprite"
 import "core:fmt"
+import "core:math"
 import "ffprobe"
 import "vendor:raylib"
 
@@ -628,7 +629,7 @@ CreateUI :: proc() {
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
-					tint_normal = raylib.WHITE,
+					tint_normal = raylib.BLACK,
 					tint_disabled = raylib.DARKGRAY,
 					leftChannelBars = {},
 					rightChannelBars = {},
@@ -726,7 +727,7 @@ UserInterface :: proc() {
 	DrawLists()
 	DrawTexts()
 	DrawToggles()
-	DrawAudioVisualizers()
+	when FEATURE_FFT {DrawAudioVisualizers()}
 	if EnableToolTips {DrawToolTips()}
 	HandleButtonActions()
 }
@@ -796,31 +797,24 @@ DrawToggles :: proc() {
 }
 
 DrawAudioVisualizers :: proc() {
-	if raylib.IsMusicStreamPlaying(currentStream) {
-		AudioVisualizers["meter"].isPlaying = true
-		if len(currentLeftChannel) == 0 {
-			ResetVizualizerState()
-			return
-		}
-		if vizualizerState == .Copying {
-			AudioVisualizers["meter"].leftChannelBars = fft(currentLeftChannel[:])
-			AudioVisualizers["meter"].rightChannelBars = fft(currentRightChannel[:])
-			ResetVizualizerState()
-		}
-	} else {
-		AudioVisualizers["meter"].isPlaying = false
-		ResetVizualizerState()
-	}
-
-	DrawAudioVisualizerControl("meter", camera)
+	DrawAudioVisualizerControl("meter", songProgress, camera)
 }
 
 HandleButtonActions :: proc() {
 	if GetButtonPressedState("load") == 1 {
+		media_play_state = .NoMusic
+		playListLoaded = false
+		PlayListLoading = true
+		ClearPlaylist()
+		ClearPlaylistList()
 		load_from_dir()
+		Texts["current song"].text = fmt.caprintf("Playlist loading...")
 	}
 	if GetButtonPressedState("load playlist") == 1 {
+		media_play_state = .NoMusic
+		PlayListLoading = true
 		load_from_json()
+		Texts["current song"].text = fmt.caprintf("Playlist loading...")
 	}
 	if playListLoaded {
 		if Buttons["play"].enabled == false {
@@ -839,6 +833,7 @@ HandleButtonActions :: proc() {
 		}
 		if GetButtonPressedState("save playlist") == 1 {
 			save_to_json()
+			Texts["current song"].text = fmt.caprintf("Playlist saving...")
 		}
 		if GetTogglePressedState("loop song") == 1 {
 			currentStream.looping = !loop_song_toggle.checked

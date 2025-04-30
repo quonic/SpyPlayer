@@ -8,7 +8,6 @@ import "core:prof/spall"
 import "core:strings"
 import "core:sync"
 import "core:thread"
-import "core:time"
 import "vendor:raylib"
 
 spall_ctx: spall.Context
@@ -46,19 +45,12 @@ lastScrollTime: f64 = 0
 
 EnableToolTips: bool : true
 
-MAX_SAMPLES :: 512
 MAX_SAMPLES_PER_UPDATE :: 4096
-
-N :: 4
 
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
 
-// Thread User Indices
-LOAD_FROM_CONFIG :: 0
-LOAD_FROM_DIR :: 1
-LOAD_FROM_JSON :: 2
-SAVE_TO_JSON :: 3
+FEATURE_FFT :: false
 
 main :: proc() {
 	when OUTPUT_SPALL_TRACE {
@@ -66,6 +58,8 @@ main :: proc() {
 		defer spall.context_destroy(&spall_ctx)
 
 		buffer_backing := make([]u8, spall.BUFFER_DEFAULT_SIZE)
+		defer delete(buffer_backing)
+
 		spall_buffer = spall.buffer_create(buffer_backing, u32(sync.current_thread_id()))
 		defer spall.buffer_destroy(&spall_ctx, &spall_buffer)
 	}
@@ -119,6 +113,7 @@ _main :: proc() {
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
 	raylib.SetWindowState(raylib.ConfigFlags{raylib.ConfigFlag.WINDOW_ALWAYS_RUN})
+	raylib.SetWindowIcon(raylib.LoadImage("assets/SpyPlayer.png"))
 	defer raylib.CloseWindow()
 
 	// Move the window to the primary monitor
@@ -128,7 +123,6 @@ _main :: proc() {
 
 	loadStyle()
 
-	// textFont = raylib.LoadFont("assets/fonts/MyFontHere.ttf")
 	textFont = raylib.GetFontDefault()
 
 	// Create the UI elements
@@ -143,16 +137,17 @@ _main :: proc() {
 	raylib.SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE)
 
 
+	// Load the config file
 	{
-		XDG_CONFIG_HOME := os.get_env("XDG_CONFIG_HOME", context.temp_allocator)
-		if XDG_CONFIG_HOME == "" {
-			XDG_CONFIG_HOME = os.get_env("HOME", context.temp_allocator)
-			XDG_CONFIG_HOME = fmt.aprintf("%v/.config", XDG_CONFIG_HOME)
-		}
-		config_file = fmt.aprintf("%v/SpyPlayer/config.json", XDG_CONFIG_HOME)
+		// Concatenate the config file path to the XDG_CONFIG_HOME path
+		err: os.Error
+		config_file, err = GetConfigFilePath()
+		assert(err == nil, "Error building config file path")
+
 		if os.exists(config_file) {
 			t := thread.create(proc(t: ^thread.Thread) {
-				task_load_from_config(t)
+				load_config()
+				volume_slider.value = currentSongVolume
 			})
 			if t == nil {
 				fmt.eprintln("Error creating task_load_from_config")
@@ -180,17 +175,19 @@ _main :: proc() {
 		case .Playing:
 			{
 
+				// If the playlist is empty, set the state to NoMusic
 				if Lists["playlist"].active == -1 {
 					Lists["playlist"].active = currentSongIndex
 				}
+				// If the active song is not the current song, load and play the selected song
 				if Lists["playlist"].active != currentSongIndex {
 					loadSelected()
 					playSelected()
 					UpdateCurrentSongText()
 				}
 
+				// Update the current song text
 				UpdatePlayTime()
-
 
 				// Scroll the current song text when scrolling is enabled
 				if Texts["current song"].text != "" && Texts["current song"].scrolling {
@@ -203,22 +200,30 @@ _main :: proc() {
 						lastScrollTime = raylib.GetTime()
 					}
 				}
+
+				// Update the song progress
 				songProgress =
 					raylib.GetMusicTimePlayed(currentStream) /
 					raylib.GetMusicTimeLength(currentStream)
 
+				// Update the seek bar
 				if raylib.IsMusicReady(currentStream) {
 					raylib.UpdateMusicStream(currentStream)
 				}
+
+				// If the song is finished, play the next song
 				if !raylib.IsMusicStreamPlaying(currentStream) {
 					next()
 				}
 			}
 		case .Paused:
 			{
+				// If the playlist is empty, set the state to NoMusic
 				if Lists["playlist"].active == -1 {
 					Lists["playlist"].active = currentSongIndex
 				}
+
+				// If the active song is not the current song, load and play the selected song
 				if Lists["playlist"].active != currentSongIndex {
 					loadSelected()
 					UpdateCurrentSongText()
@@ -226,9 +231,12 @@ _main :: proc() {
 			}
 		case .Stopped:
 			{
+				// If the playlist is empty, set the state to NoMusic
 				if Lists["playlist"].active == -1 {
 					Lists["playlist"].active = currentSongIndex
 				}
+
+				// If the active song is not the current song, load and play the selected song
 				if Lists["playlist"].active != currentSongIndex {
 					loadSelected()
 					UpdateCurrentSongText()
@@ -239,10 +247,11 @@ _main :: proc() {
 			}
 		}
 
-
 		raylib.EndMode2D()
 		raylib.EndDrawing()
 	}
+
+	// Save the config when the program is closed
 	save_config()
 }
 
@@ -264,7 +273,9 @@ play :: proc() {
 		currentStream = raylib.LoadMusicStream(
 			strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 		)
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		when FEATURE_FFT {
+			GenerateSpectrum()
+		}
 		media_play_state = .Playing
 		currentStream.looping = loop_song_toggle.checked
 		raylib.PlayMusicStream(currentStream)
@@ -276,7 +287,6 @@ play :: proc() {
 loadSelected :: proc() {
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 		raylib.UnloadMusicStream(currentStream)
 	}
 
@@ -293,7 +303,9 @@ loadSelected :: proc() {
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
-	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	when FEATURE_FFT {
+		GenerateSpectrum()
+	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 }
@@ -327,7 +339,9 @@ stop :: proc() {
 	}
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		when FEATURE_FFT {
+			// raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+		}
 	}
 	media_play_state = .Stopped
 
@@ -351,7 +365,9 @@ next :: proc() {
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
-	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	when FEATURE_FFT {
+		GenerateSpectrum()
+	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	if media_play_state == .Playing {
@@ -367,7 +383,9 @@ previous :: proc() {
 		return
 	}
 	raylib.StopMusicStream(currentStream)
-	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	when FEATURE_FFT {
+		// raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	}
 	raylib.UnloadMusicStream(currentStream)
 	if len(playList) > 0 {
 		currentSongIndex -= 1
@@ -379,7 +397,9 @@ previous :: proc() {
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path),
 	)
-	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	when FEATURE_FFT {
+		GenerateSpectrum()
+	}
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	if media_play_state == .Playing {
@@ -391,52 +411,6 @@ previous :: proc() {
 
 LoadingUpdate :: proc() {
 
-}
-
-load_from_dir :: proc() {
-	media_play_state = .NoMusic
-	playListLoaded = false
-	PlayListLoading = true
-	ClearPlaylist()
-	ClearPlaylistList()
-	t := thread.create(proc(t: ^thread.Thread) {
-		task_prompt_load_from_dir(t)
-	})
-	if t == nil {
-		fmt.eprintln("Error creating task_load_from_config")
-	}
-	t.user_index = LOAD_FROM_DIR
-	append(&threads, t)
-	thread.start(t)
-	Texts["current song"].text = fmt.caprintf("Playlist loading...")
-}
-
-load_from_json :: proc() {
-	media_play_state = .NoMusic
-	PlayListLoading = true
-	t := thread.create(proc(t: ^thread.Thread) {
-		task_prompt_load_from_json(t)
-	})
-	if t == nil {
-		fmt.eprintln("Error creating task_load_from_config")
-	}
-	t.user_index = LOAD_FROM_JSON
-	append(&threads, t)
-	thread.start(t)
-	Texts["current song"].text = fmt.caprintf("Playlist loading...")
-}
-
-save_to_json :: proc() {
-	t := thread.create(proc(t: ^thread.Thread) {
-		task_prompt_save_to_json(t)
-	})
-	if t == nil {
-		fmt.eprintln("Error creating task_load_from_config")
-	}
-	t.user_index = SAVE_TO_JSON
-	append(&threads, t)
-	thread.start(t)
-	Texts["current song"].text = fmt.caprintf("Playlist saving...")
 }
 
 UpdateCurrentSongText :: proc() {
@@ -482,67 +456,4 @@ UpdatePlayTime :: proc() {
 	songProgress =
 		raylib.GetMusicTimePlayed(currentStream) / raylib.GetMusicTimeLength(currentStream)
 	Sliders["seek bar"].value = songProgress
-}
-
-// Thread Pool
-
-// Thanks to VOU-folks for this code: https://github.com/VOU-folks/odin-tcp-server-example/blob/main/main.odin
-
-threads: [dynamic]^thread.Thread
-
-@(init)
-create_thread_pool :: proc() {
-	threads = make([dynamic]^thread.Thread, 0)
-	thread_cleaner()
-}
-
-destroy_thread_pool :: proc() {
-	delete(threads)
-}
-
-thread_cleaner :: proc() {
-	t := thread.create(proc(t: ^thread.Thread) {
-		for {
-			time.sleep(1 * time.Second)
-
-			if len(threads) == 0 {
-				continue
-			}
-
-			for i := 0; i < len(threads); {
-				if PlayListLoading {
-					if thread.is_done(t) &&
-					   (threads[i].user_index == LOAD_FROM_CONFIG ||
-							   threads[i].user_index == LOAD_FROM_JSON ||
-							   threads[i].user_index == LOAD_FROM_DIR) {
-						Texts["current song"].text = fmt.caprintf("Playlist loaded!")
-						currentSongIndex = 0
-						currentSongPath = playList[currentSongIndex].path
-						current_song_tags = playList[currentSongIndex].tags
-						currentStream = raylib.LoadMusicStream(
-							strings.clone_to_cstring(
-								playList[currentSongIndex].path,
-								context.temp_allocator,
-							),
-						)
-						raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-						PlayListLoading = false
-					}
-				}
-
-				if threads_cleaner := threads[i]; thread.is_done(threads_cleaner) {
-					when ODIN_DEBUG {
-						fmt.printf("Thread %d is done\n", threads_cleaner.user_index)
-					}
-					threads_cleaner.data = nil
-					thread.destroy(threads_cleaner)
-
-					ordered_remove(&threads, i)
-				} else {
-					i += 1
-				}
-			}
-		}
-	})
-	thread.start(t)
 }

@@ -122,7 +122,7 @@ IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
 	)
 }
 
-DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
+DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.Camera2D) {
 	texture: raylib.Texture2D = AudioVisualizers[name].texture
 	sourceRec: raylib.Rectangle = AudioVisualizers[name].positionSpriteSheet
 	tint: raylib.Color =
@@ -131,17 +131,13 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, AudioVisualizers[name].positionRec, {0, 0}, 0, tint)
 
-	barLength := len(AudioVisualizers[name].leftChannelBars)
-	// If the left channel bars array is empty, return and draw nothing
-	if barLength == 0 {
-		return
-	}
 	raylib.BeginScissorMode(
 		i32(AudioVisualizers[name].positionRec.x + 2),
 		i32(AudioVisualizers[name].positionRec.y + 2),
 		i32(AudioVisualizers[name].positionRec.width - 4),
 		i32(AudioVisualizers[name].positionRec.height - 4),
 	)
+
 	// Width of the control minus the borders
 	Width := int(AudioVisualizers[name].positionRec.width) - 2
 	// Half the height of the control minus the borders
@@ -149,59 +145,26 @@ DrawAudioVisualizerControl :: proc(name: string, camera: raylib.Camera2D) {
 	// Border width
 	boarder: f32 = 1
 
-	// Magnitude of the bars
-	// Make sure that the magnitude is within a range of 2 to 4
-	magnitude: f32 = math.max(2, 4 * currentSongVolume)
-
-	barCount := 0
-	color := raylib.BLACK
-	// Don't check bounds as we are doing our own bounds checking
-	#no_bounds_check {
-		w := barLength / Width
-		for i := 0; i < barLength; i = i + w {
-			averageLeft: f32 = math.abs(
-				math.sum(AudioVisualizers[name].leftChannelBars[i:i + w]) /
-				f32(len(AudioVisualizers[name].leftChannelBars[i:i + w])) *
-				magnitude,
-			)
-			averageRight: f32 =
-				math.abs(
-					math.sum(AudioVisualizers[name].rightChannelBars[i:i + w]) /
-					f32(len(AudioVisualizers[name].rightChannelBars[i:i + w])) *
-					magnitude,
-				) *
-				-1
-
-			// x position of the current line
-			x := i32(barCount) + i32(AudioVisualizers[name].positionRec.x + boarder)
-			// Left Channel - Drawn from the top of the control, downwards
-			raylib.DrawLine(
-				x,
-				i32(AudioVisualizers[name].positionRec.y + boarder),
-				x,
-				i32(AudioVisualizers[name].positionRec.y - boarder + f32(averageLeft * Height)),
-				color,
-			)
-			// Right Channel - Drawn from the bottom of the control, upwards
-			raylib.DrawLine(
-				x,
-				i32(
-					AudioVisualizers[name].positionRec.y -
-					boarder +
-					AudioVisualizers[name].positionRec.height,
-				),
-				x,
-				i32(
-					AudioVisualizers[name].positionRec.y -
-					boarder +
-					AudioVisualizers[name].positionRec.height +
-					f32(averageRight * Height),
-				),
-				color,
-			)
-			barCount = barCount + 1
-		}
+	if raylib.IsTextureReady(spectrum_texture) {
+		// Draw the audio visualizer from spectrum_texture
+		raylib.DrawTexturePro(
+			spectrum_texture,
+			raylib.Rectangle{0, 0, f32(Width), f32(Height)},
+			raylib.Rectangle {
+				f32(Width) +
+				AudioVisualizers[name].positionRec.x +
+				boarder -
+				(progress * f32(Width)),
+				AudioVisualizers[name].positionRec.y + boarder,
+				f32(Width) + AudioVisualizers[name].positionRec.width - boarder * 2,
+				AudioVisualizers[name].positionRec.height - boarder * 2,
+			},
+			{0, 0},
+			0,
+			raylib.WHITE,
+		)
 	}
+
 	raylib.EndScissorMode()
 }
 
