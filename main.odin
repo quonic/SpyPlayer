@@ -3,6 +3,7 @@ package main
 import "base:runtime"
 import "core:fmt"
 import "core:mem"
+import "core:mem/virtual"
 import "core:os"
 import "core:prof/spall"
 import "core:strings"
@@ -47,7 +48,7 @@ EnableToolTips: bool : true
 
 MAX_SAMPLES_PER_UPDATE :: 4096
 
-TRACK_MEMORY_LEAKS :: #config(leaks, false)
+TRACK_MEMORY_LEAKS :: #config(leaks, true)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
 
 FEATURE_FFT :: false
@@ -87,6 +88,15 @@ main :: proc() {
 			}
 		}
 	} else {
+		allocator := context.allocator
+
+		arena: virtual.Arena
+		if virtual.arena_init_growing(&arena) == nil {
+			allocator = virtual.arena_allocator(&arena)
+		}
+
+		context.allocator = allocator
+		defer virtual.arena_destroy(&arena)
 		_main()
 	}
 }
@@ -110,10 +120,12 @@ spall_exit :: proc "contextless" (
 }
 
 _main :: proc() {
+	icon := raylib.LoadImage("assets/SpyPlayer.png")
+	defer raylib.UnloadImage(icon)
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
 	raylib.SetWindowState(raylib.ConfigFlags{raylib.ConfigFlag.WINDOW_ALWAYS_RUN})
-	raylib.SetWindowIcon(raylib.LoadImage("assets/SpyPlayer.png"))
+	raylib.SetWindowIcon(icon)
 	defer raylib.CloseWindow()
 
 	// Move the window to the primary monitor
