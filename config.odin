@@ -13,6 +13,7 @@ Config :: struct {
 }
 
 config_file: string
+config: Config
 
 load_config :: proc() {
 	XDG_CONFIG_HOME := os.get_env("XDG_CONFIG_HOME", context.temp_allocator)
@@ -28,7 +29,6 @@ load_config :: proc() {
 	}
 	defer delete(config_data)
 
-	config: Config
 	err := json.unmarshal(config_data, &config)
 	if err != nil {
 		fmt.eprintf("Error unmarshalling data: %v", err)
