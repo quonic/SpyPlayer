@@ -7,6 +7,7 @@ die() {
 
 _trace="false"
 _leaks="false"
+_vet=""
 
 POSITIONAL=()
 while (($# > 0)); do
@@ -17,6 +18,10 @@ while (($# > 0)); do
         ;;
     -l | --leaks)
         _leaks="true"
+        shift
+        ;;
+    -v | --vet)
+        _vet="-vet"
         shift
         ;;
     *) # unknown flag/switch
@@ -32,8 +37,8 @@ if ! [ "$(command -v odin)" ]; then
     die "Odin is not installed. Please install Odin first." 1
 fi
 
-# Validate that building with "-vet -define:leaks=true -define:trace=true" we don't have build errors
-odin build . -vet -define:leaks=true -define:trace=true || die "Build failed" 1
+# Validate that building with "-define:leaks=true -define:trace=true" we don't have build errors
+odin build . "${_vet}" -define:leaks=true -define:trace=true || die "Build failed" 1
 
 # Build with or without our debug options
 odin build . -debug -define:leaks="${_leaks}" -define:trace="${_trace}" || die "Build failed" 1

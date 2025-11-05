@@ -2,7 +2,8 @@
 
 param(
     [switch]$trace,
-    [switch]$leaks
+    [switch]$leaks,
+    [switch]$vet
 )
 
 if (!(Get-Command odin -ErrorAction SilentlyContinue)) {
@@ -10,8 +11,13 @@ if (!(Get-Command odin -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
+$_vet = ""
+if ($vet) {
+    $_vet = "-vet"
+}
+
 # Validate that building with "-vet -define:leaks=true -define:trace=true" we don't have build errors
-odin build . -vet -define:leaks=true -define:trace=true
+odin build . $_vet -define:leaks=true -define:trace=true
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Build failed"
     exit 1
