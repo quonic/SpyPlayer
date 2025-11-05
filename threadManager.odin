@@ -1,5 +1,6 @@
 package main
 
+import "base:runtime"
 import "core:fmt"
 import "core:math"
 import "core:os"
@@ -101,8 +102,9 @@ save_to_json :: proc() {
 }
 
 @(init)
-create_thread_pool :: proc() {
+create_thread_pool :: proc "contextless" () {
 	// Thanks to VOU-folks for this code: https://github.com/VOU-folks/odin-tcp-server-example/blob/main/main.odin
+	context = runtime.default_context()
 	threads = make([dynamic]^thread.Thread, 0)
 	thread_cleaner()
 }
