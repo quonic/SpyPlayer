@@ -185,7 +185,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 		rightBars := g_spectrumState.right_spectrum
 
 		barWidth := f32(Width) / f32(NUM_BARS)
-		spacing := f32(1.0)
+		spacing := f32(0.0)
 		actualBarWidth := barWidth - spacing
 
 		baseX := AudioVisualizers[name].positionRec.x + boarder
