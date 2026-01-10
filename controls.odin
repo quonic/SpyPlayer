@@ -19,8 +19,8 @@ AudioVisualizers: map[string]^AudioVisualizerControl
 Pictures: map[string]^PictureControl
 
 // FFT Spectrum constants
-FFT_SIZE :: 1024
-FFT_HOP_SIZE :: 512 // 50% overlap
+FFT_SIZE :: 256
+FFT_HOP_SIZE :: 128 // 50% overlap
 NUM_BARS :: 64
 SAMPLE_RATE :: 44100.0 // Assumed sample rate
 
