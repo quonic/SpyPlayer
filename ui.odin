@@ -628,7 +628,7 @@ CreateUI :: proc() {
 						width = key.bounds.w,
 						height = key.bounds.h,
 					},
-					tint_normal = raylib.BLACK,
+					tint_normal = raylib.GRAY,
 					tint_disabled = raylib.DARKGRAY,
 					leftChannelBars = {},
 					rightChannelBars = {},

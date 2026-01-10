@@ -21,7 +21,6 @@ Pictures: map[string]^PictureControl
 // FFT Spectrum constants
 FFT_SIZE :: 256
 NUM_BARS :: 64
-SAMPLE_RATE :: 44100.0 // Assumed sample rate
 
 // Audio spectrum state for visualizer
 AudioSpectrumState :: struct {
@@ -194,6 +193,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 		baseYBottom := baseYTop + Height
 
 		bar_len := len(AudioVisualizers[name].barColors)
+		barColor := raylib.WHITE
 		// Draw bars
 		for i := 0; i < NUM_BARS; i += 1 {
 			x := baseX + f32(i) * barWidth
@@ -201,18 +201,23 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 			// Left channel (top half) - inverted so bars grow downward from top
 			leftHeight := leftBars[i] * Height
 			if leftHeight > 0 {
-				color := raylib.WHITE // AudioVisualizers[name].barColors[int(math.round(leftBars[i])) % bar_len]
-				raylib.DrawRectangleRec(
-					{x, baseYTop + (Height - leftHeight), actualBarWidth, leftHeight},
-					color,
+				raylib.DrawLineEx(
+					{x + actualBarWidth / 2, baseYTop + (Height - leftHeight)},
+					{x + actualBarWidth / 2, baseYTop + Height},
+					actualBarWidth / 2,
+					barColor,
 				)
 			}
 
 			// Right channel (bottom half) - bars grow upward from bottom
 			rightHeight := rightBars[i] * Height
 			if rightHeight > 0 {
-				color := raylib.WHITE // AudioVisualizers[name].barColors[int(math.round(rightBars[i])) % bar_len]
-				raylib.DrawRectangleRec({x, baseYBottom, actualBarWidth, rightHeight}, color)
+				raylib.DrawLineEx(
+					{x + actualBarWidth / 2, baseYBottom},
+					{x + actualBarWidth / 2, baseYBottom + rightHeight},
+					actualBarWidth / 2,
+					barColor,
+				)
 			}
 		}
 	}
