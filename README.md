@@ -22,9 +22,9 @@ If you want a feature that isn't there, please create a pull request or open an 
 - [x] Current time and total time
 - [x] Play next song when finished playing current song
 - [x] Seeking
-- [ ] Visualizer
-  - [ ] Spectrum
-    - [ ] FFT - Work in progress
+- [x] Visualizer
+  - [x] Spectrum
+    - [x] FFT
 - [x] Tooltips for controls
   - [ ] Delay before showing tooltips
 - [x] Keyboard shortcuts
@@ -36,7 +36,7 @@ If you want a feature that isn't there, please create a pull request or open an 
   - [x] Selecting a song plays that song
   - [x] Save playlist
   - [x] Load playlist
-  - [x] Automatic loadind of playlist from config
+  - [x] Automatic loading of playlist from config
   - [x] Automatic saving of playlist to config
   - [x] Shuffle playlist
   - [x] Add to playlist
