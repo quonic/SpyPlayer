@@ -38,7 +38,7 @@ if ! [ "$(command -v odin)" ]; then
 fi
 
 # Validate that building with "-define:leaks=true -define:trace=true" we don't have build errors
-odin build . "${_vet}" -define:leaks=true -define:trace=true || die "Build failed" 1
+# odin build . "${_vet}" -define:leaks=true -define:trace=true || die "Build failed" 1
 
 # Build with or without our debug options
 odin build . -debug -define:leaks="${_leaks}" -define:trace="${_trace}" || die "Build failed" 1

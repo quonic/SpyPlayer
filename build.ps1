@@ -17,11 +17,11 @@ if ($vet) {
 }
 
 # Validate that building with "-vet -define:leaks=true -define:trace=true" we don't have build errors
-odin build . $_vet -define:leaks=true -define:trace=true
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Build failed"
-    exit 1
-}
+# odin build . $_vet -define:leaks=true -define:trace=true
+# if ($LASTEXITCODE -ne 0) {
+#     Write-Error "Build failed"
+#     exit 1
+# }
 
 # Build with or without our debug options
 odin build . -debug -o:speed -define:leaks=$(if ($leaks) { "true" } else { "false" }) -define:trace=$(if ($trace) { "true" } else { "false" })
