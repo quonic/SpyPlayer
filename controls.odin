@@ -19,15 +19,9 @@ AudioVisualizers: map[string]^AudioVisualizerControl
 Pictures: map[string]^PictureControl
 
 // FFT Spectrum constants
-FFT_SIZE :: 1024
-FFT_HOP_SIZE :: 512 // 50% overlap
+FFT_SIZE :: 256
 NUM_BARS :: 64
 SAMPLE_RATE :: 44100.0 // Assumed sample rate
-
-// Compute magnitudes and convert to dB, then bin into 64 bars
-DB_FLOOR :: -60.0
-DB_RANGE :: 60.0
-EMA_ALPHA :: 0.2
 
 // Audio spectrum state for visualizer
 AudioSpectrumState :: struct {

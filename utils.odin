@@ -54,20 +54,27 @@ AudioProcessFFT :: proc "c" (bufferData: rawptr, frames: u32) {
 		}
 	}
 
-	// Run FFT on both channels (ensure each uses its own work buffer if needed)
+	// Run FFT on left channel and compute its power spectrum
 	fft.run_fft_plan(g_spectrumState.plan, g_spectrumState.leftInput[:])
-	fft.run_fft_plan(g_spectrumState.plan, g_spectrumState.rightInput[:])
-
-	// Power spectrum without sqrt/conj
-
+	
+	// Compute power spectrum for left channel
 	for i := 0; i < FFT_SIZE; i += 1 {
 		c := g_spectrumState.plan.buffer[i]
 		re := real(c)
 		im := imag(c)
 		power := (re * re + im * im) * inv_size
 		g_spectrumState.left_spectrum[i] = power
-
-		// If plan.buffer is shared, store right FFT output separately
-		// (alternatively, run and consume per channel before the next run)
+	}
+	
+	// Run FFT on right channel and compute its power spectrum
+	fft.run_fft_plan(g_spectrumState.plan, g_spectrumState.rightInput[:])
+	
+	// Compute power spectrum for right channel
+	for i := 0; i < FFT_SIZE; i += 1 {
+		c := g_spectrumState.plan.buffer[i]
+		re := real(c)
+		im := imag(c)
+		power := (re * re + im * im) * inv_size
+		g_spectrumState.right_spectrum[i] = power
 	}
 }
