@@ -145,25 +145,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 	// Border width
 	boarder: f32 = 1
 
-	if raylib.IsTextureReady(spectrum_texture) {
-		// Draw the audio visualizer from spectrum_texture
-		raylib.DrawTexturePro(
-			spectrum_texture,
-			raylib.Rectangle{0, 0, f32(Width), f32(Height)},
-			raylib.Rectangle {
-				f32(Width) +
-				AudioVisualizers[name].positionRec.x +
-				boarder -
-				(progress * f32(Width)),
-				AudioVisualizers[name].positionRec.y + boarder,
-				f32(Width) + AudioVisualizers[name].positionRec.width - boarder * 2,
-				AudioVisualizers[name].positionRec.height - boarder * 2,
-			},
-			{0, 0},
-			0,
-			raylib.WHITE,
-		)
-	}
+	// Draw the audio visualizer here
 
 	raylib.EndScissorMode()
 }
