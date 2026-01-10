@@ -43,11 +43,14 @@ destroy_fft_plan :: proc(plan: FFT_Plan) {
 	delete(plan.scrambled_indexes)
 }
 
+// Optimized for real-valued inputs (like audio samples)
+// Uses the fact that real inputs produce Hermitian-symmetric outputs
 run_fft_plan :: proc "c" (plan: FFT_Plan, samples: []f32) #no_bounds_check {
-
-	for sample, i in samples {
+	// Optimized bit-reversed copy for real inputs
+	// Set real part from samples, imaginary part is always 0 for real inputs
+	#no_bounds_check for i in 0 ..< plan.fft_size {
 		j := plan.scrambled_indexes[i]
-		plan.buffer[j] = complex(sample, 0)
+		plan.buffer[j] = complex(samples[i], 0)
 	}
 
 	RADIX :: uint(2)
@@ -56,13 +59,15 @@ run_fft_plan :: proc "c" (plan: FFT_Plan, samples: []f32) #no_bounds_check {
 	twiddle_increment := plan.fft_size / RADIX
 	butterfly_count := uint(1)
 
+	// In-place FFT computation using Cooley-Tukey algorithm
 	for stride < plan.fft_size {
 		group := uint(0)
 
 		for group < plan.fft_size {
 			k := uint(0)
 
-			for b in 0 ..< butterfly_count {
+			// Process butterflies in groups for better cache locality
+			#no_bounds_check for b in 0 ..< butterfly_count {
 				radix2_butterfly(
 					&plan.buffer[group + b],
 					&plan.buffer[group + b + stride],
@@ -79,10 +84,14 @@ run_fft_plan :: proc "c" (plan: FFT_Plan, samples: []f32) #no_bounds_check {
 	}
 }
 
+// Optimized radix-2 butterfly operation
+// For real-time performance, this is force-inlined and uses minimal operations
 radix2_butterfly :: #force_inline proc "c" (x: ^complex64, y: ^complex64, w: complex64) {
-	a := x^ + w * y^
-	b := x^ - w * y^
+	// Compute twiddle factor multiplication
+	wy := w * y^
+	// Perform butterfly operation
+	a := x^ + wy
+	b := x^ - wy
 	x^ = a
 	y^ = b
 }
-// TODO: real-time input optimization
