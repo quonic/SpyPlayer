@@ -114,8 +114,7 @@ destroy_thread_pool :: proc() {
 }
 
 thread_cleaner :: proc() {
-	t := thread.create(
-	proc(t: ^thread.Thread) {
+	t := thread.create(proc(t: ^thread.Thread) {
 		for {
 			time.sleep(1 * time.Second)
 
@@ -140,7 +139,7 @@ thread_cleaner :: proc() {
 							),
 						)
 						when FEATURE_FFT {
-							// raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+							raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 						}
 						PlayListLoading = false
 					}
@@ -159,7 +158,6 @@ thread_cleaner :: proc() {
 				}
 			}
 		}
-	},
-	)
+	})
 	thread.start(t)
 }
