@@ -4,12 +4,8 @@ import "base:runtime"
 import "core:fmt"
 import "core:math"
 import "core:os"
-import "core:os/os2"
 import "core:path/filepath"
-import "core:strings"
-import "core:sync"
 import fft "fft"
-import "vendor:raylib"
 
 GetXdgConfigHome :: proc() -> (string, os.Error) {
 	XDG_CONFIG_HOME := os.get_env("XDG_CONFIG_HOME")

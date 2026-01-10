@@ -2,7 +2,6 @@ package main
 
 import "aseprite"
 import "core:fmt"
-import "core:math"
 import "ffprobe"
 import "vendor:raylib"
 

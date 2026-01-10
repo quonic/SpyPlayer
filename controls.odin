@@ -4,7 +4,6 @@ import "base:intrinsics"
 import "core:fmt"
 import "core:math"
 import "core:strings"
-import "core:sync"
 import fft "fft"
 import "vendor:raylib"
 
@@ -270,6 +269,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 		baseYTop := AudioVisualizers[name].positionRec.y + boarder
 		baseYBottom := baseYTop + Height
 
+		bar_len := len(AudioVisualizers[name].barColors)
 		// Draw bars
 		for i := 0; i < NUM_BARS; i += 1 {
 			x := baseX + f32(i) * barWidth
@@ -277,8 +277,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 			// Left channel (top half) - inverted so bars grow downward from top
 			leftHeight := leftBars[i] * Height
 			if leftHeight > 0 {
-				color :=
-					AudioVisualizers[name].barColors[i % len(AudioVisualizers[name].barColors)]
+				color := raylib.WHITE // AudioVisualizers[name].barColors[int(math.round(leftBars[i])) % bar_len]
 				raylib.DrawRectangleRec(
 					{x, baseYTop + (Height - leftHeight), actualBarWidth, leftHeight},
 					color,
@@ -288,8 +287,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 			// Right channel (bottom half) - bars grow upward from bottom
 			rightHeight := rightBars[i] * Height
 			if rightHeight > 0 {
-				color :=
-					AudioVisualizers[name].barColors[i % len(AudioVisualizers[name].barColors)]
+				color := raylib.WHITE // AudioVisualizers[name].barColors[int(math.round(rightBars[i])) % bar_len]
 				raylib.DrawRectangleRec({x, baseYBottom, actualBarWidth, rightHeight}, color)
 			}
 		}
