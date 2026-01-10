@@ -14,6 +14,9 @@ SpyPlayer
 trace_test.spall
 SpyPlayer.obj
 bin/
+dist/
+out/
+build/
 
 # IDE
 .idea
