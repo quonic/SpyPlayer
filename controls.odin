@@ -4,6 +4,8 @@ import "base:intrinsics"
 import "core:fmt"
 import "core:math"
 import "core:strings"
+import "core:sync"
+import fft "fft"
 import "vendor:raylib"
 
 Labels: map[string]^LabelControl
@@ -16,6 +18,44 @@ ProgressBars: map[string]^ProgressBarControl
 Lists: map[string]^ListControl
 AudioVisualizers: map[string]^AudioVisualizerControl
 Pictures: map[string]^PictureControl
+
+// FFT Spectrum constants
+FFT_SIZE :: 1024
+FFT_HOP_SIZE :: 512 // 50% overlap
+NUM_BARS :: 64
+SAMPLE_RATE :: 44100.0 // Assumed sample rate
+
+// Audio spectrum state for visualizer
+AudioSpectrumState :: struct {
+	// Double-buffered bar data
+	leftBarsRead:       [NUM_BARS]f32,
+	rightBarsRead:      [NUM_BARS]f32,
+	leftBarsWrite:      [NUM_BARS]f32,
+	rightBarsWrite:     [NUM_BARS]f32,
+
+	// Atomic index for lock-free swap (0 or 1)
+	bufferIndex:        int,
+
+	// Precomputed Hanning window
+	hanningWindow:      [FFT_SIZE]f32,
+
+	// Log-frequency bin edges (65 values for 64 bars)
+	binEdges:           [NUM_BARS + 1]int,
+
+	// Scratch buffers for FFT (2*FFT_SIZE for complex packing)
+	leftScratch:        [FFT_SIZE * 2]f32,
+	rightScratch:       [FFT_SIZE * 2]f32,
+
+	// Overlap buffers (last 512 samples retained)
+	leftOverlap:        [FFT_SIZE]f32,
+	rightOverlap:       [FFT_SIZE]f32,
+
+	// Sample accumulator for hop size
+	samplesAccumulated: int,
+}
+
+// Global spectrum state
+g_spectrumState: AudioSpectrumState
 
 AddAudioVisualizer :: proc(audioVisualizer: ^AudioVisualizerControl) -> bool {
 	if audioVisualizer.name == "" {
@@ -97,6 +137,77 @@ AddPicture :: proc(picture: ^PictureControl) -> bool {
 	return true
 }
 
+InitAudioSpectrumState :: proc() {
+	// Initialize Hanning window
+	fft.hanning(g_spectrumState.hanningWindow[:])
+
+	// Compute log-frequency bin edges
+	// Map from FFT bins [0..512] to 64 bars with log spacing
+	// Frequency range: 20 Hz to Nyquist (22050 Hz for 44.1kHz sample rate)
+	minFreq := f32(20.0)
+	maxFreq := f32(SAMPLE_RATE / 2.0)
+
+	// Log scale mapping
+	logMin := math.log2(minFreq)
+	logMax := math.log2(maxFreq)
+
+	for i := 0; i <= NUM_BARS; i += 1 {
+		t := f32(i) / f32(NUM_BARS)
+		freq := math.pow(2.0, logMin + t * (logMax - logMin))
+		bin := int(freq * f32(FFT_SIZE) / SAMPLE_RATE)
+
+		// Clamp to valid bin range [0, FFT_SIZE/2]
+		if bin < 0 do bin = 0
+		if bin > FFT_SIZE / 2 do bin = FFT_SIZE / 2
+
+		g_spectrumState.binEdges[i] = bin
+	}
+
+	// Zero all buffers
+	for i := 0; i < NUM_BARS; i += 1 {
+		g_spectrumState.leftBarsRead[i] = 0
+		g_spectrumState.rightBarsRead[i] = 0
+		g_spectrumState.leftBarsWrite[i] = 0
+		g_spectrumState.rightBarsWrite[i] = 0
+	}
+
+	for i := 0; i < FFT_SIZE; i += 1 {
+		g_spectrumState.leftOverlap[i] = 0
+		g_spectrumState.rightOverlap[i] = 0
+	}
+
+	for i := 0; i < FFT_SIZE * 2; i += 1 {
+		g_spectrumState.leftScratch[i] = 0
+		g_spectrumState.rightScratch[i] = 0
+	}
+
+	g_spectrumState.samplesAccumulated = 0
+	g_spectrumState.bufferIndex = 0
+}
+
+ResetAudioSpectrumState :: proc() {
+	// Zero all buffers
+	for i := 0; i < NUM_BARS; i += 1 {
+		g_spectrumState.leftBarsRead[i] = 0
+		g_spectrumState.rightBarsRead[i] = 0
+		g_spectrumState.leftBarsWrite[i] = 0
+		g_spectrumState.rightBarsWrite[i] = 0
+	}
+
+	for i := 0; i < FFT_SIZE; i += 1 {
+		g_spectrumState.leftOverlap[i] = 0
+		g_spectrumState.rightOverlap[i] = 0
+	}
+
+	for i := 0; i < FFT_SIZE * 2; i += 1 {
+		g_spectrumState.leftScratch[i] = 0
+		g_spectrumState.rightScratch[i] = 0
+	}
+
+	g_spectrumState.samplesAccumulated = 0
+	g_spectrumState.bufferIndex = 0
+}
+
 ClearList :: proc(list: ^ListControl) {
 	list.items = nil
 }
@@ -146,6 +257,43 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 	boarder: f32 = 1
 
 	// Draw the audio visualizer here
+	if AudioVisualizers[name].isPlaying {
+		// Read current spectrum bars (lock-free)
+		leftBars := g_spectrumState.leftBarsRead
+		rightBars := g_spectrumState.rightBarsRead
+
+		barWidth := f32(Width) / f32(NUM_BARS)
+		spacing := f32(1.0)
+		actualBarWidth := barWidth - spacing
+
+		baseX := AudioVisualizers[name].positionRec.x + boarder
+		baseYTop := AudioVisualizers[name].positionRec.y + boarder
+		baseYBottom := baseYTop + Height
+
+		// Draw bars
+		for i := 0; i < NUM_BARS; i += 1 {
+			x := baseX + f32(i) * barWidth
+
+			// Left channel (top half) - inverted so bars grow downward from top
+			leftHeight := leftBars[i] * Height
+			if leftHeight > 0 {
+				color :=
+					AudioVisualizers[name].barColors[i % len(AudioVisualizers[name].barColors)]
+				raylib.DrawRectangleRec(
+					{x, baseYTop + (Height - leftHeight), actualBarWidth, leftHeight},
+					color,
+				)
+			}
+
+			// Right channel (bottom half) - bars grow upward from bottom
+			rightHeight := rightBars[i] * Height
+			if rightHeight > 0 {
+				color :=
+					AudioVisualizers[name].barColors[i % len(AudioVisualizers[name].barColors)]
+				raylib.DrawRectangleRec({x, baseYBottom, actualBarWidth, rightHeight}, color)
+			}
+		}
+	}
 
 	raylib.EndScissorMode()
 }
