@@ -302,6 +302,7 @@ play :: proc() {
 loadSelected :: proc() {
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
+		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 		raylib.UnloadMusicStream(currentStream)
 	}
 
@@ -329,6 +330,7 @@ playSelected :: proc() {
 		when FEATURE_FFT {
 			for _, av in AudioVisualizers do av.isPlaying = true
 			ResetAudioSpectrumState()
+			raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 		}
 	}
 }
