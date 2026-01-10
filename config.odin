@@ -100,11 +100,9 @@ save_config :: proc() {
 		}
 	}
 
-	config: Config = {
-		keys                = GetKeyBindins(),
-		playlist            = playList,
-		current_song_volume = currentSongVolume,
-	}
+	config.keys = GetKeyBindins()
+	config.playlist = playList
+	config.current_song_volume = currentSongVolume
 
 	// Marshal the playlist paths to JSON
 	json_data, marshalerror := json.marshal(config)
