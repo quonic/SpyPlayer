@@ -48,7 +48,7 @@ EnableToolTips: bool : true
 
 MAX_SAMPLES_PER_UPDATE :: 4096
 
-TRACK_MEMORY_LEAKS :: #config(leaks, true)
+TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
 
 FEATURE_FFT :: true
@@ -88,15 +88,7 @@ main :: proc() {
 			}
 		}
 	} else {
-		allocator := context.allocator
-
-		arena: virtual.Arena
-		if virtual.arena_init_growing(&arena) == nil {
-			allocator = virtual.arena_allocator(&arena)
-		}
-
-		context.allocator = allocator
-		defer virtual.arena_destroy(&arena)
+		// TODO: Initialize audio context here
 		_main()
 	}
 }
