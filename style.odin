@@ -4,7 +4,7 @@ package main
 import "vendor:raylib"
 
 loadStyle :: proc() {
-	raylib.GuiLoadStyle("assets/listview.rgs")
+	// raylib.GuiLoadStyle("assets/listview.rgs")
 	raylib.GuiSetStyle(
 		raylib.GuiControl.LISTVIEW,
 		i32(raylib.GuiControlProperty.TEXT_ALIGNMENT),
