@@ -7,6 +7,7 @@
 **/*.rlib
 **/*.o
 **/*.a
+**/*.zst
 
 # Generated files
 aseprite.bin
