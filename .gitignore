@@ -12,7 +12,7 @@
 # Generated files
 aseprite.bin
 SpyPlayer
-trace_test.spall
+*.spall
 SpyPlayer.obj
 bin/
 dist/
