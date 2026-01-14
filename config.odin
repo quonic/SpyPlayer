@@ -69,9 +69,7 @@ load_config :: proc() {
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
-	when FEATURE_FFT {
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-	}
+	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 
 	fmt.printf("Config loaded\n")
 }

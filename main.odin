@@ -51,8 +51,6 @@ MAX_SAMPLES_PER_UPDATE :: 4096
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
 
-FEATURE_FFT :: true
-
 main :: proc() {
 	when OUTPUT_SPALL_TRACE {
 		spall_ctx = spall.context_create("trace_test.spall")
@@ -144,9 +142,7 @@ _main :: proc() {
 	raylib.SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE)
 
 	// Initialize FFT spectrum state
-	when FEATURE_FFT {
-		InitAudioSpectrumState()
-	}
+	InitAudioSpectrumState()
 
 
 	// Load the config file
@@ -277,9 +273,7 @@ play :: proc() {
 	} else {
 		if len(playList) == 0 {
 			media_play_state = .NoMusic
-			when FEATURE_FFT {
-				for _, av in AudioVisualizers do av.isPlaying = false
-			}
+			for _, av in AudioVisualizers do av.isPlaying = false
 			return
 		}
 		currentSongIndex = 0
@@ -294,12 +288,10 @@ play :: proc() {
 		raylib.SetMusicVolume(currentStream, currentSongVolume)
 		UpdateCurrentSongText()
 	}
-	when FEATURE_FFT {
-		for _, av in AudioVisualizers do av.isPlaying = true
-		ResetAudioSpectrumState()
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-	}
+	for _, av in AudioVisualizers do av.isPlaying = true
+	ResetAudioSpectrumState()
+	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 }
 
 loadSelected :: proc() {
@@ -330,28 +322,22 @@ playSelected :: proc() {
 	if media_play_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
 		currentStream.looping = loop_song_toggle.checked
-		when FEATURE_FFT {
-			for _, av in AudioVisualizers do av.isPlaying = true
-			ResetAudioSpectrumState()
-			raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-		}
+		for _, av in AudioVisualizers do av.isPlaying = true
+		ResetAudioSpectrumState()
+		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 	}
 }
 
 pause :: proc() {
 	if len(playList) == 0 {
 		media_play_state = .NoMusic
-		when FEATURE_FFT {
-			for _, av in AudioVisualizers do av.isPlaying = false
-		}
+		for _, av in AudioVisualizers do av.isPlaying = false
 		return
 	}
 	if raylib.IsMusicStreamPlaying(currentStream) {
 		raylib.PauseMusicStream(currentStream)
 		media_play_state = .Paused
-		when FEATURE_FFT {
-			for _, av in AudioVisualizers do av.isPlaying = false
-		}
+		for _, av in AudioVisualizers do av.isPlaying = false
 		UpdateCurrentSongText()
 	} else {
 		play()
@@ -361,21 +347,15 @@ pause :: proc() {
 stop :: proc() {
 	if len(playList) == 0 {
 		media_play_state = .NoMusic
-		when FEATURE_FFT {
-			for _, av in AudioVisualizers do av.isPlaying = false
-		}
+		for _, av in AudioVisualizers do av.isPlaying = false
 		return
 	}
 	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
 		raylib.StopMusicStream(currentStream)
-		when FEATURE_FFT {
-			raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-		}
+		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 	}
 	media_play_state = .Stopped
-	when FEATURE_FFT {
-		for _, av in AudioVisualizers do av.isPlaying = false
-	}
+	for _, av in AudioVisualizers do av.isPlaying = false
 
 	UpdateCurrentSongText()
 }
@@ -383,14 +363,10 @@ stop :: proc() {
 next :: proc() {
 	if len(playList) == 0 {
 		media_play_state = .NoMusic
-		when FEATURE_FFT {
-			for _, av in AudioVisualizers do av.isPlaying = false
-		}
+		for _, av in AudioVisualizers do av.isPlaying = false
 		return
 	}
-	when FEATURE_FFT {
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-	}
+	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 	raylib.StopMusicStream(currentStream)
 	raylib.UnloadMusicStream(currentStream)
 	if len(playList) > 0 {
@@ -403,18 +379,18 @@ next :: proc() {
 	currentStream = raylib.LoadMusicStream(
 		strings.clone_to_cstring(playList[currentSongIndex].path, context.temp_allocator),
 	)
-	when FEATURE_FFT {
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-	}
+
+	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
+
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	if media_play_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
-		when FEATURE_FFT {
-			for _, av in AudioVisualizers do av.isPlaying = true
-			ResetAudioSpectrumState()
-		}
+
+		for _, av in AudioVisualizers do av.isPlaying = true
+		ResetAudioSpectrumState()
+
 	}
 	currentStream.looping = loop_song_toggle.checked
 	UpdateCurrentSongText()
@@ -423,15 +399,11 @@ next :: proc() {
 previous :: proc() {
 	if len(playList) == 0 {
 		media_play_state = .NoMusic
-		when FEATURE_FFT {
-			for _, av in AudioVisualizers do av.isPlaying = false
-		}
+		for _, av in AudioVisualizers do av.isPlaying = false
 		return
 	}
 	raylib.StopMusicStream(currentStream)
-	when FEATURE_FFT {
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-	}
+	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
 	raylib.UnloadMusicStream(currentStream)
 	if len(playList) > 0 {
 		currentSongIndex -= 1
@@ -444,18 +416,14 @@ previous :: proc() {
 		strings.clone_to_cstring(playList[currentSongIndex].path),
 	)
 
-	when FEATURE_FFT {
-		raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
-		raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
-	}
+	raylib.DetachAudioStreamProcessor(currentStream, AudioProcessFFT)
+	raylib.AttachAudioStreamProcessor(currentStream, AudioProcessFFT)
 
 	raylib.SetMusicVolume(currentStream, currentSongVolume)
 	if media_play_state == .Playing {
 		raylib.PlayMusicStream(currentStream)
-		when FEATURE_FFT {
-			for _, av in AudioVisualizers do av.isPlaying = true
-			ResetAudioSpectrumState()
-		}
+		for _, av in AudioVisualizers do av.isPlaying = true
+		ResetAudioSpectrumState()
 	}
 	currentStream.looping = loop_song_toggle.checked
 	UpdateCurrentSongText()
