@@ -19,8 +19,10 @@ AudioVisualizers: map[string]^AudioVisualizerControl
 Pictures: map[string]^PictureControl
 
 // FFT Spectrum constants
-FFT_SIZE :: 256
-NUM_BARS :: 64
+FFT_SIZE :: 256 // Must be power of two
+NUM_BARS :: 32 // Number of visualizer bars
+// We use 48 bins (0-47) from the FFT output (which has 128 bins for FFT_SIZE 256)
+MAX_BINS :: 32 // Number of usable FFT bins for visualizer
 
 // Audio spectrum state for visualizer
 AudioSpectrumState :: struct {
@@ -155,6 +157,74 @@ IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
 	)
 }
 
+// GetLogBinRange maps a visualizer bar index to FFT bin range using base-2 logarithmic distribution
+// This ensures bass frequencies (low bins) get fewer bins per bar, while treble (high bins) aggregate more
+GetLogBinRange :: proc(barIndex: int) -> (startBin: int, endBin: int) {
+
+	// Use base 1.8 instead of 2 for more emphasis on lower frequencies
+	BASE :: 1.8
+
+	// Calculate bin position using base-2 exponential distribution
+	// Formula: bin = floor(127 * (2^(barIndex/64) - 1))
+
+	// Allocate first 50% of bars to first 25% of frequency spectrum (bass/low-mid)
+	// Next 30% of bars to next 35% of spectrum (mid/high-mid)
+	// Last 20% of bars to remaining 40% of spectrum (high/treble)
+
+	normalizedPos := f32(barIndex) / f32(NUM_BARS)
+
+	startPos: f32
+	endPos: f32
+
+	if normalizedPos < 0.5 {
+		// First half of bars cover 0-25% of frequency range
+		ratio := normalizedPos / 0.5 // 0.0 to 1.0
+		startPos = ratio * 0.25 * f32(MAX_BINS)
+		endPos = (ratio + (1.0 / f32(NUM_BARS)) / 0.5) * 0.25 * f32(MAX_BINS)
+	} else if normalizedPos < 0.8 {
+		// Next 30% of bars cover 25-60% of frequency range
+		ratio := (normalizedPos - 0.5) / 0.3
+		startPos = (0.25 + ratio * 0.35) * f32(MAX_BINS)
+		endPos = (0.25 + (ratio + (1.0 / f32(NUM_BARS)) / 0.3) * 0.35) * f32(MAX_BINS)
+	} else {
+		// Last 20% of bars cover 60-100% of frequency range
+		ratio := (normalizedPos - 0.8) / 0.2
+		startPos = (0.6 + ratio * 0.4) * f32(MAX_BINS)
+		endPos = (0.6 + (ratio + (1.0 / f32(NUM_BARS)) / 0.2) * 0.4) * f32(MAX_BINS)
+	}
+
+	startBin = int(math.floor(startPos))
+	endBin = int(math.floor(endPos))
+
+	// Ensure we don't exceed bounds
+	if startBin >= MAX_BINS {startBin = MAX_BINS - 1}
+	if endBin >= MAX_BINS {endBin = MAX_BINS - 1}
+
+	// Ensure at least one bin
+	if endBin <= startBin {endBin = startBin + 1}
+
+	return startBin, endBin
+}
+
+// GetBarMagnitudeRMS computes the RMS (Root Mean Square) magnitude for a range of FFT bins
+// RMS provides perceptually accurate audio power measurement
+GetBarMagnitudeRMS :: proc(spectrum: [FFT_SIZE]f32, startBin, endBin: int) -> f32 {
+	if startBin >= endBin {return spectrum[startBin]}
+
+	sum := f32(0.0)
+	count := 0
+
+	for i := startBin; i < endBin; i += 1 {
+		sum += spectrum[i] * spectrum[i]
+		count += 1
+	}
+
+	if count == 0 {return 0.0}
+
+	// Return RMS: sqrt(sum of squares / count)
+	return math.sqrt(sum / f32(count))
+}
+
 DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.Camera2D) {
 	texture: raylib.Texture2D = AudioVisualizers[name].texture
 	sourceRec: raylib.Rectangle = AudioVisualizers[name].positionSpriteSheet
@@ -164,19 +234,21 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, AudioVisualizers[name].positionRec, {0, 0}, 0, tint)
 
-	raylib.BeginScissorMode(
-		i32(AudioVisualizers[name].positionRec.x + 2),
-		i32(AudioVisualizers[name].positionRec.y + 2),
-		i32(AudioVisualizers[name].positionRec.width - 4),
-		i32(AudioVisualizers[name].positionRec.height - 4),
-	)
+	when !ODIN_DEBUG {
+		raylib.BeginScissorMode(
+			i32(AudioVisualizers[name].positionRec.x + 2),
+			i32(AudioVisualizers[name].positionRec.y + 2),
+			i32(AudioVisualizers[name].positionRec.width - 4),
+			i32(AudioVisualizers[name].positionRec.height - 4),
+		)
+	}
 
 	// Width of the control minus the borders
 	Width := int(AudioVisualizers[name].positionRec.width) - 2
 	// Half the height of the control minus the borders
 	Height := (AudioVisualizers[name].positionRec.height * 0.5) - 2
 	// Border width
-	boarder: f32 = 1
+	border: f32 = 1
 
 	// Draw the audio visualizer here
 	if AudioVisualizers[name].isPlaying {
@@ -185,44 +257,53 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 		rightBars := g_spectrumState.right_spectrum
 
 		barWidth := f32(Width) / f32(NUM_BARS)
-		spacing := f32(0.0)
+		spacing := f32(-4.0)
 		actualBarWidth := barWidth - spacing
 
-		baseX := AudioVisualizers[name].positionRec.x + boarder
-		baseYTop := AudioVisualizers[name].positionRec.y + boarder
-		baseYBottom := baseYTop + Height
+		baseX := AudioVisualizers[name].positionRec.x + border
+		baseYTop := AudioVisualizers[name].positionRec.y + border
+		baseYBottom := baseYTop + Height - border
 
 		bar_len := len(AudioVisualizers[name].barColors)
 		barColor := raylib.WHITE
-		// Draw bars
+		// Draw bars with logarithmic frequency distribution
 		for i := 0; i < NUM_BARS; i += 1 {
 			x := baseX + f32(i) * barWidth
 
+			// Get logarithmic bin range for this bar
+			startBin, endBin := GetLogBinRange(i)
+
+			// Compute RMS magnitude for the bin range
+			leftMagnitude := GetBarMagnitudeRMS(leftBars, startBin, endBin)
+			rightMagnitude := GetBarMagnitudeRMS(rightBars, startBin, endBin)
+
 			// Left channel (top half) - inverted so bars grow downward from top
-			leftHeight := leftBars[i] * Height
+			leftHeight := leftMagnitude
 			if leftHeight > 0 {
 				raylib.DrawLineEx(
 					{x + actualBarWidth / 2, baseYTop + (Height - leftHeight)},
 					{x + actualBarWidth / 2, baseYTop + Height},
 					actualBarWidth / 2,
-					barColor,
+					raylib.GREEN,
 				)
 			}
 
 			// Right channel (bottom half) - bars grow upward from bottom
-			rightHeight := rightBars[i] * Height
+			rightHeight := rightMagnitude
 			if rightHeight > 0 {
 				raylib.DrawLineEx(
 					{x + actualBarWidth / 2, baseYBottom},
 					{x + actualBarWidth / 2, baseYBottom + rightHeight},
 					actualBarWidth / 2,
-					barColor,
+					raylib.BLUE,
 				)
 			}
 		}
 	}
 
-	raylib.EndScissorMode()
+	when !ODIN_DEBUG {
+		raylib.EndScissorMode()
+	}
 }
 
 DrawPictureControl :: proc(name: string, camera: raylib.Camera2D) {
