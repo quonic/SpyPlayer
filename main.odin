@@ -114,6 +114,9 @@ spall_exit :: proc "contextless" (
 _main :: proc() {
 	icon := raylib.LoadImage("assets/SpyPlayer.png")
 	defer raylib.UnloadImage(icon)
+	// Uncomment the following if you aren't on GNOME as libdecor/libpango leaks memory,
+	// run with: export GDK_BACKEND=x11
+	// raylib.SetConfigFlags(raylib.ConfigFlags{.WINDOW_UNDECORATED})
 	// Initialize raylib
 	raylib.InitWindow(600, 200, "SpyPlayer")
 	raylib.SetWindowState(raylib.ConfigFlags{raylib.ConfigFlag.WINDOW_ALWAYS_RUN})
