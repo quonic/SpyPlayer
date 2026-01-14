@@ -164,31 +164,26 @@ GetLogBinRange :: proc(barIndex: int) -> (startBin: int, endBin: int) {
 	// Use base 1.8 instead of 2 for more emphasis on lower frequencies
 	BASE :: 1.8
 
-	// Calculate bin position using base-2 exponential distribution
-	// Formula: bin = floor(127 * (2^(barIndex/64) - 1))
-
-	// Allocate first 50% of bars to first 25% of frequency spectrum (bass/low-mid)
-	// Next 30% of bars to next 35% of spectrum (mid/high-mid)
-	// Last 20% of bars to remaining 40% of spectrum (high/treble)
-
 	normalizedPos := f32(barIndex) / f32(NUM_BARS)
 
 	startPos: f32
 	endPos: f32
 
+	// 0.0 to 1.0
+	firstRatio := normalizedPos / 0.5
+	secondRatio := (normalizedPos - 0.5) / 0.3
+	thirdRatio := (normalizedPos - 0.8) / 0.2
+
 	if normalizedPos < 0.5 {
-		// First half of bars cover 0-25% of frequency range
-		ratio := normalizedPos / 0.5 // 0.0 to 1.0
+		ratio := firstRatio
 		startPos = ratio * 0.25 * f32(MAX_BINS)
 		endPos = (ratio + (1.0 / f32(NUM_BARS)) / 0.5) * 0.25 * f32(MAX_BINS)
 	} else if normalizedPos < 0.8 {
-		// Next 30% of bars cover 25-60% of frequency range
-		ratio := (normalizedPos - 0.5) / 0.3
+		ratio := secondRatio
 		startPos = (0.25 + ratio * 0.35) * f32(MAX_BINS)
 		endPos = (0.25 + (ratio + (1.0 / f32(NUM_BARS)) / 0.3) * 0.35) * f32(MAX_BINS)
 	} else {
-		// Last 20% of bars cover 60-100% of frequency range
-		ratio := (normalizedPos - 0.8) / 0.2
+		ratio := thirdRatio
 		startPos = (0.6 + ratio * 0.4) * f32(MAX_BINS)
 		endPos = (0.6 + (ratio + (1.0 / f32(NUM_BARS)) / 0.2) * 0.4) * f32(MAX_BINS)
 	}
