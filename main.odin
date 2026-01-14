@@ -143,6 +143,7 @@ _main :: proc() {
 
 	// Initialize FFT spectrum state
 	InitAudioSpectrumState()
+	defer DestroyAudioSpectrumState()
 
 
 	// Load the config file

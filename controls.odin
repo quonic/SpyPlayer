@@ -128,6 +128,10 @@ InitAudioSpectrumState :: proc() {
 	}
 }
 
+DestroyAudioSpectrumState :: proc() {
+	fft.destroy_fft_plan(g_spectrumState.plan)
+}
+
 ResetAudioSpectrumState :: proc() {
 	// Zero all buffers
 }
