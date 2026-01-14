@@ -39,7 +39,7 @@ AudioProcessFFT :: proc "c" (bufferData: rawptr, frames: u32) {
 	}
 
 	samples := ([^]f32)(bufferData)
-	inv_size := 1.0 / f32(FFT_SIZE)
+	inv_size := (1.5 + math.log2(f32(FFT_SIZE))) / f32(FFT_SIZE) * 2
 
 	// Prepare FFT input buffers (mono: left and right)
 
@@ -56,7 +56,7 @@ AudioProcessFFT :: proc "c" (bufferData: rawptr, frames: u32) {
 
 	// Run FFT on left channel and compute its power spectrum
 	fft.run_fft_plan(g_spectrumState.plan, g_spectrumState.leftInput[:])
-	
+
 	// Compute power spectrum for left channel
 	for i := 0; i < FFT_SIZE; i += 1 {
 		c := g_spectrumState.plan.buffer[i]
@@ -65,10 +65,10 @@ AudioProcessFFT :: proc "c" (bufferData: rawptr, frames: u32) {
 		power := (re * re + im * im) * inv_size
 		g_spectrumState.left_spectrum[i] = power
 	}
-	
+
 	// Run FFT on right channel and compute its power spectrum
 	fft.run_fft_plan(g_spectrumState.plan, g_spectrumState.rightInput[:])
-	
+
 	// Compute power spectrum for right channel
 	for i := 0; i < FFT_SIZE; i += 1 {
 		c := g_spectrumState.plan.buffer[i]
