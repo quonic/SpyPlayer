@@ -63,7 +63,7 @@ AudioProcessFFT :: proc "c" (bufferData: rawptr, frames: u32) {
 		re := real(c)
 		im := imag(c)
 		power := (re * re + im * im) * inv_size
-		g_spectrumState.left_spectrum[i] = power
+		g_spectrumState.left_spectrum[i] = power / 10
 	}
 
 	// Run FFT on right channel and compute its power spectrum
@@ -75,6 +75,6 @@ AudioProcessFFT :: proc "c" (bufferData: rawptr, frames: u32) {
 		re := real(c)
 		im := imag(c)
 		power := (re * re + im * im) * inv_size
-		g_spectrumState.right_spectrum[i] = power
+		g_spectrumState.right_spectrum[i] = power / 10
 	}
 }
