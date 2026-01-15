@@ -233,7 +233,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 	// Draw the background image
 	raylib.DrawTexturePro(texture, sourceRec, AudioVisualizers[name].positionRec, {0, 0}, 0, tint)
 
-	when !ODIN_DEBUG {
+	when DISABLE_SCISSOR_MODE {
 		raylib.BeginScissorMode(
 			i32(AudioVisualizers[name].positionRec.x + 2),
 			i32(AudioVisualizers[name].positionRec.y + 2),
@@ -300,7 +300,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 		}
 	}
 
-	when !ODIN_DEBUG {
+	when DISABLE_SCISSOR_MODE {
 		raylib.EndScissorMode()
 	}
 }
