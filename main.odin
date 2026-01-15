@@ -50,7 +50,7 @@ MAX_SAMPLES_PER_UPDATE :: 4096
 
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
-DISABLE_SCISSOR_MODE :: #config(scissor, false)
+DISABLE_SCISSOR_MODE :: #config(scissor, true)
 
 main :: proc() {
 	when OUTPUT_SPALL_TRACE {
