@@ -273,6 +273,10 @@ _main :: proc() {
 		free_all(context.temp_allocator)
 	}
 
+	if raylib.IsMusicStreamPlaying(currentStream) || raylib.IsMusicReady(currentStream) {
+		stop()
+		raylib.UnloadMusicStream(currentStream)
+	}
 	// Save the config when the program is closed
 	save_config()
 }
