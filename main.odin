@@ -52,6 +52,11 @@ TRACK_MEMORY_LEAKS :: #config(leaks, false)
 OUTPUT_SPALL_TRACE :: #config(trace, false)
 DISABLE_SCISSOR_MODE :: #config(scissor, false)
 
+when ODIN_DEBUG || TRACK_MEMORY_LEAKS {
+	Show_Debug_Info: bool = true
+	track: mem.Tracking_Allocator
+}
+
 main :: proc() {
 	when OUTPUT_SPALL_TRACE {
 		spall_ctx = spall.context_create("trace_test.spall")
@@ -63,9 +68,7 @@ main :: proc() {
 		spall_buffer = spall.buffer_create(buffer_backing, u32(sync.current_thread_id()))
 		defer spall.buffer_destroy(&spall_ctx, &spall_buffer)
 	}
-
-	when TRACK_MEMORY_LEAKS {
-		track: mem.Tracking_Allocator
+	when ODIN_DEBUG || TRACK_MEMORY_LEAKS {
 		mem.tracking_allocator_init(&track, context.allocator)
 		defer mem.tracking_allocator_destroy(&track)
 		context.allocator = mem.tracking_allocator(&track)
@@ -87,7 +90,6 @@ main :: proc() {
 			}
 		}
 	} else {
-		// TODO: Initialize audio context here
 		_main()
 	}
 }
@@ -256,6 +258,16 @@ _main :: proc() {
 		}
 
 		raylib.EndMode2D()
+
+		// Draw Debug Info
+		when ODIN_DEBUG {
+			if raylib.GetFrameTime() == 0 {
+				update_page_size()
+			}
+			if raylib.IsKeyPressed(.F1) do Show_Debug_Info = !Show_Debug_Info
+			if Show_Debug_Info do debug_draw(&track)
+		}
+
 		raylib.EndDrawing()
 
 		free_all(context.temp_allocator)
