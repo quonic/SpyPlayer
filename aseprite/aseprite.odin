@@ -56,14 +56,14 @@ ReadAsespriteJsonFile :: proc(
 	filename: string,
 	allocator := context.allocator,
 ) -> (
-	aseprite: ^Aseprite,
+	aseprite: Aseprite,
 	ok: bool,
 ) {
 	data := os.read_entire_file(filename) or_return
 	defer delete(data)
 
-	aseprite = new(Aseprite)
-	err := json.unmarshal(data, aseprite)
+	// aseprite = new(Aseprite)
+	err := json.unmarshal(data, &aseprite)
 	assert(err == nil, fmt.tprintf("Error: %v", err))
 	ok = err == nil
 	return
@@ -77,7 +77,7 @@ test_read_aseprite_json_file :: proc(_: ^testing.T) {
 	// I've created this test for validating the parser in my own project
 	test_file := "assets/window.json"
 	test_aseprite, ok := ReadAsespriteJsonFile(test_file)
-	if ok == false && test_aseprite != nil {
+	if ok == false && test_aseprite.frames != nil {
 		assert(test_aseprite.frames["window.aseprite"].frame.x == 0)
 		assert(test_aseprite.frames["window.aseprite"].frame.y == 0)
 		assert(test_aseprite.frames["window.aseprite"].frame.w == 600)

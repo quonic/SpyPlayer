@@ -49,7 +49,8 @@ CreateUserInterface :: proc() {
 }
 
 CreateUI :: proc() {
-	spriteSheet, ok := aseprite.ReadAsespriteJsonFile("assets/window.json")
+	ok: bool
+	spriteSheet, ok = aseprite.ReadAsespriteJsonFile("assets/window.json")
 	assert(ok, fmt.tprintf("Error reading file"))
 	window_texture = raylib.LoadTexture(fmt.caprintf("assets/%s", spriteSheet.meta.image))
 
