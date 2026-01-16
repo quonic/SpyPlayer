@@ -58,13 +58,7 @@ GetTags :: proc(file_name: string) -> (result: TagResult) {
 	defer delete(stderr)
 
 	if state.exit_code != 0 || proc_err != nil {
-		fmt.printfln("Error: Process Error: %v", proc_err)
-		fmt.printfln("----------------- STDOUT --------------------")
-		fmt.printfln("%s", transmute(string)stdout)
-		fmt.printfln("----------------- STDERR --------------------")
-		fmt.printfln("%s", transmute(string)stderr)
-		fmt.printfln("----------------- STATUS --------------------")
-		fmt.printfln("%v", state)
+		fmt.printfln("ffprobe error(%v) reading file: %v", state.exit_code, file_name)
 		return {format = Format{filename = file_name, tags = {title = file_name}}}
 	}
 

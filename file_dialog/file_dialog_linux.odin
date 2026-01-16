@@ -6,7 +6,7 @@ import "core:os/os2"
 import "core:strings"
 
 when ODIN_OS == .Linux || ODIN_OS == .Darwin {
-	foreign libc 
+	foreign libc
 	{
 		popen :: proc(command: cstring, type: cstring) -> ^FILE ---
 		pclose :: proc(stream: ^FILE) -> i32 ---
