@@ -9,14 +9,13 @@ import "core:os"
 import "core:strings"
 import "core:thread"
 import "core:time"
-import "ffprobe"
 import "file_dialog"
 import "vendor:raylib"
 
 Song :: struct {
 	path:  string,
 	frame: f32,
-	tags:  ffprobe.Tags,
+	tags:  Tags,
 }
 
 playList: [dynamic]Song
@@ -142,8 +141,8 @@ ClearPlaylistList :: proc() {
 }
 
 AddSong :: proc(path: string) {
-	frame := ffprobe.GetTags(path)
-	append(&playList, Song{path = path, tags = frame.format.tags})
+	tags, success := load_id3_tags(path)
+	append(&playList, Song{path = path, tags = tags})
 }
 
 RemoveSong :: proc(path: string) {
@@ -292,6 +291,6 @@ ClearPlaylist :: proc() {
 
 	currentSongIndex = 0
 	currentSongPath = ""
-	current_song_tags = ffprobe.Tags{}
+	current_song_tags = Tags{}
 
 }

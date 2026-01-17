@@ -2,7 +2,7 @@
 
 Yet another music player, written in [Odin](https://github.com/odin-lang/Odin).
 
-Raylib is used for playback and UI rendering. A custom Aseprite sprite sheet parser is used to load sprites and to help position the sprites for custom controls. Currently only Button, Slider and Text controls are implemented. `ffprobe` is used to get metadata from audio files.
+Raylib is used for playback and UI rendering. A custom Aseprite sprite sheet parser is used to load sprites and to help position the sprites for custom controls. Currently only Button, Slider and Text controls are implemented.
 
 ![Screenshot](screenshots/player.png)
 
@@ -47,8 +47,8 @@ If you want a feature that isn't there, please create a pull request or open an 
   - [ ] Album
   - [ ] Genre
 - [x] Supported operating systems
-  - [ ] Windows - It should compile, but I can't verify that it works as OpenGL is not supported on Windows in my VM's
-  - [x] Linux - Daily tested on Fedora 41
+  - [x] Windows
+  - [x] Linux
 - [ ] Other things I haven't figured out yet
 
 ## Contributions
@@ -67,7 +67,6 @@ I'm currently focusing on supporting Linux first. If you want other platforms to
 
 ### Runtime Dependencies
 
-- ffprobe to get metadata from audio files, usually installed with ffmpeg
 - zenity or kdialog to show popups, depends on the desktop environment
 - opengl or vulkan to render the GUI, should be installed along with your graphics driver
 

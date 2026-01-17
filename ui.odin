@@ -2,7 +2,6 @@ package main
 
 import "aseprite"
 import "core:fmt"
-import "ffprobe"
 import "vendor:raylib"
 
 window_texture: raylib.Texture2D
@@ -42,7 +41,7 @@ radio_checked: raylib.Rectangle
 
 spriteSheet: aseprite.Aseprite
 
-current_song_tags: ffprobe.Tags
+current_song_tags: Tags
 
 CreateUserInterface :: proc() {
 	CreateUI()
