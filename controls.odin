@@ -20,9 +20,7 @@ Pictures: map[string]^PictureControl
 
 // FFT Spectrum constants
 FFT_SIZE :: 512 // Must be power of two
-NUM_BARS :: 128 // Number of visualizer bars
-// We use 48 bins (0-47) from the FFT output (which has 128 bins for FFT_SIZE 256)
-MAX_BINS :: 128 // Number of usable FFT bins for visualizer
+MAX_BINS :: FFT_SIZE / 2 // Number of usable FFT bins for visualizer
 
 // Audio spectrum state for visualizer
 AudioSpectrumState :: struct {
@@ -162,13 +160,8 @@ IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
 }
 
 // GetLogBinRange maps a visualizer bar index to FFT bin range using base-2 logarithmic distribution
-// This ensures bass frequencies (low bins) get fewer bins per bar, while treble (high bins) aggregate more
 GetLogBinRange :: proc(barIndex: int) -> (startBin: int, endBin: int) {
-
-	// Use base 1.8 instead of 2 for more emphasis on lower frequencies
-	BASE :: 1.8
-
-	normalizedPos := f32(barIndex) / f32(NUM_BARS)
+	normalizedPos := f32(barIndex) / f32(MAX_BINS)
 
 	startPos: f32
 	endPos: f32
@@ -181,15 +174,15 @@ GetLogBinRange :: proc(barIndex: int) -> (startBin: int, endBin: int) {
 	if normalizedPos < 0.5 {
 		ratio := firstRatio
 		startPos = ratio * 0.25 * f32(MAX_BINS)
-		endPos = (ratio + (1.0 / f32(NUM_BARS)) / 0.5) * 0.25 * f32(MAX_BINS)
+		endPos = (ratio + (1.0 / f32(MAX_BINS)) / 0.5) * 0.25 * f32(MAX_BINS)
 	} else if normalizedPos < 0.8 {
 		ratio := secondRatio
 		startPos = (0.25 + ratio * 0.35) * f32(MAX_BINS)
-		endPos = (0.25 + (ratio + (1.0 / f32(NUM_BARS)) / 0.3) * 0.35) * f32(MAX_BINS)
+		endPos = (0.25 + (ratio + (1.0 / f32(MAX_BINS)) / 0.3) * 0.35) * f32(MAX_BINS)
 	} else {
 		ratio := thirdRatio
 		startPos = (0.6 + ratio * 0.4) * f32(MAX_BINS)
-		endPos = (0.6 + (ratio + (1.0 / f32(NUM_BARS)) / 0.2) * 0.4) * f32(MAX_BINS)
+		endPos = (0.6 + (ratio + (1.0 / f32(MAX_BINS)) / 0.2) * 0.4) * f32(MAX_BINS)
 	}
 
 	startBin = int(math.floor(startPos))
@@ -280,7 +273,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 		leftBars := g_spectrumState.left_spectrum
 		rightBars := g_spectrumState.right_spectrum
 
-		barWidth := f32(Width) / f32(NUM_BARS)
+		barWidth := f32(Width) / f32(MAX_BINS)
 		spacing := f32(-4.0)
 		actualBarWidth := barWidth - spacing
 
@@ -291,7 +284,7 @@ DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.C
 		bar_len := len(AudioVisualizers[name].barColors)
 		barColor := raylib.WHITE
 		// Draw bars with logarithmic frequency distribution
-		for i := 0; i < NUM_BARS; i += 1 {
+		for i := 0; i < MAX_BINS; i += 1 {
 			x := baseX + f32(i) * barWidth
 
 			// Get logarithmic bin range for this bar
