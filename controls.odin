@@ -19,10 +19,10 @@ AudioVisualizers: map[string]^AudioVisualizerControl
 Pictures: map[string]^PictureControl
 
 // FFT Spectrum constants
-FFT_SIZE :: 256 // Must be power of two
-NUM_BARS :: 32 // Number of visualizer bars
+FFT_SIZE :: 512 // Must be power of two
+NUM_BARS :: 128 // Number of visualizer bars
 // We use 48 bins (0-47) from the FFT output (which has 128 bins for FFT_SIZE 256)
-MAX_BINS :: 32 // Number of usable FFT bins for visualizer
+MAX_BINS :: 128 // Number of usable FFT bins for visualizer
 
 // Audio spectrum state for visualizer
 AudioSpectrumState :: struct {
@@ -225,6 +225,31 @@ GetBarMagnitudeRMS :: proc(spectrum: [FFT_SIZE]f32, startBin, endBin: int) -> f3
 }
 
 DrawAudioVisualizerControl :: proc(name: string, progress: f32, camera: raylib.Camera2D) {
+
+	// Run FFT on left channel and compute its power spectrum
+	fft.run_fft_plan(g_spectrumState.plan, g_spectrumState.leftInput[:])
+
+	// Compute power spectrum for left channel
+	for i := 0; i < FFT_SIZE; i += 1 {
+		c := g_spectrumState.plan.buffer[i]
+		re := real(c)
+		im := imag(c)
+		power := (re * re + im * im) * inv_size
+		g_spectrumState.left_spectrum[i] = power / 10
+	}
+
+	// Run FFT on right channel and compute its power spectrum
+	fft.run_fft_plan(g_spectrumState.plan, g_spectrumState.rightInput[:])
+
+	// Compute power spectrum for right channel
+	for i := 0; i < FFT_SIZE; i += 1 {
+		c := g_spectrumState.plan.buffer[i]
+		re := real(c)
+		im := imag(c)
+		power := (re * re + im * im) * inv_size
+		g_spectrumState.right_spectrum[i] = power / 10
+	}
+
 	texture: raylib.Texture2D = AudioVisualizers[name].texture
 	sourceRec: raylib.Rectangle = AudioVisualizers[name].positionSpriteSheet
 	tint: raylib.Color =
