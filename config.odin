@@ -22,12 +22,12 @@ load_config :: proc() {
 		XDG_CONFIG_HOME = fmt.aprintf("%v/.config", XDG_CONFIG_HOME)
 	}
 	config_file = fmt.aprintf("%v/SpyPlayer/config.json", XDG_CONFIG_HOME)
-	config_data, read_error := os.read_entire_file_from_filename_or_err(config_file)
+	config_data, read_error := os.read_entire_file_from_path(config_file, context.temp_allocator)
 	if read_error != {} {
 		// Config file doesn't exist, do nothing
 		return
 	}
-	defer delete(config_data)
+	// defer delete(config_data)
 
 	err := json.unmarshal(config_data, &config)
 	if err != nil {
@@ -111,7 +111,7 @@ save_config :: proc() {
 
 	// Write the JSON data to the file
 	writesuccess := os.write_entire_file(config_file, json_data)
-	if writesuccess == false {
+	if writesuccess != nil {
 		fmt.eprintf("Error writing config file: %v", writesuccess)
 		return
 	}

@@ -1,5 +1,6 @@
 package main
 
+import "core:io"
 import "core:os"
 import "core:strings"
 import "core:unicode/utf8"
@@ -100,7 +101,7 @@ load_id3_tags :: proc(filepath: string) -> (tags: Tags, success: bool) {
 			int(ext_header_size_buf[2]) << 8 |
 			int(ext_header_size_buf[3])
 
-		os.seek(file, i64(extended_size), os.SEEK_CUR)
+		os.seek(file, i64(extended_size), io.Seek_From.Current)
 		pos += 4 + extended_size
 	}
 
@@ -182,7 +183,7 @@ load_id3_tags :: proc(filepath: string) -> (tags: Tags, success: bool) {
 				tags.album_artist = bytes_to_string(frame_data) or_return
 			}
 		case:
-			os.seek(file, i64(frame.size), os.SEEK_CUR)
+			os.seek(file, i64(frame.size), io.Seek_From.Current)
 		}
 
 		pos += 10 + frame.size

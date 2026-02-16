@@ -2,7 +2,6 @@ package file_dialog
 
 import "core:fmt"
 import "core:os"
-import "core:os/os2"
 import "core:strings"
 
 when ODIN_OS == .Linux || ODIN_OS == .Darwin {
@@ -79,8 +78,8 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 
 		cmd := strings.split(fullpath, " ")
 
-		state, stdout, stderr, proc_err := os2.process_exec(
-			os2.Process_Desc{command = cmd},
+		state, stdout, stderr, proc_err := os.process_exec(
+			os.Process_Desc{command = cmd},
 			context.allocator,
 		)
 

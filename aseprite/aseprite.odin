@@ -59,13 +59,17 @@ ReadAsespriteJsonFile :: proc(
 	aseprite: Aseprite,
 	ok: bool,
 ) {
-	data := os.read_entire_file(filename) or_return
-	defer delete(data)
+	data, err := os.read_entire_file_from_path(filename, allocator)
+	if err != nil {
+		assert(false, fmt.tprintf("Error reading file: %v", err))
+		ok = false
+		return
+	}
 
 	// aseprite = new(Aseprite)
-	err := json.unmarshal(data, &aseprite)
-	assert(err == nil, fmt.tprintf("Error: %v", err))
-	ok = err == nil
+	err_json := json.unmarshal(data, &aseprite)
+	assert(err_json == nil, fmt.tprintf("Error: %v", err_json))
+	ok = err_json == nil
 	return
 }
 

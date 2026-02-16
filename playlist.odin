@@ -6,6 +6,7 @@ import "core:fmt"
 import "core:math"
 import "core:math/rand"
 import "core:os"
+import "core:os/old"
 import "core:strings"
 import "core:thread"
 import "core:time"
@@ -44,7 +45,7 @@ task_prompt_load_from_dir :: proc(t: ^thread.Thread) {
 	handle, handleerror := os.open(folder)
 	assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
 
-	fileinfo, fileinfoerror := os.read_dir(handle, -1)
+	fileinfo, fileinfoerror := os.read_dir(handle, -1, context.temp_allocator)
 	assert(fileinfoerror == nil, fmt.tprintf("Error reading directory: %v", fileinfoerror))
 
 	totalProgress: f16 = f16(len(fileinfo) - 1)
@@ -224,7 +225,7 @@ SavePlaylist :: proc() {
 
 	// Write the JSON data to the file
 	writeerror := os.write_entire_file(playlist_file, json_data)
-	if writeerror != true {
+	if writeerror != nil {
 		fmt.eprintf("Error writing file: %v", writeerror)
 		Texts["current song"].text = fmt.caprintf("Error saving playlist! Write error.")
 		return
@@ -244,8 +245,11 @@ LoadPlaylist :: proc(path: string = "", clear: bool = true) {
 	} else {
 		playlist_file = path
 	}
-	playlist_data, read_error := os.read_entire_file_from_filename_or_err(playlist_file)
-	if read_error != {} {
+	playlist_data, read_error := os.read_entire_file_from_path(
+		playlist_file,
+		context.temp_allocator,
+	)
+	if read_error != nil {
 		fmt.eprintf("Error reading file: %v", read_error)
 		Texts["current song"].text = fmt.caprintf("Error loading playlist! Read error.")
 		return
@@ -271,10 +275,10 @@ LoadPlaylist :: proc(path: string = "", clear: bool = true) {
 	// Add the paths to the playlist
 	for current_item, _ in paths {
 		current_path := current_item
-		if os.is_file_path(current_item) {
+		if os.is_file(current_item) {
 			// Check for leading "./" and replace with current working directory
 			if strings.starts_with(current_item, "./") {
-				current_path = fmt.aprintf("%v/%v", os.get_current_directory(), current_item[2:])
+				current_path = fmt.aprintf("%v/%v", old.get_current_directory(), current_item[2:])
 			}
 			AddSong(current_path)
 		}

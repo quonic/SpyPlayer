@@ -32,7 +32,7 @@ load_from_dir :: proc() {
 		handle, handleerror := os.open(folder)
 		assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
 
-		fileinfo, fileinfoerror := os.read_dir(handle, -1)
+		fileinfo, fileinfoerror := os.read_all_directory(handle, context.temp_allocator)
 		assert(fileinfoerror == nil, fmt.tprintf("Error reading directory: %v", fileinfoerror))
 
 		totalProgress: f16 = f16(len(fileinfo) - 1)

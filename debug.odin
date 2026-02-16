@@ -3,12 +3,13 @@ package main
 import "core:fmt"
 import "core:mem"
 import "core:os"
+import "core:os/old"
 import "vendor:raylib"
 
 page_size: int
 
 update_page_size :: proc() {
-	page_size = os.get_page_size()
+	page_size = old.get_page_size()
 }
 
 debug_draw :: proc(tracking_allocator: ^mem.Tracking_Allocator) {
