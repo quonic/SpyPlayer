@@ -18,6 +18,7 @@ bin/
 dist/
 out/
 build/
+renderdoc.cap
 
 # IDE
 .idea
