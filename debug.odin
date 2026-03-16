@@ -41,12 +41,10 @@ debug_draw :: proc(tracking_allocator: ^mem.Tracking_Allocator) {
 
 	// About every minute, print memory usage to console
 	if frame_count % (60 * 60) == 0 {
-		fmt.println(
-			fmt.caprintf(
-				"Current Memory Allocated: %.2f MB, Peak Memory Allocated: %.2f MB",
-				f32(tracking_allocator.current_memory_allocated) / (1024.0 * 1024.0),
-				f32(tracking_allocator.peak_memory_allocated) / (1024.0 * 1024.0),
-			),
+		fmt.printfln(
+			"Current Memory Allocated: %.2f MB, Peak Memory Allocated: %.2f MB",
+			f32(tracking_allocator.current_memory_allocated) / (1024.0 * 1024.0),
+			f32(tracking_allocator.peak_memory_allocated) / (1024.0 * 1024.0),
 		)
 	}
 }
