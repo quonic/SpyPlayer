@@ -40,10 +40,12 @@ task_prompt_load_from_dir :: proc(t: ^thread.Thread) {
 	playListLoaded = false
 	// TODO: Add a way to remember the last folder/playlist
 	folder := file_dialog.open_file_dialog("*.mp3", directory = true)
+	defer if folder != "" do delete(folder)
 	assert(os.exists(folder))
 
 	handle, handleerror := os.open(folder)
 	assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
+	defer os.close(handle)
 
 	fileinfo, fileinfoerror := os.read_dir(handle, -1, context.temp_allocator)
 	assert(fileinfoerror == nil, fmt.tprintf("Error reading directory: %v", fileinfoerror))
@@ -182,6 +184,7 @@ SavePlaylist :: proc() {
 	if playlist_file == "" {
 		return
 	}
+	defer delete(playlist_file)
 
 	// Check if the file already exists
 	if os.exists(playlist_file) {
@@ -237,14 +240,17 @@ SavePlaylist :: proc() {
 
 LoadPlaylist :: proc(path: string = "", clear: bool = true) {
 	playlist_file: string
+	owns_playlist_file := false
 	if path == "" {
 		playlist_file = file_dialog.open_file_dialog("*.json")
 		if playlist_file == "" {
 			return
 		}
+		owns_playlist_file = true
 	} else {
 		playlist_file = path
 	}
+	defer if owns_playlist_file do delete(playlist_file)
 	playlist_data, read_error := os.read_entire_file_from_path(
 		playlist_file,
 		context.temp_allocator,
