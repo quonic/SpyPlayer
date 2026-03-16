@@ -43,7 +43,7 @@ AddAudioVisualizer :: proc(audioVisualizer: ^AudioVisualizerControl) -> bool {
 }
 
 AddLabel :: proc(label: ^LabelControl) -> bool {
-	if label.name != "" || Labels[label.name] == nil {
+	if label.name == "" || Labels[label.name] == nil {
 		return false
 	}
 	Labels[label.name] = label
