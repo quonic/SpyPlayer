@@ -39,8 +39,8 @@ debug_draw :: proc(tracking_allocator: ^mem.Tracking_Allocator) {
 	)
 	raylib.DrawText(fmt.caprintf("Page Size: %d", page_size), 10, 70, 20, raylib.RED)
 
-	// Every 60 frames, print memory usage to console
-	if frame_count % 60 == 0 {
+	// About every minute, print memory usage to console
+	if frame_count % (60 * 60) == 0 {
 		fmt.println(
 			fmt.caprintf(
 				"Current Memory Allocated: %.2f MB, Peak Memory Allocated: %.2f MB",
