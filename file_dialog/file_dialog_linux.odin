@@ -70,20 +70,27 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 		fgets(raw_data(location_buf[:]), len(location_buf), file)
 		location := string(location_buf[len(fmt.tprintf("%v: ", name)):])
 		location, _ = strings.replace_all(location, "\n", "", context.temp_allocator)
-		return strings.clone(location)
+		return strings.clone(location, allocator)
 	}
 
 	@(private = "file")
 	execute_binary :: proc(fullpath: string) -> (output: string, exitcode: int) {
 
-		cmd := strings.split(fullpath, " ")
+		cmd := strings.split(fullpath, " ", context.temp_allocator)
+		defer delete(cmd)
 
 		state, stdout, stderr, proc_err := os.process_exec(
 			os.Process_Desc{command = cmd},
 			context.allocator,
 		)
+		defer delete(stdout)
+		defer delete(stderr)
 
 		if state.exit_code != 0 || proc_err != nil {
+			error_output := transmute(string)stderr
+			if error_output == "" {
+				error_output = transmute(string)stdout
+			}
 			fmt.printfln("Error: Process Error: %v", proc_err)
 			fmt.printfln("----------------- STDOUT --------------------")
 			fmt.printfln("%s", transmute(string)stdout)
@@ -91,10 +98,10 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 			fmt.printfln("%s", transmute(string)stderr)
 			fmt.printfln("----------------- STATUS --------------------")
 			fmt.printfln("%v", state)
-			return "", state.exit_code
+			return strings.clone(error_output), state.exit_code
 		}
 
-		return transmute(string)stdout, state.exit_code
+		return strings.clone(transmute(string)stdout), state.exit_code
 	}
 
 	open_file_dialog :: proc(filter: ..string, directory: bool = false) -> string {
@@ -116,11 +123,15 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 			output, exit_code := execute_binary(command)
 			if exit_code != 0 {
 				fmt.eprintfln("Error: %v", output)
+				if output != "" {
+					delete(output)
+				}
 				return ""
 			}
 			// Remove newlines
-			output, _ = strings.replace_all(output, "\n", "", context.temp_allocator)
-			return output
+			trimmed_output, _ := strings.replace_all(output, "\n", "", context.allocator)
+			delete(output)
+			return trimmed_output
 		case .Zenity:
 			command: string
 			if directory {
@@ -138,11 +149,15 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 			output, exit_code := execute_binary(command)
 			if exit_code != 0 {
 				fmt.eprintfln("Error: %v", output)
+				if output != "" {
+					delete(output)
+				}
 				return ""
 			}
 			// Remove newlines
-			output, _ = strings.replace_all(output, "\n", "", context.temp_allocator)
-			return output
+			trimmed_output, _ := strings.replace_all(output, "\n", "", context.allocator)
+			delete(output)
+			return trimmed_output
 		}
 		unimplemented()
 	}
@@ -155,8 +170,16 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 			} else {
 				command = fmt.tprintf("kdialog --getsavefilename '%v'", strings.join(filter, " "))
 			}
-			output, _ := execute_binary(command)
-			return output
+			output, exit_code := execute_binary(command)
+			if exit_code != 0 {
+				if output != "" {
+					delete(output)
+				}
+				return ""
+			}
+			trimmed_output, _ := strings.replace_all(output, "\n", "", context.allocator)
+			delete(output)
+			return trimmed_output
 		case .Zenity:
 			command: string
 			if len(filter) == 0 {
@@ -167,8 +190,16 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 					strings.join(filter, " "),
 				)
 			}
-			output, _ := execute_binary(command)
-			return output
+			output, exit_code := execute_binary(command)
+			if exit_code != 0 {
+				if output != "" {
+					delete(output)
+				}
+				return ""
+			}
+			trimmed_output, _ := strings.replace_all(output, "\n", "", context.allocator)
+			delete(output)
+			return trimmed_output
 		}
 		unimplemented()
 	}
@@ -178,6 +209,7 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 		output: int
 		switch _, type, _ := find_installed_dialog_binary(); type {
 		case .KDialog:
+			output_text: string
 			command: string
 			switch notification_type {
 			case .Info:
@@ -189,8 +221,12 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 			case .Question:
 				command = fmt.tprintf("kdialog --title '%v' --yesno '%v'", title, message)
 			}
-			_, output = execute_binary(command)
+			output_text, output = execute_binary(command)
+			if output_text != "" {
+				delete(output_text)
+			}
 		case .Zenity:
+			output_text: string
 			command: string
 			switch notification_type {
 			case .Info:
@@ -202,7 +238,10 @@ when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 			case .Question:
 				command = fmt.tprintf("zenity --question --title='%v' --text='%v'", title, message)
 			}
-			_, output = execute_binary(command)
+			output_text, output = execute_binary(command)
+			if output_text != "" {
+				delete(output_text)
+			}
 		}
 		if output == 0 {
 			return true
