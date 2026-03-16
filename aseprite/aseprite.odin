@@ -65,6 +65,7 @@ ReadAsespriteJsonFile :: proc(
 		ok = false
 		return
 	}
+	defer delete(data)
 
 	// aseprite = new(Aseprite)
 	err_json := json.unmarshal(data, &aseprite)
