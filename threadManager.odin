@@ -19,6 +19,8 @@ AUDIO_PROCESS :: 4
 
 // Thread Pool
 threads: [dynamic]^thread.Thread
+thread_cleaner_thread: ^thread.Thread
+thread_cleaner_running: bool
 
 load_from_dir :: proc() {
 	t := thread.create(
@@ -27,10 +29,12 @@ load_from_dir :: proc() {
 		playListLoaded = false
 		// TODO: Add a way to remember the last folder/playlist
 		folder := file_dialog.open_file_dialog("*.mp3", directory = true)
+		defer if folder != "" do delete(folder)
 		assert(os.exists(folder), fmt.tprintf("Folder does not exist: %v", folder))
 
 		handle, handleerror := os.open(folder)
 		assert(handleerror == nil, fmt.tprintf("Error opening directory: %v", handleerror))
+		defer os.close(handle)
 
 		fileinfo, fileinfoerror := os.read_all_directory(handle, context.temp_allocator)
 		assert(fileinfoerror == nil, fmt.tprintf("Error reading directory: %v", fileinfoerror))
@@ -106,16 +110,34 @@ create_thread_pool :: proc "contextless" () {
 	// Thanks to VOU-folks for this code: https://github.com/VOU-folks/odin-tcp-server-example/blob/main/main.odin
 	context = runtime.default_context()
 	threads = make([dynamic]^thread.Thread, 0)
+	thread_cleaner_running = true
 	thread_cleaner()
 }
 
 destroy_thread_pool :: proc() {
+	thread_cleaner_running = false
+	if thread_cleaner_thread != nil {
+		for !thread.is_done(thread_cleaner_thread) {
+			time.sleep(10 * time.Millisecond)
+		}
+		thread.destroy(thread_cleaner_thread)
+		thread_cleaner_thread = nil
+	}
+
+	for i := 0; i < len(threads); {
+		if worker := threads[i]; thread.is_done(worker) {
+			thread.destroy(worker)
+			ordered_remove(&threads, i)
+		} else {
+			time.sleep(10 * time.Millisecond)
+		}
+	}
 	delete(threads)
 }
 
 thread_cleaner :: proc() {
 	t := thread.create(proc(t: ^thread.Thread) {
-		for {
+		for thread_cleaner_running {
 			time.sleep(1 * time.Second)
 
 			if len(threads) == 0 {
@@ -157,5 +179,6 @@ thread_cleaner :: proc() {
 			}
 		}
 	})
+	thread_cleaner_thread = t
 	thread.start(t)
 }
