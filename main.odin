@@ -112,6 +112,8 @@ spall_exit :: proc "contextless" (
 	spall._buffer_end(&spall_ctx, &spall_buffer)
 }
 
+frame_count: u64 = 0
+
 _main :: proc() {
 	icon := raylib.LoadImage("assets/SpyPlayer.png")
 	defer raylib.UnloadImage(icon)
@@ -261,7 +263,7 @@ _main :: proc() {
 
 		// Draw Debug Info
 		when ODIN_DEBUG {
-			if raylib.GetFrameTime() == 0 {
+			if frame_count % 300 == 0 {
 				update_page_size()
 			}
 			if raylib.IsKeyPressed(.F1) do Show_Debug_Info = !Show_Debug_Info
@@ -269,7 +271,10 @@ _main :: proc() {
 		}
 
 		raylib.EndDrawing()
-
+		frame_count += 1
+		if frame_count == 1000000 {
+			frame_count = 0
+		}
 		free_all(context.temp_allocator)
 	}
 
