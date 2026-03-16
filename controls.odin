@@ -142,6 +142,10 @@ CleanUpControls :: proc() {
 	for name, _ in Lists {
 		delete(Lists[name].items)
 	}
+	if window_texture.id != 0 {
+		raylib.UnloadTexture(window_texture)
+		window_texture = {}
+	}
 	delete_map(Lists)
 	delete_map(ProgressBars)
 	delete_map(Sliders)
