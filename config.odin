@@ -82,7 +82,7 @@ save_config :: proc() {
 	}
 	config_dir := fmt.aprintf("%v/SpyPlayer", XDG_CONFIG_HOME)
 	if !os.exists(config_dir) {
-		os.make_directory(config_dir, 0o755)
+		os.make_directory(config_dir, os.Permissions_Default_Directory)
 	}
 	config_file = fmt.aprintf("%v/SpyPlayer/config.json", XDG_CONFIG_HOME)
 
