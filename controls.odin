@@ -150,6 +150,8 @@ CleanUpControls :: proc() {
 	delete_map(Texts)
 	delete_map(Buttons)
 	delete_map(Labels)
+	delete_map(AudioVisualizers)
+	delete_map(Pictures)
 }
 
 IsHovering :: proc(box: raylib.Rectangle, camera: raylib.Camera2D) -> bool {
