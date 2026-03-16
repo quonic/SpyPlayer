@@ -171,6 +171,7 @@ _main :: proc() {
 			PlayListLoading = true
 		}
 	}
+	defer destroy_thread_pool()
 
 	lastScrollTime = raylib.GetTime()
 
