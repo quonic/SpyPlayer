@@ -5,15 +5,10 @@ import "core:fmt"
 import "core:mem"
 import "core:mem/virtual"
 import "core:os"
-import "core:prof/spall"
 import "core:strings"
 import "core:sync"
 import "core:thread"
 import "vendor:raylib"
-
-spall_ctx: spall.Context
-@(thread_local)
-spall_buffer: spall.Buffer
 
 // SpyPlayer is a Music player that use raylib for the UI and miniaudio for the audio
 
@@ -49,7 +44,6 @@ EnableToolTips: bool : true
 MAX_SAMPLES_PER_UPDATE :: 4096
 
 TRACK_MEMORY_LEAKS :: #config(leaks, false)
-OUTPUT_SPALL_TRACE :: #config(trace, false)
 DISABLE_SCISSOR_MODE :: #config(scissor, false)
 
 when ODIN_DEBUG || TRACK_MEMORY_LEAKS {
@@ -58,16 +52,6 @@ when ODIN_DEBUG || TRACK_MEMORY_LEAKS {
 }
 
 main :: proc() {
-	when OUTPUT_SPALL_TRACE {
-		spall_ctx = spall.context_create("trace_test.spall")
-		defer spall.context_destroy(&spall_ctx)
-
-		buffer_backing := make([]u8, spall.BUFFER_DEFAULT_SIZE)
-		defer delete(buffer_backing)
-
-		spall_buffer = spall.buffer_create(buffer_backing, u32(sync.current_thread_id()))
-		defer spall.buffer_destroy(&spall_ctx, &spall_buffer)
-	}
 	when ODIN_DEBUG || TRACK_MEMORY_LEAKS {
 		mem.tracking_allocator_init(&track, context.allocator)
 		defer mem.tracking_allocator_destroy(&track)
@@ -92,24 +76,6 @@ main :: proc() {
 	} else {
 		_main()
 	}
-}
-
-// Automatic profiling of every procedure:
-
-@(instrumentation_enter)
-spall_enter :: proc "contextless" (
-	proc_address, call_site_return_address: rawptr,
-	loc: runtime.Source_Code_Location,
-) {
-	spall._buffer_begin(&spall_ctx, &spall_buffer, "", "", loc)
-}
-
-@(instrumentation_exit)
-spall_exit :: proc "contextless" (
-	proc_address, call_site_return_address: rawptr,
-	loc: runtime.Source_Code_Location,
-) {
-	spall._buffer_end(&spall_ctx, &spall_buffer)
 }
 
 frame_count: u64 = 0
