@@ -8,7 +8,7 @@ import "core:strings"
 import "core:thread"
 import "core:time"
 import "file_dialog"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 // Thread User Indices
 LOAD_FROM_CONFIG :: 0

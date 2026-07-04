@@ -11,7 +11,7 @@ import "core:strings"
 import "core:thread"
 import "core:time"
 import "file_dialog"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 Song :: struct {
 	path:  string,

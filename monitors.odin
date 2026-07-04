@@ -16,7 +16,7 @@ SetWindowToPrimaryMonitor()
 */
 
 import "vendor:glfw"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 // Sets a raylib window to the primary monitor
 SetWindowToPrimaryMonitor :: proc(setFps: bool = false) {

@@ -2,7 +2,7 @@ package main
 
 import "aseprite"
 import "core:fmt"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 window_texture: raylib.Texture2D
 previous_button: ButtonControl

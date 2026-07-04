@@ -96,7 +96,7 @@ See [Build Odin from Source](https://odin-lang.org/docs/install/#windows)
 #### Linux
 
 ```sh
-./build.sh
+odin build . -define=RAYLIB_SHARED=true -define=RAYGUI_SHARED=true
 ./SpyPlayer
 ```
 

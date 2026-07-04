@@ -4,7 +4,7 @@ import "core:encoding/json"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 Config :: struct {
 	keys:                map[string]string,

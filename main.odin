@@ -8,7 +8,7 @@ import "core:os"
 import "core:strings"
 import "core:sync"
 import "core:thread"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 // SpyPlayer is a Music player that use raylib for the UI and miniaudio for the audio
 
@@ -92,7 +92,9 @@ _main :: proc() {
 
 	// Move the window to the primary monitor
 	when ODIN_OS == .Linux {
-		SetWindowToPrimaryMonitor(setFps = true)
+		// TODO: Fix "glfwGetMonitorName: Assertion `monitor != NULL' failed."
+		// SpyPlayer: /builddir/build/BUILD/glfw-3.4-build/glfw-3.4/src/monitor.c:398: glfwGetMonitorName: Assertion `monitor != NULL' failed.
+		// SetWindowToPrimaryMonitor(setFps = true)
 	}
 
 	loadStyle()

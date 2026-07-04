@@ -2,7 +2,7 @@
 package main
 
 import "core:fmt"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 SEEK_SECONDS :: 5
 

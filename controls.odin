@@ -5,7 +5,7 @@ import "core:fmt"
 import "core:math"
 import "core:strings"
 import fft "fft"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 Labels: map[string]^LabelControl
 Buttons: map[string]^ButtonControl

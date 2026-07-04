@@ -41,7 +41,7 @@ if (-not (Test-Path $outputDir -ErrorAction SilentlyContinue)) {
 if ($Build -like "Debug") {
     Write-Host "Building in Debug mode"
     # Build with or without our debug options
-    odin build . -debug -o:speed -define:leaks=true -define:trace=true -out:$BuildExecutableFile
+    odin build . -debug -o:speed -define:leaks=true -define:trace=true -define=RAYLIB_SHARED=true -define=RAYGUI_SHARED=true -out:$BuildExecutableFile
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Build failed"
         exit 1
@@ -49,7 +49,7 @@ if ($Build -like "Debug") {
 }
 if ($Build -like "Release") {
     # Build with or without our debug options
-    odin build . -o:speed -out:$BuildExecutableFile
+    odin build . -o:speed -define=RAYLIB_SHARED=true -define=RAYGUI_SHARED=true -out:$BuildExecutableFile
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Build failed"
         exit 1

@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:mem"
 import "core:os"
 import "core:os/old"
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 page_size: int
 

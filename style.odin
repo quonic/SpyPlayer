@@ -1,7 +1,7 @@
 package main
 
 
-import "vendor:raylib"
+import raylib "vendor:raylib/v55"
 
 loadStyle :: proc() {
 	// raylib.GuiLoadStyle("assets/listview.rgs")
