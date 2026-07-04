@@ -92,9 +92,7 @@ _main :: proc() {
 
 	// Move the window to the primary monitor
 	when ODIN_OS == .Linux {
-		// TODO: Fix "glfwGetMonitorName: Assertion `monitor != NULL' failed."
-		// SpyPlayer: /builddir/build/BUILD/glfw-3.4-build/glfw-3.4/src/monitor.c:398: glfwGetMonitorName: Assertion `monitor != NULL' failed.
-		// SetWindowToPrimaryMonitor(setFps = true)
+		SetWindowToPrimaryMonitor(setFps = true)
 	}
 
 	loadStyle()

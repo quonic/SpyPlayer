@@ -31,6 +31,11 @@ SetWindowToPrimaryMonitor :: proc(setFps: bool = false) {
 // Returns the index of the primary monitor
 GetPrimaryMonitor :: proc() -> i32 {
 	primary := glfw.GetPrimaryMonitor()
+	if primary == nil {
+		// Fixes "glfwGetMonitorName: Assertion `monitor != NULL' failed."
+		// SpyPlayer: /builddir/build/BUILD/glfw-3.4-build/glfw-3.4/src/monitor.c:398: glfwGetMonitorName: Assertion `monitor != NULL' failed.
+		return 0
+	}
 	name := glfw.GetMonitorName(primary)
 
 	for i in 0 ..< raylib.GetMonitorCount() {
